@@ -1,7 +1,7 @@
 {
   "name": "com.moe-baker.toolbox",
   "version": "1.0.0",
-  "displayName": "Moe Baker Packages",
+  "displayName": "Toolbox",
   "description": "A Collection of usefull packages",
   "unity": "2017.1",
   "unityRelease": "0a0",

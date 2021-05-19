@@ -26,6 +26,6 @@ namespace MB
 
 	public interface IDependencySample
 	{
-		public string name { get; }
+		string name { get; }
 	}
 }
