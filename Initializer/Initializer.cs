@@ -46,7 +46,7 @@ namespace MB
             Perform(targets);
         }
 
-        public static IList<IInitialize> Perform(UObjectSurrogate surrogate)
+        public static IInitialize[] Perform(UObjectSurrogate surrogate)
         {
             var targets = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
 
@@ -71,7 +71,7 @@ namespace MB
         #endregion
 
         #region Configure
-        public static IList<IInitialize> Configure(UObjectSurrogate surrogate)
+        public static IInitialize[] Configure(UObjectSurrogate surrogate)
         {
             var targets = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
 
@@ -101,7 +101,7 @@ namespace MB
         #endregion
 
         #region Init
-        public static IList<IInitialize> Init(UObjectSurrogate surrogate)
+        public static IInitialize[] Init(UObjectSurrogate surrogate)
         {
             var targets = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
 
