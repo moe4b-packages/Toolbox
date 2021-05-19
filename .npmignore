@@ -1,0 +1,4 @@
+# Stuff that is ignored by the package.
+.npmignore
+.gitignore
+.gitattributes

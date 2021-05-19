@@ -1,0 +1,88 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using UnityEngine.AI;
+
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditorInternal;
+#endif
+
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
+
+using System.Diagnostics;
+
+using Debug = UnityEngine.Debug;
+
+namespace MB
+{
+	public class ExecutionTimer : IDisposable
+	{
+		string name;
+		Stopwatch watch;
+
+		public void Dispose()
+		{
+			watch.Stop();
+
+			var time = watch.Elapsed.TotalMilliseconds;
+
+			LogMethod($"{name} Execution Time: {time}ms");
+		}
+
+		public ExecutionTimer() : this(string.Empty) { }
+		public ExecutionTimer(string name)
+		{
+			this.name = name;
+			watch = Stopwatch.StartNew();
+		}
+
+		public static ExecutionTimer operator +(ExecutionTimer timer, string name)
+		{
+			timer.name += name;
+
+			return timer;
+		}
+
+		//Static Utility
+		public delegate void LogDelegate(object target);
+		public static LogDelegate LogMethod { get; set; } = Debug.Log;
+
+		public static ExecutionTimer New => new ExecutionTimer("");
+
+		static ExecutionTimer instance;
+
+		public static void Measure(Action callback) => Measure(callback, callback.Method.Name);
+		public static void Measure(Action callback, string title)
+		{
+			using (new ExecutionTimer(title))
+			{
+				callback();
+			}
+		}
+
+		public static void Start(string name)
+        {
+			if (instance != null)
+			{
+				Debug.LogError($"Execution Timer Instance Already Running");
+				return;
+			}
+
+			instance = new ExecutionTimer(name);
+        }
+
+		public static void Stop()
+        {
+			instance.Dispose();
+			instance = null;
+        }
+	}
+}

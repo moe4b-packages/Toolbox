@@ -1,0 +1,245 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+using UnityEngine.AI;
+
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityEditorInternal;
+#endif
+
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
+
+namespace MB
+{
+    [Serializable]
+    public class MSceneAsset : ISerializationCallbackReceiver
+    {
+        [SerializeField]
+        Object asset = default;
+        public Object Asset => asset;
+
+        [SerializeField]
+        bool registered = default;
+        public bool Registered => registered;
+
+        [SerializeField]
+        bool active = default;
+        public bool Active => active;
+
+        [SerializeField]
+        string id = default;
+        public string ID => id;
+
+        [SerializeField]
+        int index = default;
+        public int Index => index;
+
+        [SerializeField]
+        string path = default;
+        public string Path => path;
+
+        public void OnBeforeSerialize()
+        {
+#if UNITY_EDITOR
+            Refresh();
+#endif
+        }
+
+        public void OnAfterDeserialize() { }
+
+#if UNITY_EDITOR
+        public void Refresh()
+        {
+            registered = TryFind(Asset, out active, out id, out index, out path);
+        }
+#endif
+
+        public override string ToString()
+        {
+#if UNITY_EDITOR
+            return asset == null ? "null" : asset.name;
+#else
+            return registered ? id : "null";
+#endif
+        }
+
+        public MSceneAsset(Object asset)
+        {
+            this.asset = asset;
+
+#if UNITY_EDITOR
+            Refresh();
+#endif
+        }
+
+        public static implicit operator int(MSceneAsset scene) => scene.Index;
+
+#if UNITY_EDITOR
+        //Static Utility
+
+        public static bool TryFind(Object asset, out bool active, out string id, out int index, out string path)
+        {
+            index = 0;
+
+            if (asset != null)
+            {
+                foreach (var entry in EditorBuildSettings.scenes)
+                {
+                    var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(entry.path);
+
+                    if (scene == asset)
+                    {
+                        active = entry.enabled;
+                        id = asset.name;
+                        path = entry.path;
+                        return true;
+                    }
+
+                    if (entry.enabled) index += 1;
+                }
+            }
+
+            active = false;
+            id = string.Empty;
+            index = 0;
+            path = string.Empty;
+            return false;
+        }
+
+        public static bool Register(Object scene)
+        {
+            var list = EditorBuildSettings.scenes.ToList();
+
+            var path = AssetDatabase.GetAssetPath(scene);
+
+            if (list.Any(x => x.path == path)) return false;
+
+            var entry = new EditorBuildSettingsScene(path, true);
+
+            list.Add(entry);
+
+            EditorBuildSettings.scenes = list.ToArray();
+
+            return true;
+        }
+
+        public static void Activate(Object scene)
+        {
+            var list = EditorBuildSettings.scenes;
+
+            var path = AssetDatabase.GetAssetPath(scene);
+
+            foreach (var entry in list)
+            {
+                if (entry.path == path)
+                {
+                    entry.enabled = true;
+                    break;
+                }
+            }
+
+            EditorBuildSettings.scenes = list;
+        }
+
+        [CustomPropertyDrawer(typeof(MSceneAsset))]
+        public class Drawer : PropertyDrawer
+        {
+            SerializedProperty property;
+
+            SerializedProperty asset;
+            SerializedProperty registered;
+            SerializedProperty active;
+
+            public static float LineHeight => EditorGUIUtility.singleLineHeight;
+
+            void Init(SerializedProperty reference)
+            {
+                if (property?.propertyPath == reference?.propertyPath) return;
+
+                property = reference;
+
+                asset = property.FindPropertyRelative(nameof(asset));
+                registered = property.FindPropertyRelative(nameof(registered));
+                active = property.FindPropertyRelative(nameof(active));
+            }
+
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            {
+                Init(property);
+
+                var height = LineHeight;
+
+                if (asset.objectReferenceValue != null)
+                {
+                    if (registered.boolValue == false)
+                        height += LineHeight;
+                    else if (active.boolValue == false)
+                        height += LineHeight;
+                }
+
+                return height;
+            }
+
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+            {
+                Init(property);
+
+                DrawField(ref rect, label);
+
+                if (asset.objectReferenceValue != null)
+                {
+                    if (registered.boolValue == false)
+                        DrawInstruction(ref rect, $"Scene not Registered to Build Settings", MessageType.Warning, "Register", Register);
+                    else if (active.boolValue == false)
+                        DrawInstruction(ref rect, $"Scene not Active within Build Settings", MessageType.Warning, "Activate", Activate);
+                }
+            }
+
+            void Register() => MSceneAsset.Register(asset.objectReferenceValue);
+            void Activate() => MSceneAsset.Activate(asset.objectReferenceValue);
+
+            void DrawField(ref Rect rect, GUIContent label)
+            {
+                GetLine(ref rect, out var area);
+
+                asset.objectReferenceValue = EditorGUI.ObjectField(area, label, asset.objectReferenceValue, typeof(SceneAsset), false);
+            }
+
+            void DrawInstruction(ref Rect rect, string text, MessageType type, string instructions, Action callback)
+            {
+                GetLine(ref rect, out var area);
+
+                area.width -= 90;
+
+                EditorGUI.HelpBox(area, text.Insert(0, " "), type);
+
+                area.x += area.width + 10;
+                area.width = 80;
+
+                if (GUI.Button(area, instructions)) callback?.Invoke();
+            }
+
+            static void GetLine(ref Rect rect, out Rect area)
+            {
+                area = new Rect(rect.position, new Vector2(rect.width, LineHeight));
+
+                IterateLine(ref rect);
+            }
+
+            static void IterateLine(ref Rect rect)
+            {
+                rect.y += LineHeight;
+                rect.height -= LineHeight;
+            }
+        }
+#endif
+    }
+}
