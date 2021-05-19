@@ -210,6 +210,7 @@ namespace MB
             return fallback;
         }
 
+#if UNITY_EDITOR
         public static class GUICoordinates
         {
             public static Rect[] SplitHorizontally(Rect rect, float padding, int cuts)
@@ -255,7 +256,6 @@ namespace MB
             }
         }
 
-#if UNITY_EDITOR
         public static class SerializedPropertyType
         {
             public static Dictionary<string, Type> Cache { get; private set; }

@@ -22,6 +22,9 @@ using UnityEngine.PlayerLoop;
 
 namespace MB
 {
+    /// <summary>
+    /// Executed before LateUpdate, but After Update, Register Delegate for it to get Invoked Once
+    /// </summary>
 	public static class ManualLateStart
 	{
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
