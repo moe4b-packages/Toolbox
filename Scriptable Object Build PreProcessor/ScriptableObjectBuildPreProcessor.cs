@@ -28,16 +28,10 @@ namespace MB
 
 		public void OnPreprocessBuild(BuildReport report)
 		{
-			var guids = AssetDatabase.FindAssets("t:ScriptableObject");
+			var list = ScriptableObjectQuery.FindAll<IScriptableObjectBuildPreProcess>();
 
-			for (int i = 0; i < guids.Length; i++)
-			{
-				var path = AssetDatabase.GUIDToAssetPath(guids[i]);
-
-				var asset = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-
-				if (asset is IScriptableObjectBuildPreProcess contract) contract.PreProcessBuild();
-			}
+			for (int i = 0; i < list.Count; i++)
+				list[i].PreProcessBuild();
 		}
 	}
 #endif

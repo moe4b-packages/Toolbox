@@ -53,18 +53,7 @@ namespace MB
 #if UNITY_EDITOR
         public virtual void Refresh()
         {
-            list.Clear();
-
-            var guids = AssetDatabase.FindAssets("t:ScriptableObject");
-
-            for (int i = 0; i < guids.Length; i++)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guids[i]);
-
-                var instance = AssetDatabase.LoadAssetAtPath<ScriptableObject>(path);
-
-                if (instance is IInitialize) list.Add(instance);
-            }
+            list = ScriptableObjectQuery.FindAllWith<IInitialize>();
 
             EditorUtility.SetDirty(this);
         }

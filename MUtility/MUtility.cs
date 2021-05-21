@@ -166,6 +166,7 @@ namespace MB
         }
         #endregion
 
+        #region Collections
         /// <summary>
         /// Returns element at index, or returns null if index out of bounds
         /// </summary>
@@ -200,14 +201,27 @@ namespace MB
 
             return true;
         }
+        #endregion
 
-        public static T ValueOrFallback<T>(this T? nullable, T fallback)
-            where T : struct
+        public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
         {
-            if (nullable.HasValue)
-                return nullable.Value;
+            var transform = surrogate.Transform;
 
-            return fallback;
+            var builder = new StringBuilder();
+
+            builder.Append(transform.name);
+
+            transform = transform.parent;
+
+            while (transform != null)
+            {
+                builder.Insert(0, seperator);
+                builder.Insert(0, transform.name);
+
+                transform = transform.parent;
+            }
+
+            return builder.ToString();
         }
 
 #if UNITY_EDITOR
@@ -244,7 +258,7 @@ namespace MB
                 return areas;
             }
 
-            static Rect SliceLine(ref Rect rect)
+            public static Rect SliceLine(ref Rect rect)
             {
                 var area = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
 
@@ -330,6 +344,8 @@ namespace MB
 
             return color;
         }
+
+        public static string GetHierarchyPath(this Transform transform) => MUtility.GetHierarchyPath(transform);
     }
 
     /// <summary>
