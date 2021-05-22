@@ -20,6 +20,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	/// <summary>
+	/// A Utility for quering ScriptableObjects, Editor only script
+	/// </summary>
 	public static class ScriptableObjectQuery
 	{
 		public static List<ScriptableObject> Collection { get; private set; }

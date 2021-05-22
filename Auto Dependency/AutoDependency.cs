@@ -21,6 +21,9 @@ using System.Reflection;
 
 namespace MB
 {
+    /// <summary>
+    /// Attribute to apply to single/list of component fields to auto retrive them on ResolveAll
+    /// </summary>
     public static class AutoDependency
     {
         public static void ResolveAll(UObjectSurrogate surrogate)

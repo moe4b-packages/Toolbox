@@ -19,6 +19,10 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	/// <summary>
+	/// Made to be used as a field in a monobehaviour script,
+	/// will provide quick access buttons for reordering and duplicating the specified component
+	/// </summary>
 	[Serializable]
 	public class ComponentInspectorUtility
 	{

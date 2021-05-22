@@ -24,6 +24,9 @@ using Newtonsoft.Json.Linq;
 namespace MB
 {
 #if UNITY_EDITOR
+    /// <summary>
+    /// A PreProcessor for scripts, used for replacing #VARIABLES like #NAMESPACE
+    /// </summary>
     public class ScriptCreationPreprocessor : UnityEditor.AssetModificationProcessor
     {
         public static List<AssemblyData> Assemblies { get; protected set; }

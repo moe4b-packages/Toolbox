@@ -21,6 +21,9 @@ using System.Reflection;
 
 namespace MB
 {
+    /// <summary>
+    /// A base class for creating a singelton ScriptableObject that will be loaded dynamically from Resources
+    /// </summary>
     public class GlobalScriptableObject : ScriptableObject
     {
 #if UNITY_EDITOR
@@ -30,20 +33,29 @@ namespace MB
 #endif
         static void Initiate()
         {
-            var target = typeof(GlobalScriptableObject);
+            var list = TypeQuery.FindAll(Predicate);
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            var flags = BindingFlags.FlattenHierarchy | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+
+            for (int i = 0; i < list.Count; i++)
             {
-                foreach (var type in assembly.GetTypes())
-                {
-                    if (type == target) continue;
-                    if (type.IsGenericType) continue;
-                    if (target.IsAssignableFrom(type) == false) continue;
-
-                    var method = type.GetMethod("OnLoad", BindingFlags.FlattenHierarchy | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-                    method.Invoke(null, null);
-                }
+                var method = list[i].GetMethod("OnLoad", flags);
+                method.Invoke(null, null);
             }
+        }
+
+        static bool Predicate(Type type)
+        {
+            if (type == typeof(GlobalScriptableObject))
+                return false;
+
+            if (type.IsGenericType)
+                return false;
+
+            if (typeof(GlobalScriptableObject).IsAssignableFrom(type) == false)
+                return false;
+
+            return true;
         }
     }
 

@@ -20,6 +20,9 @@ using Random = UnityEngine.Random;
 using System.Reflection;
 
 #if UNITY_EDITOR
+/// <summary>
+/// Set script symbol defines (#UNITY_EDITOR, #UNITY_ANDROID, ...) as assembly attributes
+/// </summary>
 [InitializeOnLoad]
 public static class AssemblySymbolDefine
 {

@@ -8,6 +8,10 @@ using System.Collections.Generic;
 
 namespace MB
 {
+    /// <summary>
+    /// Provides a user readable string from a collection,
+    /// mostly usefull for debugging when you are too lazy to set break points :)
+    /// </summary>
     public static class CollectionPrettyPrint
     {
         public static string ToCollectionString<T>(this IEnumerable<T> collection, Func<T, string> ToString = null)

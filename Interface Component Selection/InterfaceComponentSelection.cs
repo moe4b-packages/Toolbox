@@ -19,6 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	/// <summary>
+	/// A serializable field that allows you to select a component that implements a specific interface
+	/// </summary>
 	[Serializable]
 	public class InterfaceComponentSelection
 	{

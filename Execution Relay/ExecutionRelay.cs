@@ -19,6 +19,10 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// A relay used to execute operations based on invokation,
+    /// used mostly with UI in the form of a ButtonExecutionRelay that will execute operations on button click
+    /// </summary>
 	public abstract class ExecutionRelay : MonoBehaviour, IInitialize
 	{
 		public IOperation[] Operations { get; protected set; }

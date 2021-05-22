@@ -23,6 +23,9 @@ using Debug = UnityEngine.Debug;
 
 namespace MB
 {
+	/// <summary>
+	/// A stopwatch for code, use it to measure code execution time for the sake of optimizing
+	/// </summary>
 	public class ExecutionTimer : IDisposable
 	{
 		string name;

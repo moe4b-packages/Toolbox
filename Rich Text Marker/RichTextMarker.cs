@@ -14,6 +14,9 @@ using UnityEngine;
 
 namespace MB
 {
+	/// <summary>
+	/// A rich text markup utlity class for decorating texts for use in UI
+	/// </summary>
 	public static class RichTextMarker
 	{
 		public static string Bold(string text) => $"<b>{text}</b>";

@@ -20,6 +20,9 @@ using UnityEngine.UIElements;
 
 namespace MB
 {
+    /// <summary>
+    /// A field that provides an optional value
+    /// </summary>
     [Serializable]
     public abstract class OptionalValue
     {

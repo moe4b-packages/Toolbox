@@ -21,11 +21,14 @@ using System.Reflection;
 
 namespace MB
 {
+    /// <summary>
+    /// an attribute to be used on fields with an enum flag to allow setting multiple values for that field
+    /// </summary>
     [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-    public class EnumFlag : PropertyAttribute
+    public class EnumFlagAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR
-        [CustomPropertyDrawer(typeof(EnumFlag))]
+        [CustomPropertyDrawer(typeof(EnumFlagAttribute))]
         public class Drawer : PropertyDrawer
         {
             SerializedProperty property;

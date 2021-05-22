@@ -19,11 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-    public interface IUCollection
-    {
-        int Count { get; }
-    }
-
+    /// <summary>
+    /// A Collection of serializable collections
+    /// </summary>
     public abstract class UCollection : IUCollection
     {
         public abstract int Count { get; }
@@ -272,5 +270,10 @@ namespace MB
             #endregion
         }
 #endif
+    }
+
+    public interface IUCollection
+    {
+        int Count { get; }
     }
 }

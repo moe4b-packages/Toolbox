@@ -24,6 +24,9 @@ using System.Reflection;
 
 namespace MB
 {
+    /// <summary>
+    /// A collection of random utility functions
+    /// </summary>
     public static class MUtility
     {
         public static RuntimePlatform CheckPlatform()

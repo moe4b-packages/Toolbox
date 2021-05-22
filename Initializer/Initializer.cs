@@ -19,6 +19,10 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// A System for configuring (Awake) & initializing (Start) classes independently of Unity's reflection based method,
+    /// usefull for preparing UI because Awake & Start methods don't get called on inactive objects and UI is often inactive on play
+    /// </summary>
     public static class Initializer
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]

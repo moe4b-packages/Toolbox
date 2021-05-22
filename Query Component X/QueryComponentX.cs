@@ -19,6 +19,10 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	/// <summary>
+	/// A helper class to query for components using types or generics,
+	/// supports querying for interfaces as well as classes
+	/// </summary>
 	public static class QueryComponent
 	{
 		#region Generic

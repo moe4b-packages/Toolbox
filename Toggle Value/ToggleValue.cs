@@ -16,10 +16,12 @@ using UnityEditorInternal;
 
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
-using UnityEngine.UIElements;
 
 namespace MB
 {
+    /// <summary>
+    /// A field that provides a toggleable value
+    /// </summary>
     [Serializable]
     public abstract class ToggleValue
     {

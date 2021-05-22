@@ -19,6 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// A serializable field that will contain a reference to a scene asset
+    /// </summary>
     [Serializable]
     public class MSceneAsset : ISerializationCallbackReceiver
     {

@@ -23,6 +23,9 @@ using static MB.AutoComponentX;
 
 namespace MB
 {
+	/// <summary>
+	/// Serializable Field that will auto retrieve a single/list of component dependency
+	/// </summary>
 	public static class AutoComponentX
 	{
 #if UNITY_EDITOR

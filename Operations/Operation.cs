@@ -19,13 +19,16 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-	public interface IOperation
-    {
-		void Execute();
-    }
-
+	/// <summary>
+	/// A single purpose operation that can be executed, base class for operation variants
+	/// </summary>
 	public abstract class Operation : MonoBehaviour, IOperation
 	{
 		public abstract void Execute();
+	}
+
+	public interface IOperation
+	{
+		void Execute();
 	}
 }

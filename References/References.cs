@@ -19,6 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// A system to establish references between different (and usually nested) classes
+    /// </summary>
     public static class References
     {
         public static IList<IReference<TContext>> Set<TContext>(TContext context) where TContext : Component => Set(context, context.gameObject);

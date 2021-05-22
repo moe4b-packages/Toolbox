@@ -19,6 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// A serializable field that ensures only prefabs assets (no scene assets) are selected
+    /// </summary>
     [Serializable]
     public class PrefabAsset
     {

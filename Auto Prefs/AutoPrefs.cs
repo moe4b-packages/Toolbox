@@ -22,6 +22,10 @@ using Newtonsoft.Json.Linq;
 
 namespace MB
 {
+    /// <summary>
+    /// More competant version of PlayerPrefs, uses JsonDotNet, can serialize anything,
+    /// requires .Net 4.X compatibility instead of .Net 2.0 Standard because of a bug with JsonDotNet I think
+    /// </summary>
     public static class AutoPrefs
     {
         public const string ID = nameof(AutoPrefs);

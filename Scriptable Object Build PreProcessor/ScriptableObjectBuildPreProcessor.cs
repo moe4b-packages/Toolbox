@@ -22,6 +22,10 @@ using Random = UnityEngine.Random;
 namespace MB
 {
 #if UNITY_EDITOR
+	/// <summary>
+	/// A preprocessor for ScriptableObjects,
+	/// implement the interface on ScriptableObjects and recieve the callback before build
+	/// </summary>
 	public class ScriptableObjectBuildPreProcessor : IPreprocessBuildWithReport
 	{
 		public int callbackOrder => 0;
