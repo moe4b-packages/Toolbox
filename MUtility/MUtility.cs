@@ -227,6 +227,18 @@ namespace MB
             return builder.ToString();
         }
 
+        public static IEnumerable<Type> GetHierarchyTree(Type type)
+        {
+            while(true)
+            {
+                yield return type;
+
+                type = type.BaseType;
+
+                if (type == null) break;
+            }
+        }
+
 #if UNITY_EDITOR
         public static class GUICoordinates
         {

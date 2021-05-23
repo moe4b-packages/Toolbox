@@ -34,6 +34,8 @@ namespace MB
         {
 #if UNITY_EDITOR
             Refresh();
+
+            EditorBuildSettings.sceneListChanged += Refresh;
 #endif
 
             Dictionary = list.ToDictionary(x => x.ID);
@@ -44,7 +46,7 @@ namespace MB
 #if UNITY_EDITOR
         void Refresh()
         {
-            list.Clear();
+            list = new List<MSceneAsset>();
 
             foreach (var entry in EditorBuildSettings.scenes)
             {
@@ -57,15 +59,12 @@ namespace MB
                 list.Add(item);
             }
 
+            Dictionary = list.ToDictionary(x => x.ID);
+
             EditorUtility.SetDirty(this);
         }
 
         public void PreProcessBuild() => Refresh();
 #endif
-
-        public MScenesCollection()
-        {
-            list = new List<MSceneAsset>();
-        }
     }
 }

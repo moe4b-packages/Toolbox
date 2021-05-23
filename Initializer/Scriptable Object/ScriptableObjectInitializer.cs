@@ -35,6 +35,8 @@ namespace MB
 
 #if UNITY_EDITOR
             Refresh();
+
+            AssetCollection.OnRefresh += Refresh;
 #endif
 
             Perform();
@@ -53,7 +55,7 @@ namespace MB
 #if UNITY_EDITOR
         public virtual void Refresh()
         {
-            list = ScriptableObjectQuery.FindAllWith<IInitialize>();
+            list = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
 
             EditorUtility.SetDirty(this);
         }

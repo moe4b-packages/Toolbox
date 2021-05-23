@@ -37,6 +37,20 @@ namespace MB
             return list;
         }
 
+        public static List<Type> FindInheritors(Type target)
+        {
+            return FindAll(Predicate);
+
+            bool Predicate(Type type)
+            {
+                if (type == target) return false;
+
+                if (target.IsAssignableFrom(type) == false) return false;
+
+                return true;
+            }
+        }
+
         static TypeQuery()
         {
             Collection = new List<Type>();
