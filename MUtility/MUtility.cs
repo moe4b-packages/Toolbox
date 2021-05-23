@@ -239,6 +239,28 @@ namespace MB
             }
         }
 
+        /// <summary>
+        /// Checks that elements in the original collect exist in the latest collection
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="original"></param>
+        /// <param name="latest"></param>
+        /// <returns></returns>
+        public static bool CheckElementsInclusion<T>(IEnumerable<T> original, IEnumerable<T> latest, IEqualityComparer<T> comparer = null)
+        {
+            if (comparer == null) comparer = EqualityComparer<T>.Default;
+
+            var hashset = new HashSet<T>(original, comparer);
+
+            foreach (var item in latest)
+                if (hashset.Remove(item) == false)
+                    return false;
+
+            if (hashset.Count > 0) return false;
+
+            return true;
+        }
+
 #if UNITY_EDITOR
         public static class GUICoordinates
         {

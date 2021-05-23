@@ -26,27 +26,27 @@ namespace MB
     public class MSceneAsset : ISerializationCallbackReceiver
     {
         [SerializeField]
-        Object asset = default;
+        Object asset;
         public Object Asset => asset;
 
         [SerializeField]
-        bool registered = default;
+        bool registered;
         public bool Registered => registered;
 
         [SerializeField]
-        bool active = default;
+        bool active;
         public bool Active => active;
 
         [SerializeField]
-        string id = default;
+        string id;
         public string ID => id;
 
         [SerializeField]
-        int index = default;
+        int index;
         public int Index => index;
 
         [SerializeField]
-        string path = default;
+        string path;
         public string Path => path;
 
         public void OnBeforeSerialize()
@@ -55,7 +55,6 @@ namespace MB
             Refresh();
 #endif
         }
-
         public void OnAfterDeserialize() { }
 
 #if UNITY_EDITOR
@@ -244,5 +243,20 @@ namespace MB
             }
         }
 #endif
+
+        public class AssetComparer : IEqualityComparer<MSceneAsset>
+        {
+            public static AssetComparer Instance { get; } = new AssetComparer();
+
+            public bool Equals(MSceneAsset right, MSceneAsset left)
+            {
+                return right?.asset == left?.asset;
+            }
+
+            public int GetHashCode(MSceneAsset target)
+            {
+                return target.asset.GetHashCode();
+            }
+        }
     }
 }

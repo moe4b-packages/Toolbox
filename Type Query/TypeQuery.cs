@@ -23,7 +23,7 @@ namespace MB
     /// A utility for querying types all types in all assemblies
     /// </summary>
 	public static class TypeQuery
-	{
+    {
         public static List<Type> Collection { get; private set; }
 
         public static List<Type> FindAll(Predicate<Type> predicate)
@@ -59,5 +59,5 @@ namespace MB
                 foreach (var type in assembly.GetTypes())
                     Collection.Add(type);
         }
-	}
+    }
 }

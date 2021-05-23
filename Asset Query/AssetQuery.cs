@@ -30,7 +30,7 @@ namespace MB
 
 		static void Refresh()
 		{
-			Collection = AssetCollection.FindAll<T>();
+			Collection = AssetCollection.Query<T>();
 		}
 
 		public static List<T> ToList() => Collection.ToList();
@@ -62,53 +62,6 @@ namespace MB
 			AssetCollection.OnRefresh += Refresh;
 
 			Refresh();
-		}
-	}
-
-	public static class AssetCollection
-	{
-		public static List<Object> List { get; private set; }
-
-		static bool Ready => List != null;
-
-		public static event Action OnRefresh;
-		public static void Refresh()
-		{
-			var pathes = AssetDatabase.GetAllAssetPaths();
-
-			List = new List<Object>(pathes.Length);
-
-			for (int i = 0; i < pathes.Length; i++)
-			{
-				var asset = AssetDatabase.LoadAssetAtPath<Object>(pathes[i]);
-				List.Add(asset);
-			}
-
-			OnRefresh?.Invoke();
-		}
-
-		public static List<T> FindAll<T>()
-		{
-			var list = new List<T>();
-
-			for (int i = 0; i < List.Count; i++)
-				if (List[i] is T target)
-					list.Add(target);
-
-			return list;
-		}
-
-		static AssetCollection()
-		{
-			Refresh();
-		}
-
-		class FileImporter : AssetPostprocessor
-		{
-			public static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
-			{
-				if (Ready) Refresh();
-			}
 		}
 	}
 }

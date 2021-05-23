@@ -46,7 +46,21 @@ namespace MB
 #if UNITY_EDITOR
         void Refresh()
         {
-            list = new List<MSceneAsset>();
+            var targets = Extract();
+
+            if (MUtility.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
+            {
+                list = targets;
+                Dictionary = list.ToDictionary(x => x.ID);
+                EditorUtility.SetDirty(this);
+            }
+        }
+
+        public void PreProcessBuild() => Refresh();
+
+        static List<MSceneAsset> Extract()
+        {
+            var targets = new List<MSceneAsset>();
 
             foreach (var entry in EditorBuildSettings.scenes)
             {
@@ -56,15 +70,11 @@ namespace MB
 
                 var item = new MSceneAsset(asset);
 
-                list.Add(item);
+                targets.Add(item);
             }
 
-            Dictionary = list.ToDictionary(x => x.ID);
-
-            EditorUtility.SetDirty(this);
+            return targets;
         }
-
-        public void PreProcessBuild() => Refresh();
 #endif
     }
 }

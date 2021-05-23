@@ -23,7 +23,10 @@ namespace MB
             var text = "";
 
             text += "[ ";
-            text += collection.Select(x => ToString(x)).Aggregate((x, y) => $"{x}, {y}");
+
+            if (collection.Count() > 0)
+                text += collection.Select(x => ToString(x)).Aggregate((x, y) => $"{x}, {y}");
+
             text += " ]";
 
             return text;

@@ -55,18 +55,17 @@ namespace MB
 #if UNITY_EDITOR
         public virtual void Refresh()
         {
-            list = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
+            var targets = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
 
-            EditorUtility.SetDirty(this);
+            if(MUtility.CheckElementsInclusion(list, targets) == false)
+            {
+                list = targets;
+                EditorUtility.SetDirty(this);
+            }
         }
 
         public void PreProcessBuild() => Refresh();
 #endif
-
-        public ScriptableObjectInitializer()
-        {
-            list = new List<ScriptableObject>();
-        }
 
 #if UNITY_EDITOR
         class BuildProcessor : IPreprocessBuildWithReport
@@ -76,7 +75,6 @@ namespace MB
             public int callbackOrder => 0;
 
             public void OnPreprocessBuild(BuildReport report) => Instance.Refresh();
-            public void OnPreprocessBuild(BuildTarget target, string path) => Instance.Refresh();
         }
 #endif
     }
