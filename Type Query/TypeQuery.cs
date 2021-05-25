@@ -26,6 +26,20 @@ namespace MB
     {
         public static List<Type> Collection { get; private set; }
 
+        public static List<Type> FindAll<T>()
+        {
+            var target = typeof(T);
+
+            return FindAll(Predicate);
+
+            bool Predicate(Type type)
+            {
+                if (target.IsAssignableFrom(type) == false) return false;
+
+                return true;
+            }
+        }
+
         public static List<Type> FindAll(Predicate<Type> predicate)
         {
             var list = new List<Type>();

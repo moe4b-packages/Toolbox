@@ -27,10 +27,8 @@ namespace MB
         public abstract int Count { get; }
 
 #if UNITY_EDITOR
-        public abstract class BaseDrawer : PropertyDrawer
+        public abstract class BaseDrawer : PersistantPropertyDrawer
         {
-            protected SerializedProperty property;
-
             public bool IsExpanded
             {
                 get => property.isExpanded;
@@ -40,12 +38,30 @@ namespace MB
             protected SerializedProperty list;
             protected abstract SerializedProperty GetList();
 
-            protected GUIContent label;
-            protected virtual void SetLabel(GUIContent content)
+            protected override void Init()
             {
-                var text = content.text.Insert(0, " ");
+                base.Init();
 
-                label = new GUIContent(text, content.image, content.tooltip);
+                FormatLabel(ref label);
+
+                list = GetList();
+
+                defaults = new ReorderableList.Defaults();
+
+                gui = new ReorderableList(property.serializedObject, list, true, true, true, true);
+
+                gui.drawHeaderCallback = DrawHeader;
+                gui.elementHeightCallback = GetElementHeight;
+                gui.drawElementCallback = DrawElement;
+            }
+
+            static void FormatLabel(ref GUIContent label)
+            {
+                var text = label.text;
+
+                text = text.Insert(0, " ");
+
+                label = new GUIContent(text, label.image, label.tooltip);
             }
 
             protected ReorderableList gui;
@@ -58,39 +74,15 @@ namespace MB
 
             public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
 
-            protected virtual void Set(SerializedProperty reference)
-            {
-                if (property?.propertyPath == reference.propertyPath) return;
-
-                property = reference;
-
-                Init();
-            }
-
-            protected virtual void Init()
-            {
-                list = GetList();
-
-                defaults = new ReorderableList.Defaults();
-
-                gui = new ReorderableList(property.serializedObject, list, true, true, true, true);
-
-                gui.drawHeaderCallback = DrawHeader;
-                gui.elementHeightCallback = GetElementHeight;
-                gui.drawElementCallback = DrawElement;
-            }
-
             #region Height
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
-                Set(property);
-
                 var height = ListPadding * 2;
 
-                return CalculateHeight(height);
+                return AppendHeight(height);
             }
 
-            protected virtual float CalculateHeight(float height)
+            protected virtual float AppendHeight(float height)
             {
                 height += IsExpanded ? gui.GetHeight() : gui.headerHeight;
 
@@ -110,23 +102,13 @@ namespace MB
             #endregion
 
             #region Draw
-            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                Set(property);
-
-                SetLabel(label);
-
                 rect = EditorGUI.IndentedRect(rect);
+                EditorGUI.indentLevel = 0;
 
                 rect.y += ListPadding;
                 rect.height -= ListPadding + ListPadding;
-
-                Draw(rect);
-            }
-
-            protected virtual void Draw(Rect rect)
-            {
-                EditorGUI.indentLevel = 0;
 
                 if (IsExpanded)
                     DrawList(rect);

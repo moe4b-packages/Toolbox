@@ -29,41 +29,36 @@ namespace MB
     {
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(EnumFlagAttribute))]
-        public class Drawer : PropertyDrawer
+        public class Drawer : PersistantPropertyDrawer
         {
-            SerializedProperty property;
             Type type;
 
-            void Init(SerializedProperty reference)
+            protected override void Init()
             {
-                if (property?.propertyPath == reference?.propertyPath) return;
-
-                property = reference;
+                base.Init();
 
                 type = MUtility.SerializedPropertyType.Retrieve(property);
             }
 
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
-                Init(property);
-
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                Init(property);
-
-                var value = (Enum)Enum.ToObject(type, property.longValue);
+                var value = IntToEnum(property.intValue, type);
 
                 value = EditorGUI.EnumFlagsField(rect, label, value);
 
-                property.longValue = ChangeType<long>(value);
+                property.longValue = EnumToInt(value);
             }
 
             //Static Utility
 
-            public static T ChangeType<T>(object value) => (T)Convert.ChangeType(value, typeof(T));
+            public static Enum IntToEnum(int value, Type type) => (Enum)Enum.ToObject(type, value);
+
+            static int EnumToInt(Enum value) => (int)Convert.ChangeType(value, typeof(int));
         }
 #endif
     }

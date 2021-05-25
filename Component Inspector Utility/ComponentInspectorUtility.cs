@@ -24,41 +24,33 @@ namespace MB
 	/// will provide quick access buttons for reordering and duplicating the specified component
 	/// </summary>
 	[Serializable]
+#pragma warning disable CS0414
 	public class ComponentInspectorUtility
 	{
 		[SerializeField]
-#pragma warning disable CS0414
 		bool selected = default;
-#pragma warning restore CS0414
 
 #if UNITY_EDITOR
 		[CustomPropertyDrawer(typeof(ComponentInspectorUtility))]
-		public class Drawer : PropertyDrawer
+		public class Drawer : PersistantPropertyDrawer
 		{
-			SerializedProperty property;
 			SerializedProperty selected;
 
-			void Init(SerializedProperty reference)
-			{
-				if (property?.propertyPath == reference?.propertyPath) return;
+            protected override void Init()
+            {
+                base.Init();
 
-				property = reference;
 				selected = property.FindPropertyRelative(nameof(selected));
-
 				Selection.Register(selected);
 			}
 
-			public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override float CalculateHeight()
+            {
 				return EditorGUIUtility.singleLineHeight;
-			}
+            }
 
-			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override void Draw(Rect rect)
+            {
 				if (selected.boolValue) DrawHighlight(rect);
 
 				rect.x += 50;
@@ -71,7 +63,7 @@ namespace MB
 				DrawMoveDown(areas[2]);
 			}
 
-			void DrawHighlight(Rect rect)
+            void DrawHighlight(Rect rect)
 			{
 				var color = new Color(0, 153, 255, 0.5f);
 
@@ -171,4 +163,5 @@ namespace MB
 		}
 #endif
 	}
+#pragma warning restore CS0414
 }

@@ -29,20 +29,31 @@ namespace MB
 	public static class AutoComponentX
 	{
 #if UNITY_EDITOR
-		public class BaseDrawer : PropertyDrawer
+		public class BaseDrawer : PersistantPropertyDrawer
 		{
-			public string FormatLabelText(string label)
+            protected override void Init()
+            {
+                base.Init();
+
+				FormatLabel(ref label);
+			}
+
+            static void FormatLabel(ref GUIContent label)
 			{
+				var text = label.text;
+
 				var prefix = "auto";
 
-				if (label.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+				if (text.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 				{
-					label = label.Substring(prefix.Length);
-					label = label.TrimStart(' ', '_');
-					label = char.ToUpper(label[0]) + label.Substring(1);
+					text = text.Substring(prefix.Length);
+					text = text.TrimStart(' ', '_');
+					text = char.ToUpper(text[0]) + text.Substring(1);
 				}
 
-				return label;
+				text = text.Insert(0, " ");
+
+				label = new GUIContent(text, label.image, label.tooltip);
 			}
 		}
 #endif
@@ -87,49 +98,36 @@ namespace MB
 		[CustomPropertyDrawer(typeof(AutoComponent), true)]
 		public class Drawer : BaseDrawer
 		{
-			SerializedProperty property;
-
 			SerializedProperty component;
 			SerializedProperty scope;
 
 			Type type;
-
 			bool isInterface;
 
 			public const float ElementSpacing = 5f;
 
-			void Init(SerializedProperty reference)
-			{
-				if (property?.propertyPath == reference?.propertyPath) return;
-
-				property = reference;
+            protected override void Init()
+            {
+                base.Init();
 
 				type = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
-
 				isInterface = type.IsInterface;
 
 				component = property.FindPropertyRelative("component");
 				scope = property.FindPropertyRelative("scope");
 			}
 
-			public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override float CalculateHeight()
+            {
 				return EditorGUIUtility.singleLineHeight;
-			}
+            }
 
-			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-			{
-				Init(property);
+            protected override void Draw(Rect rect)
+            {
+				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 0, 75f, 25f);
 
-				label.text = FormatLabelText(label.text);
-
-				DivideRect(rect, out var area1, out var area2);
-
-				DrawField(area1, label);
-
-				DrawScope(area2);
+				DrawField(areas[0], label);
+				DrawScope(areas[1]);
 			}
 
 			void DrawField(Rect rect, GUIContent label)
@@ -160,23 +158,14 @@ namespace MB
 
 			void DrawScope(Rect rect)
 			{
+				rect.x += ElementSpacing;
+				rect.width -= ElementSpacing;
+
 				if (Application.isPlaying) GUI.enabled = false;
 
 				EditorGUI.PropertyField(rect, scope, GUIContent.none);
 
 				GUI.enabled = true;
-			}
-
-			public static void DivideRect(Rect rect, out Rect area1, out Rect area2)
-			{
-				area1 = new Rect(rect);
-				area1.width *= 0.75f;
-
-				area2 = new Rect(rect);
-				area2.width *= 0.25f;
-				area2.width -= ElementSpacing;
-				area2.x += area1.width;
-				area2.x += ElementSpacing;
 			}
 		}
 #endif
@@ -254,21 +243,13 @@ namespace MB
 		[CustomPropertyDrawer(typeof(AutoComponents), true)]
 		public class Drawer : BaseDrawer
 		{
-			SerializedProperty property;
-
 			SerializedProperty list;
 			SerializedProperty scope;
 
-			GUIContent label;
-			void SetLabel(GUIContent content)
-			{
-				var text = " " + FormatLabelText(content.text);
-
-				label = new GUIContent(text, content.image, content.tooltip);
-			}
-
 			Type type;
 			bool isInterface;
+
+			Component component;
 
 			ReorderableList gui;
 			ReorderableList.Defaults defaults;
@@ -289,17 +270,17 @@ namespace MB
 
 			public const float ElementSpacing = 5f;
 
-			void Init(SerializedProperty reference)
-			{
-				if (property?.propertyPath == reference?.propertyPath) return;
-
-				property = reference;
+            protected override void Init()
+            {
+                base.Init();
 
 				list = property.FindPropertyRelative("list");
 				scope = property.FindPropertyRelative("scope");
 
 				type = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
 				isInterface = type.IsInterface;
+
+				component = serializedObject.targetObject as Component;
 
 				if (Application.isPlaying && isInterface == false)
 					gui = new ReorderableList(list.serializedObject, list, false, true, true, true);
@@ -314,15 +295,13 @@ namespace MB
 				if (Application.isPlaying == false || isInterface) UpdateComponents();
 			}
 
-			void UpdateComponents()
+            void UpdateComponents()
 			{
-				gui.list = QueryComponents.In(property.serializedObject.targetObject as Component, type, (ComponentQueryScope)scope.intValue).ToList();
+				gui.list = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
 			}
 
-			public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override float CalculateHeight()
+            {
 				var height = 0f;
 
 				height += Expanded ? gui.GetHeight() : gui.headerHeight;
@@ -330,19 +309,15 @@ namespace MB
 				height += Padding;
 
 				return height;
-			}
+            }
 
-			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-			{
+            protected override void Draw(Rect rect)
+            {
 				rect = EditorGUI.IndentedRect(rect);
 				EditorGUI.indentLevel = 0;
 
 				rect.y += Padding / 2;
 				rect.height -= Padding;
-
-				Init(property);
-
-				SetLabel(label);
 
 				if (Expanded)
 					DrawList(ref rect);

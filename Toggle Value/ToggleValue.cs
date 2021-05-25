@@ -30,53 +30,41 @@ namespace MB
         public bool Enabled { get { return enabled; } }
 
 #if UNITY_EDITOR
-        public abstract class BaseInspector : PropertyDrawer
+        [CustomPropertyDrawer(typeof(ToggleValue), true)]
+        public class Drawer : PersistantPropertyDrawer
         {
-            protected SerializedProperty property;
             protected SerializedProperty enabled;
             protected SerializedProperty value;
 
-            protected virtual void Init(SerializedProperty property)
+            protected override void Init()
             {
-                this.property = property;
+                base.Init();
 
-                enabled = property.FindPropertyRelative("enabled");
-                value = property.FindPropertyRelative("value");
+                enabled = property.FindPropertyRelative(nameof(enabled));
+                value = property.FindPropertyRelative(nameof(value));
             }
 
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
-                Init(property);
-
                 if (enabled.boolValue && value.isExpanded)
                     return EditorGUI.GetPropertyHeight(value, label, true);
 
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                position = EditorGUI.IndentedRect(position);
-
-                var indentLevel = EditorGUI.indentLevel;
-
+                rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
-                {
-                    Init(property);
 
-                    Draw(ref position, property, label);
-                }
-                EditorGUI.indentLevel = indentLevel;
-            }
-
-            protected virtual void Draw(ref Rect rect, SerializedProperty property, GUIContent label)
-            {
                 DrawToggle(ref rect, property, label);
 
-                if (!enabled.boolValue) DrawLabel(ref rect, property, label);
-
-                if (enabled.boolValue) DrawValue(ref rect, property, label);
+                if (enabled.boolValue)
+                    DrawValue(ref rect, property, label);
+                else
+                    DrawLabel(ref rect, property, label);
             }
+
             protected virtual void DrawToggle(ref Rect rect, SerializedProperty property, GUIContent label)
             {
                 var size = EditorGUIUtility.singleLineHeight - 2f;
@@ -88,6 +76,7 @@ namespace MB
                 rect.x += size + offset;
                 rect.width -= size + offset;
             }
+
             protected virtual void DrawLabel(ref Rect rect, SerializedProperty property, GUIContent label)
             {
                 var width = GUI.skin.label.CalcSize(label).x + 10f;
@@ -97,6 +86,7 @@ namespace MB
                 rect.x += width;
                 rect.width -= width;
             }
+
             protected virtual void DrawValue(ref Rect rect, SerializedProperty property, GUIContent label)
             {
                 var value = property.FindPropertyRelative("value");
@@ -126,12 +116,6 @@ namespace MB
 
                 return true;
             }
-        }
-
-        [CustomPropertyDrawer(typeof(ToggleValue), true)]
-        public class DefaultInspector : BaseInspector
-        {
-
         }
 #endif
     }

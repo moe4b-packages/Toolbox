@@ -119,9 +119,8 @@ namespace MB
 		}
 
 		[CustomPropertyDrawer(typeof(MonoScriptSelection), true)]
-		public class Drawer : PropertyDrawer
+		public class Drawer : PersistantPropertyDrawer
 		{
-			SerializedProperty property;
 			SerializedProperty asset;
 
 			Type argument;
@@ -130,11 +129,10 @@ namespace MB
 
 			GUIContent[] popup;
 
-			void Init(SerializedProperty reference)
-			{
-				if (property?.propertyPath == reference?.propertyPath) return;
+            protected override void Init()
+            {
+                base.Init();
 
-				property = reference;
 				asset = property.FindPropertyRelative(nameof(asset));
 
 				argument = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
@@ -169,14 +167,14 @@ namespace MB
 				return true;
 			}
 
-			public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
 				return EditorGUIUtility.singleLineHeight;
 			}
 
-			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-			{
-				Init(property);
+            protected override void Draw(Rect rect)
+            {
+                base.Draw(rect);
 
 				var script = asset.objectReferenceValue as MonoScript;
 

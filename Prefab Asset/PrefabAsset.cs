@@ -26,32 +26,45 @@ namespace MB
     public class PrefabAsset
     {
         [SerializeField]
-        GameObject gameObject = default;
-        public GameObject GameObject => gameObject;
+        GameObject asset = default;
+        public GameObject Asset => asset;
 
-        public static implicit operator GameObject(PrefabAsset prefab) => prefab.gameObject;
+        public static implicit operator GameObject(PrefabAsset prefab) => prefab.asset;
+        public static implicit operator PrefabAsset(GameObject asset) => new PrefabAsset(asset);
 
         public PrefabAsset() : this(null) { }
-        public PrefabAsset(GameObject gameObject)
+        public PrefabAsset(GameObject asset)
         {
-            this.gameObject = gameObject;
+            this.asset = asset;
         }
 
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(PrefabAsset))]
-        public class Drawer : PropertyDrawer
+        public class Drawer : PersistantPropertyDrawer
         {
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            SerializedProperty asset;
+
+            protected override void Init()
+            {
+                base.Init();
+
+                asset = property.FindPropertyRelative(nameof(asset));
+            }
+
+            protected override float CalculateHeight()
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                var field = property.FindPropertyRelative(nameof(gameObject));
-
-                field.objectReferenceValue = EditorGUI.ObjectField(position, label, field.objectReferenceValue, typeof(GameObject), false);
+                DrawField(rect, label, asset);
             }
+        }
+
+        public static void DrawField(Rect rect, GUIContent label, SerializedProperty property)
+        {
+            property.objectReferenceValue = EditorGUI.ObjectField(rect, label, property.objectReferenceValue, typeof(GameObject), false);
         }
 #endif
     }

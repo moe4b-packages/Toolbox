@@ -61,10 +61,10 @@ namespace MB
             }
 
             #region Height
-            protected override float CalculateHeight(float height)
+            protected override float AppendHeight(float height)
             {
                 if (IsAligned)
-                    return base.CalculateHeight(height);
+                    return base.AppendHeight(height);
                 else
                     return height + gui.headerHeight;
             }

@@ -114,48 +114,32 @@ namespace MB
         }
 
         [CustomPropertyDrawer(typeof(OptionalValue), true)]
-        public class BaseDrawer : PropertyDrawer
+        public class BaseDrawer : PersistantPropertyDrawer
         {
-            protected SerializedProperty property;
             protected SerializedProperty enabled;
             protected SerializedProperty value;
 
-            protected virtual void Init(SerializedProperty property)
+            protected override void Init()
             {
-                this.property = property;
+                base.Init();
 
-                enabled = property.FindPropertyRelative("enabled");
-                value = property.FindPropertyRelative("value");
+                enabled = property.FindPropertyRelative(nameof(enabled));
+                value = property.FindPropertyRelative(nameof(value));
             }
 
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
-                Init(property);
-
-                if (enabled.boolValue && value.isExpanded)
+                if (value.isExpanded)
                     return EditorGUI.GetPropertyHeight(value, label, true);
 
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                Init(property);
-
-                position = EditorGUI.IndentedRect(position);
-
-                var indentLevel = EditorGUI.indentLevel;
-
+                rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
-                {
 
-                    Draw(ref position, property, label);
-                }
-                EditorGUI.indentLevel = indentLevel;
-            }
-
-            protected virtual void Draw(ref Rect rect, SerializedProperty property, GUIContent label)
-            {
                 DrawToggle(ref rect, property, label);
 
                 GUI.enabled = enabled.boolValue;

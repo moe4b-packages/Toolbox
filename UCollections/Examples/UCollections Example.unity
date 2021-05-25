@@ -282,12 +282,12 @@ MonoBehaviour:
   dictionary1:
     keys:
     - Hello
-    - Mark
     - Carl
+    - Mark
     values:
     - World
-    - Ruffalo
     - Sagan
+    - Ruffalo
   dictionary2:
     keys:
     - ID: 42

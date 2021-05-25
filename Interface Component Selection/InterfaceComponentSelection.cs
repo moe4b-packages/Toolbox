@@ -27,24 +27,20 @@ namespace MB
 	{
 #if UNITY_EDITOR
 		[CustomPropertyDrawer(typeof(InterfaceComponentSelection), true)]
-		public class Drawer : PropertyDrawer
+		public class Drawer : PersistantPropertyDrawer
 		{
-			SerializedProperty property;
-
 			SerializedProperty gameObject;
 			SerializedProperty component;
+
+			Type type;
 
 			Component[] options;
 			string[] popup;
 			int selection;
 
-			Type type;
-
-			void Init(SerializedProperty reference)
-			{
-				if (property?.propertyPath == reference?.propertyPath) return;
-
-				property = reference;
+            protected override void Init()
+            {
+                base.Init();
 
 				gameObject = property.FindPropertyRelative(nameof(gameObject));
 				component = property.FindPropertyRelative(nameof(component));
@@ -54,24 +50,20 @@ namespace MB
 				UpdateComponents();
 			}
 
-			public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override float CalculateHeight()
+            {
 				return EditorGUIUtility.singleLineHeight;
 			}
 
-			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-			{
-				Init(property);
-
+            protected override void Draw(Rect rect)
+            {
 				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 5, 70f, 30f);
 
 				DrawGameObject(areas[0], label);
 				DrawComponent(areas[1]);
 			}
 
-			void DrawGameObject(Rect rect, GUIContent label)
+            void DrawGameObject(Rect rect, GUIContent label)
 			{
 				rect.x -= 2.5f;
 

@@ -152,31 +152,25 @@ namespace MB
         }
 
         [CustomPropertyDrawer(typeof(MSceneAsset))]
-        public class Drawer : PropertyDrawer
+        public class Drawer : PersistantPropertyDrawer
         {
-            SerializedProperty property;
-
             SerializedProperty asset;
             SerializedProperty registered;
             SerializedProperty active;
 
             public static float LineHeight => EditorGUIUtility.singleLineHeight;
 
-            void Init(SerializedProperty reference)
+            protected override void Init()
             {
-                if (property?.propertyPath == reference?.propertyPath) return;
-
-                property = reference;
+                base.Init();
 
                 asset = property.FindPropertyRelative(nameof(asset));
                 registered = property.FindPropertyRelative(nameof(registered));
                 active = property.FindPropertyRelative(nameof(active));
             }
 
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
-                Init(property);
-
                 var height = LineHeight;
 
                 if (asset.objectReferenceValue != null)
@@ -190,10 +184,8 @@ namespace MB
                 return height;
             }
 
-            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                Init(property);
-
                 DrawField(ref rect, label);
 
                 if (asset.objectReferenceValue != null)
@@ -210,14 +202,14 @@ namespace MB
 
             void DrawField(ref Rect rect, GUIContent label)
             {
-                GetLine(ref rect, out var area);
+                var area = MUtility.GUICoordinates.SliceLine(ref rect);
 
                 asset.objectReferenceValue = EditorGUI.ObjectField(area, label, asset.objectReferenceValue, typeof(SceneAsset), false);
             }
 
             void DrawInstruction(ref Rect rect, string text, MessageType type, string instructions, Action callback)
             {
-                GetLine(ref rect, out var area);
+                var area = MUtility.GUICoordinates.SliceLine(ref rect);
 
                 area.width -= 90;
 
@@ -227,19 +219,6 @@ namespace MB
                 area.width = 80;
 
                 if (GUI.Button(area, instructions)) callback?.Invoke();
-            }
-
-            static void GetLine(ref Rect rect, out Rect area)
-            {
-                area = new Rect(rect.position, new Vector2(rect.width, LineHeight));
-
-                IterateLine(ref rect);
-            }
-
-            static void IterateLine(ref Rect rect)
-            {
-                rect.y += LineHeight;
-                rect.height -= LineHeight;
             }
         }
 #endif

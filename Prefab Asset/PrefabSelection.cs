@@ -27,16 +27,16 @@ namespace MB
     {
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(PrefabSelectionAttribute))]
-        public class Drawer : PropertyDrawer
+        public class Drawer : PersistantPropertyDrawer
         {
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            protected override float CalculateHeight()
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
+            protected override void Draw(Rect rect)
             {
-                property.objectReferenceValue = EditorGUI.ObjectField(position, label, property.objectReferenceValue, typeof(GameObject), false);
+                PrefabAsset.DrawField(rect, label, property);
             }
         }
 #endif

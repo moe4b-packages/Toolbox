@@ -229,7 +229,7 @@ namespace MB
 
         public static IEnumerable<Type> GetHierarchyTree(Type type)
         {
-            while(true)
+            while (true)
             {
                 yield return type;
 
@@ -408,4 +408,58 @@ namespace MB
         public static implicit operator GameObject(UObjectSurrogate context) => context.GameObject;
         public static implicit operator Transform(UObjectSurrogate context) => context.Transform;
     }
+
+#if UNITY_EDITOR
+    public class PersistantPropertyDrawer : PropertyDrawer
+    {
+        protected SerializedProperty property;
+
+        public SerializedObject serializedObject => property.serializedObject;
+
+        protected GUIContent label;
+
+        void Prepare(SerializedProperty reference, GUIContent label)
+        {
+            if (property?.propertyPath == reference?.propertyPath) return;
+
+            property = reference;
+            this.label = label;
+
+            Init();
+        }
+
+        protected virtual void Init()
+        {
+
+        }
+
+        #region Height
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            Prepare(property, label);
+
+            return CalculateHeight();
+        }
+
+        protected virtual float CalculateHeight()
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
+        }
+        #endregion
+
+        #region GUI
+        public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+        {
+            Prepare(property, label);
+
+            Draw(rect);
+        }
+
+        protected virtual void Draw(Rect rect)
+        {
+
+        }
+        #endregion
+    }
+#endif
 }
