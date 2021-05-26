@@ -24,15 +24,14 @@ namespace MB
 {
     /// <summary>
     /// More competant version of PlayerPrefs, uses JsonDotNet, can serialize anything,
-    /// requires .Net 4.X compatibility instead of .Net 2.0 Standard because of a bug with JsonDotNet I think
+    /// requires .Net 4.X compatibility on Windows (and possibly other platforms too)
+    /// instead of .Net 2.0 Standard because of a bug? with JsonDotNet I think
     /// </summary>
     public static class AutoPrefs
     {
         public const string ID = nameof(AutoPrefs);
 
-        public static JsonSerializer Serializer { get; private set; }
-
-        public static JObject Context { get; private set; }
+        public static JObjectComposer Composer { get; private set; }
 
         public static bool IsDirty { get; private set; }
 
@@ -49,10 +48,14 @@ namespace MB
             {
                 public string Path { get; private set; }
 
+                public bool Obfuscate { get; private set; }
+
                 public bool Exists => File.Exists(Path);
 
                 public void Save(string text)
                 {
+                    if (Obfuscate) text = Obfuscation.Encrypt(text);
+
                     File.WriteAllText(Path, text);
                 }
 
@@ -69,12 +72,15 @@ namespace MB
 
                     var text = File.ReadAllText(Path);
 
+                    if (Obfuscate) text = Obfuscation.Decrypt(text);
+
                     return text;
                 }
 
-                public Element(string directory)
+                public Element(string directory, bool obfuscate)
                 {
                     Path = System.IO.Path.Combine(directory, Name);
+                    this.Obfuscate = obfuscate;
                 }
             }
 
@@ -98,38 +104,8 @@ namespace MB
 
             static IO()
             {
-                Editor = new Element(Application.dataPath);
-                Runtime = new Element(Application.persistentDataPath);
-            }
-        }
-
-        public static class Cache
-        {
-            public static Dictionary<string, object> Dictionary { get; private set; }
-
-            public static bool Contains(string key) => Dictionary.ContainsKey(key);
-
-            public static void Set<T>(string key, T value) => Dictionary[key] = value;
-
-            public static bool TryGetValue<T>(string key, out T value)
-            {
-                if (Dictionary.TryGetValue(key, out var instance) == false)
-                {
-                    value = default;
-                    return false;
-                }
-
-                value = (T)instance;
-                return true;
-            }
-
-            public static bool Remove(string key) => Dictionary.Remove(key);
-
-            public static void Clear() => Dictionary.Clear();
-
-            static Cache()
-            {
-                Dictionary = new Dictionary<string, object>();
+                Editor = new Element(Application.dataPath, false);
+                Runtime = new Element(Application.persistentDataPath, true);
             }
         }
 
@@ -149,7 +125,22 @@ namespace MB
             }
         }
 
-        static bool ConfigurationFlags = false;
+        public static class Obfuscation
+        {
+            public static void SetMethods(EncryptDelegate encrypt, DecryptDelegate decrypt)
+            {
+                Encrypt = encrypt;
+                Decrypt = decrypt;
+            }
+
+            public static EncryptDelegate Encrypt { get; set; } = DefaultEncryptMethod;
+            public delegate string EncryptDelegate(string text);
+            public static string DefaultEncryptMethod(string text) => text;
+
+            public static DecryptDelegate Decrypt { get; set; } = DefaultDecryptMethod;
+            public delegate string DecryptDelegate(string text);
+            public static string DefaultDecryptMethod(string text) => text;
+        }
 
         public static void Configure(params JsonConverter[] converters)
         {
@@ -163,122 +154,16 @@ namespace MB
         }
         public static void Configure(JsonSerializerSettings settings)
         {
-            if (ConfigurationFlags)
+            if (Composer.IsConfigured)
             {
                 Debug.LogWarning($"{ID} is Already Configured");
                 return;
             }
 
-            ConfigurationFlags = true;
-
-            Serializer = JsonSerializer.Create(settings);
+            Composer.Configure(settings);
+            Composer.OnChange += InvokeChange;
 
             Application.quitting += QuitCallback;
-        }
-
-        static void QuitCallback()
-        {
-            if (AutoSave.OnExit && IsDirty)
-                Save();
-        }
-
-        public static void Reset()
-        {
-            Context = new JObject();
-
-            Cache.Clear();
-
-            Save();
-        }
-
-        public static bool Contains(string key)
-        {
-            if (Cache.Contains(key)) return true;
-
-            return Context[key] != null;
-        }
-
-        public static void Set<T>(string key, T value)
-        {
-            try
-            {
-                var token = JToken.FromObject(value, Serializer);
-
-                Context[key] = token;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Cannot Serialize '{value}' of Type {typeof(T)} to JSON" +
-                    $"{Environment.NewLine}" +
-                    $"Exception: {ex}");
-            }
-
-            Cache.Set(key, value);
-
-            IsDirty = true;
-
-            if (AutoSave.OnChange) Save();
-        }
-
-        public static void Read<T>(string key, out T value) => value = Read<T>(key);
-        public static void Read<T>(string key, T fallback, out T value) => value = Read<T>(key, fallback);
-
-        public static T Read<T>(string key) => Read<T>(key, default);
-        public static T Read<T>(string key, T fallback)
-        {
-            try
-            {
-                if (Cache.TryGetValue<T>(key, out var value))
-                    return value;
-            }
-            catch (Exception ex)
-            {
-                throw FormatException(ex);
-            }
-
-            if (Contains(key) == false) return fallback;
-
-            try
-            {
-                var token = Context[key];
-
-                var value = token.ToObject<T>(Serializer);
-
-                Cache.Set(key, value);
-
-                return value;
-            }
-            catch (Exception ex)
-            {
-                throw FormatException(ex);
-            }
-
-            Exception FormatException(Exception inner)
-            {
-                return new Exception($"Cannot Read PlayerPrefX Key '{key}' as {typeof(T)}" +
-                    $"{Environment.NewLine}" +
-                    $"Exception: {inner}", inner);
-            }
-        }
-
-        public static bool Remove(string key)
-        {
-            if (Contains(key) == false) return false;
-
-            Context.Remove(key);
-            Cache.Remove(key);
-
-            if (AutoSave.OnChange) Save();
-
-            return true;
-        }
-
-        public static void Save()
-        {
-            var json = Context.ToString(Formatting.Indented);
-            IO.Save(json);
-
-            IsDirty = false;
         }
 
         public static void Load()
@@ -289,22 +174,59 @@ namespace MB
         }
         public static void Load(string json)
         {
-            if (json == null || json == string.Empty)
-            {
-                Context = new JObject();
-                return;
-            }
+            Composer.Load(json);
+        }
 
-            try
-            {
-                Context = JObject.Parse(json);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Cannot Parse {ID} from '{IO.Selection.Path}'" +
-                    $"{Environment.NewLine}" +
-                    $"Exception: {ex}", ex);
-            }
+        public static void Reset()
+        {
+            Composer.Clear();
+
+            Save();
+        }
+
+        public static void Save()
+        {
+            var json = Composer.Read();
+            IO.Save(json);
+
+            IsDirty = false;
+        }
+
+        static void InvokeChange()
+        {
+            if (AutoSave.OnChange)
+                Save();
+            else
+                IsDirty = true;
+        }
+
+        #region Controls
+        public static bool Contains(string key) => Composer.Contains(key);
+
+        public static void Set<T>(string key, T value) => Composer.Set(key, value);
+
+        public static bool TryRead<T>(string key, out T value, T fallback = default)
+        {
+            return Composer.TryRead(key, out value, fallback: fallback);
+        }
+
+        public static T Read<T>(string key, T fallback = default)
+        {
+            return Composer.Read(key, fallback: fallback);
+        }
+
+        public static bool Remove(string key) => Composer.Remove(key);
+        #endregion
+
+        static void QuitCallback()
+        {
+            if (AutoSave.OnExit && IsDirty)
+                Save();
+        }
+
+        static AutoPrefs()
+        {
+            Composer = new JObjectComposer();
         }
     }
 }

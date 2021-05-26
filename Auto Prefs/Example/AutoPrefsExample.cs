@@ -54,22 +54,22 @@ namespace MB
                 AutoPrefs.Set("sample6", Color.yellow);
             }
 
-            AutoPrefs.Read("sample1", out int sample1);
+            AutoPrefs.TryRead("sample1", out int sample1);
             Debug.Log(sample1);
 
-            AutoPrefs.Read("sample2", out string sample2);
+            AutoPrefs.TryRead("sample2", out string sample2);
             Debug.Log(sample2);
 
-            AutoPrefs.Read("sample3", out DateTime sample3);
+            AutoPrefs.TryRead("sample3", out DateTime sample3);
             Debug.Log(sample3);
 
-            AutoPrefs.Read("sample4", out IPAddress sample4);
+            AutoPrefs.TryRead("sample4", out IPAddress sample4);
             Debug.Log(sample4);
 
-            AutoPrefs.Read("sample5", out SampleData sample5);
+            AutoPrefs.TryRead("sample5", out SampleData sample5);
             Debug.Log(sample5);
 
-            AutoPrefs.Read("sample6", out Color sample6);
+            AutoPrefs.TryRead("sample6", out Color sample6);
             Debug.Log(sample6);
 
             AutoPrefs.Save();

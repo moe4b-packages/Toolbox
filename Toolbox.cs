@@ -17,7 +17,7 @@ using UnityEditorInternal;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-[assembly: AssemblySymbolDefine("MB_TOOLBOX")]
+[assembly: AssemblySymbolDefine("MOE_TOOLBOX")]
 
 namespace MB
 {
