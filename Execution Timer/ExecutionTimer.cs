@@ -62,12 +62,14 @@ namespace MB
 
 		static ExecutionTimer instance;
 
-		public static void Measure(Action callback) => Measure(callback, callback.Method.Name);
-		public static void Measure(Action callback, string title)
+		public static void Measure(Action callback, string title = null, int iterations = 1)
 		{
+			if (title == null) title = callback.Method.Name;
+
 			using (new ExecutionTimer(title))
 			{
-				callback();
+				for (int i = 0; i < iterations; i++)
+					callback();
 			}
 		}
 

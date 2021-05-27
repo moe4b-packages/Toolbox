@@ -86,16 +86,18 @@ namespace MB
 
             public static void Delete()
             {
-                if (Application.isEditor)
-                    Editor.Delete();
+#if UNITY_EDITOR
+                Editor.Delete();
+#endif
 
                 Runtime.Delete();
             }
 
             public static void Save(string text)
             {
-                if (Application.isEditor)
-                    Editor.Save(text);
+#if UNITY_EDITOR
+                Editor.Save(text);
+#endif
 
                 Runtime.Save(text);
             }

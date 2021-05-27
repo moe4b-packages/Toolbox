@@ -30,6 +30,16 @@ namespace MB
 
         public JsonSerializer Serializer { get; protected set; }
 
+        public static class Path
+        {
+            public const char Seperator = '/';
+
+            public static string[] PartOut(string text)
+            {
+                return text.Split(Seperator);
+            }
+        }
+
         #region Configure
         public bool IsConfigured { get; protected set; }
 
@@ -71,34 +81,34 @@ namespace MB
         #endregion
 
         #region Utility
-        void Retrieve(string[] path, out JToken token, out string id, bool create = false)
+        public bool Retrieve(string path, out JToken token, out string id, bool create = false)
         {
-            id = path.Last();
+            var parts = Path.PartOut(path);
 
-            token = Retrieve(path, cut: 1, create: create);
-        }
+            id = parts.Last();
 
-        JToken Retrieve(string[] path, int cut = 0, bool create = false)
-        {
-            JToken token = Context;
+            JToken indexer = token = Context;
 
-            for (int i = 0; i < path.Length - cut; i++)
+            for (int i = 0; i < parts.Length - 1; i++)
             {
-                var target = token[path[i]];
+                token = indexer[parts[i]];
 
-                if (target == null)
+                if (token == null)
                 {
                     if (create == false)
-                        return null;
+                    {
+                        token = null;
+                        return false;
+                    }
 
-                    target = new JObject();
-                    (token as JObject).Add(path[i], target);
+                    token = new JObject();
+                    (indexer as JObject).Add(parts[i], token);
                 }
 
-                token = target;
+                indexer = token;
             }
 
-            return token;
+            return true;
         }
 
         void ValidateState()
@@ -123,23 +133,14 @@ namespace MB
         }
 
         #region Read
-        public virtual T Read<T>(string id, T fallback = default) => Read(Context, id, fallback: fallback);
-
-        public virtual T Read<T>(string[] path, string id, T fallback = default)
-        {
-            var token = Retrieve(path);
-
-            return Read(token, id, fallback: fallback);
-        }
-
-        public virtual T Read<T>(string[] path, T fallback = default)
+        public virtual T Read<T>(string path, T fallback = default)
         {
             Retrieve(path, out var token, out var id);
 
             return Read(token, id, fallback: fallback);
         }
 
-        public virtual T Read<T>(JToken token, string id, T fallback = default)
+        protected virtual T Read<T>(JToken token, string id, T fallback = default)
         {
             TryRead(token, id, out T value, fallback: fallback);
 
@@ -148,26 +149,14 @@ namespace MB
         #endregion
 
         #region Try Read
-        public virtual bool TryRead<T>(string id, out T value, T fallback = default)
-        {
-            return TryRead(Context, id, out value, fallback: fallback);
-        }
-
-        public virtual bool TryRead<T>(string[] path, string id, out T value, T fallback = default)
-        {
-            var token = Retrieve(path);
-
-            return TryRead(token, id, out value, fallback: fallback);
-        }
-
-        public virtual bool TryRead<T>(string[] path, out T value, T fallback = default)
+        public virtual bool TryRead<T>(string path, out T value, T fallback = default)
         {
             Retrieve(path, out var token, out var id);
 
             return TryRead(token, id, out value, fallback: fallback);
         }
 
-        public virtual bool TryRead<T>(JToken token, string id, out T value, T fallback = default)
+        protected virtual bool TryRead<T>(JToken token, string id, out T value, T fallback = default)
         {
             ValidateState();
 
@@ -195,23 +184,14 @@ namespace MB
         #endregion
 
         #region Contains
-        public virtual bool Contains(string id) => Contains(Context, id);
-
-        public virtual bool Contains(string[] path, string id)
-        {
-            var token = Retrieve(path);
-
-            return Contains(token, id);
-        }
-
-        public virtual bool Contains(string[] path)
+        public virtual bool Contains(string path)
         {
             Retrieve(path, out var token, out var id);
 
             return Contains(token, id);
         }
 
-        public virtual bool Contains(JToken token, string id)
+        protected virtual bool Contains(JToken token, string id)
         {
             ValidateState();
 
@@ -225,23 +205,14 @@ namespace MB
         #endregion
 
         #region Set
-        public virtual void Set<T>(string id, T value) => Set(Context, id, value);
-
-        public virtual void Set<T>(string[] path, string id, T value)
-        {
-            var token = Retrieve(path, create: true);
-
-            Set(token, id, value);
-        }
-
-        public virtual void Set<T>(string[] path, T value)
+        public virtual void Set<T>(string path, T value)
         {
             Retrieve(path, out var token, out var id, create: true);
 
             Set(token, id, value);
         }
 
-        public virtual void Set<T>(JToken token, string id, T value)
+        protected virtual void Set<T>(JToken token, string id, T value)
         {
             ValidateState();
 
@@ -252,23 +223,14 @@ namespace MB
         #endregion
 
         #region Remove
-        public virtual bool Remove(string id) => Remove(Context, id);
-
-        public virtual bool Remove(string[] path, string id)
-        {
-            var token = Retrieve(path);
-
-            return Remove(token, id);
-        }
-
-        public virtual bool Remove(string[] path)
+        public virtual bool Remove(string path)
         {
             Retrieve(path, out var token, out var id);
 
             return Remove(token, id);
         }
 
-        public virtual bool Remove(JToken token, string id)
+        protected virtual bool Remove(JToken token, string id)
         {
             ValidateState();
 
