@@ -132,45 +132,22 @@ namespace MB
             Context = new JObject();
         }
 
+        #region Controls
+
         #region Read
         public virtual T Read<T>(string path, T fallback = default)
         {
             Retrieve(path, out var token, out var id);
 
-            return Read(token, id, fallback: fallback);
-        }
-
-        protected virtual T Read<T>(JToken token, string id, T fallback = default)
-        {
-            TryRead(token, id, out T value, fallback: fallback);
-
-            return value;
-        }
-        #endregion
-
-        #region Try Read
-        public virtual bool TryRead<T>(string path, out T value, T fallback = default)
-        {
-            Retrieve(path, out var token, out var id);
-
-            return TryRead(token, id, out value, fallback: fallback);
-        }
-
-        protected virtual bool TryRead<T>(JToken token, string id, out T value, T fallback = default)
-        {
             ValidateState();
 
             var target = token?[id];
 
-            if (target == null)
-            {
-                value = fallback;
-                return false;
-            }
+            if (target == null) return fallback;
 
             try
             {
-                value = target.ToObject<T>(Serializer);
+                return target.ToObject<T>(Serializer);
             }
             catch (Exception ex)
             {
@@ -178,8 +155,28 @@ namespace MB
                     $"{Environment.NewLine}" +
                     $"Exception: {ex}", ex);
             }
+        }
 
-            return true;
+        public virtual object Read(Type data, string path, object fallback = default)
+        {
+            Retrieve(path, out var token, out var id);
+
+            ValidateState();
+
+            var target = token?[id];
+
+            if (target == null) return fallback;
+
+            try
+            {
+                return target.ToObject(data, Serializer);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Cannot Read {id} of {token.Path} as {data.Name}" +
+                    $"{Environment.NewLine}" +
+                    $"Exception: {ex}", ex);
+            }
         }
         #endregion
 
@@ -195,7 +192,7 @@ namespace MB
         {
             ValidateState();
 
-            var target = token[id];
+            var target = token?[id];
 
             if (target == null)
                 return false;
@@ -205,14 +202,14 @@ namespace MB
         #endregion
 
         #region Set
-        public virtual void Set<T>(string path, T value)
+        public virtual void Set(string path, object value)
         {
             Retrieve(path, out var token, out var id, create: true);
 
             Set(token, id, value);
         }
 
-        protected virtual void Set<T>(JToken token, string id, T value)
+        protected virtual void Set(JToken token, string id, object value)
         {
             ValidateState();
 
@@ -242,6 +239,8 @@ namespace MB
             InvokeChange();
             return true;
         }
+        #endregion
+
         #endregion
 
         public event Action OnChange;

@@ -102,19 +102,25 @@ namespace MB
             {
                 var current = text[i];
 
-                if (char.IsUpper(current))
+                if (i + 1 < text.Length && i > 0)
                 {
-                    if (i + 1 < text.Length && i > 0)
-                    {
-                        var next = text[i + 1];
-                        var previous = text[i - 1];
+                    var next = text[i + 1];
+                    var previous = text[i - 1];
 
-                        if (char.IsLower(previous))
-                            builder.Append(" ");
-                    }
+                    if (char.IsUpper(current) && char.IsLower(previous))
+                        builder.Append(" ");
+
+                    if (char.IsNumber(current) && !char.IsNumber(previous))
+                        builder.Append(" ");
+
+                    if (!char.IsNumber(current) && char.IsNumber(previous))
+                        builder.Append(" ");
                 }
 
-                builder.Append(text[i]);
+                if (text[i] == '_')
+                    builder.Append(" ");
+                else
+                    builder.Append(text[i]);
             }
 
             return builder.ToString();
@@ -383,6 +389,18 @@ namespace MB
         }
 
         public static string GetHierarchyPath(this Transform transform) => MUtility.GetHierarchyPath(transform);
+
+        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method)
+            where TDelegate : Delegate
+        {
+            return method.CreateDelegate(typeof(TDelegate)) as TDelegate;
+        }
+
+        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method, object target)
+            where TDelegate : Delegate
+        {
+            return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
+        }
     }
 
     /// <summary>

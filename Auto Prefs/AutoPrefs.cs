@@ -207,14 +207,13 @@ namespace MB
 
         public static void Set<T>(string key, T value) => Composer.Set(key, value);
 
-        public static bool TryRead<T>(string key, out T value, T fallback = default)
-        {
-            return Composer.TryRead(key, out value, fallback: fallback);
-        }
-
         public static T Read<T>(string key, T fallback = default)
         {
             return Composer.Read(key, fallback: fallback);
+        }
+        public static object Read(Type data, string key, object fallback = default)
+        {
+            return Composer.Read(data, key, fallback);
         }
 
         public static bool Remove(string key) => Composer.Remove(key);
