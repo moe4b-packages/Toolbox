@@ -210,6 +210,28 @@ namespace MB
 
             return true;
         }
+
+        /// <summary>
+        /// Checks that elements in the original collect exist in the latest collection
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="original"></param>
+        /// <param name="latest"></param>
+        /// <returns></returns>
+        public static bool CheckElementsInclusion<T>(IEnumerable<T> original, IEnumerable<T> latest, IEqualityComparer<T> comparer = null)
+        {
+            if (comparer == null) comparer = EqualityComparer<T>.Default;
+
+            var hashset = new HashSet<T>(original, comparer);
+
+            foreach (var item in latest)
+                if (hashset.Remove(item) == false)
+                    return false;
+
+            if (hashset.Count > 0) return false;
+
+            return true;
+        }
         #endregion
 
         public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
@@ -233,7 +255,8 @@ namespace MB
             return builder.ToString();
         }
 
-        public static IEnumerable<Type> GetHierarchyTree(Type type)
+        #region Types
+        public static IEnumerable<Type> IterateHierarchy(Type type)
         {
             while (true)
             {
@@ -245,28 +268,21 @@ namespace MB
             }
         }
 
-        /// <summary>
-        /// Checks that elements in the original collect exist in the latest collection
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="original"></param>
-        /// <param name="latest"></param>
-        /// <returns></returns>
-        public static bool CheckElementsInclusion<T>(IEnumerable<T> original, IEnumerable<T> latest, IEqualityComparer<T> comparer = null)
+        public static IEnumerable<T> IterateNest<T>(T target, Func<T, T> extract)
+            where T : class
         {
-            if (comparer == null) comparer = EqualityComparer<T>.Default;
+            while (true)
+            {
+                yield return target;
 
-            var hashset = new HashSet<T>(original, comparer);
+                target = extract(target);
 
-            foreach (var item in latest)
-                if (hashset.Remove(item) == false)
-                    return false;
-
-            if (hashset.Count > 0) return false;
-
-            return true;
+                if (target == null) break;
+            }
         }
+        #endregion
 
+        #region Editor
 #if UNITY_EDITOR
         public static class GUICoordinates
         {
@@ -375,6 +391,7 @@ namespace MB
             }
         }
 #endif
+        #endregion
     }
 
     public static class MExtensions
@@ -395,14 +412,17 @@ namespace MB
         {
             return method.CreateDelegate(typeof(TDelegate)) as TDelegate;
         }
-
         public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method, object target)
             where TDelegate : Delegate
         {
             return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
         }
+
+        public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
+        public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
     }
 
+    #region Types
     /// <summary>
     /// Surrogate for Unity Objects (gameObject, transform, Component),
     /// just pass one of these whenever a function requires this object
@@ -480,4 +500,5 @@ namespace MB
         #endregion
     }
 #endif
+    #endregion
 }

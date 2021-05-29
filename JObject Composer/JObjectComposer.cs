@@ -38,6 +38,14 @@ namespace MB
             {
                 return text.Split(Seperator);
             }
+
+            public static string Compose(string x, string y)
+            {
+                if (string.IsNullOrEmpty(x)) return y;
+
+                return $"{x}{Seperator}{y}";
+            }
+            public static string Compose(params string[] list) => list.Join(Seperator);
         }
 
         #region Configure
