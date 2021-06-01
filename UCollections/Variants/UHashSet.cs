@@ -33,7 +33,7 @@ namespace MB
             static GUIContent ConflictGUIContent = GetIconContent("console.warnicon.sml", "Conflicting Key, Data Might be Lost");
             static GUIContent NullGUIContent = GetIconContent("console.erroricon.sml", "Null Key, Will be Ignored");
 
-            protected override SerializedProperty GetList() => property.FindPropertyRelative("list");
+            protected override SerializedProperty GetList() => Property.FindPropertyRelative("list");
 
             protected override void Init()
             {
@@ -44,7 +44,7 @@ namespace MB
                 UpdateState();
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
                 EditorGUIUtility.labelWidth = 120f;
 

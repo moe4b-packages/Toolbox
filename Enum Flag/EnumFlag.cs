@@ -37,21 +37,21 @@ namespace MB
             {
                 base.Init();
 
-                type = MUtility.SerializedPropertyType.Retrieve(property);
+                type = MUtility.SerializedPropertyType.Retrieve(Property);
             }
 
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
-                var value = IntToEnum(property.intValue, type);
+                var value = IntToEnum(Property.intValue, type);
 
-                value = EditorGUI.EnumFlagsField(rect, label, value);
+                value = EditorGUI.EnumFlagsField(rect, Label, value);
 
-                property.longValue = EnumToInt(value);
+                Property.longValue = EnumToInt(value);
             }
 
             //Static Utility

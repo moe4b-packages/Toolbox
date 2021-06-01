@@ -29,14 +29,14 @@ namespace MB
         [CustomPropertyDrawer(typeof(PrefabSelectionAttribute))]
         public class Drawer : PersistantPropertyDrawer
         {
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
-                PrefabAsset.DrawField(rect, label, property);
+                PrefabAsset.DrawField(rect, Label, Property);
             }
         }
 #endif

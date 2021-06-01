@@ -42,24 +42,24 @@ namespace MB
             {
                 base.Init();
 
-				gameObject = property.FindPropertyRelative(nameof(gameObject));
-				component = property.FindPropertyRelative(nameof(component));
+				gameObject = Property.FindPropertyRelative(nameof(gameObject));
+				component = Property.FindPropertyRelative(nameof(component));
 
-				type = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
+				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 
 				UpdateComponents();
 			}
 
-            protected override float CalculateHeight()
+			public override float CalculateHeight()
             {
 				return EditorGUIUtility.singleLineHeight;
 			}
 
-            protected override void Draw(Rect rect)
+			public override void Draw(Rect rect)
             {
 				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 5, 70f, 30f);
 
-				DrawGameObject(areas[0], label);
+				DrawGameObject(areas[0], Label);
 				DrawComponent(areas[1]);
 			}
 

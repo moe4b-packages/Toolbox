@@ -31,8 +31,8 @@ namespace MB
         {
             public bool IsExpanded
             {
-                get => property.isExpanded;
-                set => property.isExpanded = value;
+                get => Property.isExpanded;
+                set => Property.isExpanded = value;
             }
 
             protected SerializedProperty list;
@@ -42,13 +42,13 @@ namespace MB
             {
                 base.Init();
 
-                FormatLabel(ref label);
+                FormatLabel(ref Label);
 
                 list = GetList();
 
                 defaults = new ReorderableList.Defaults();
 
-                gui = new ReorderableList(property.serializedObject, list, true, true, true, true);
+                gui = new ReorderableList(Property.serializedObject, list, true, true, true, true);
 
                 gui.drawHeaderCallback = DrawHeader;
                 gui.elementHeightCallback = GetElementHeight;
@@ -75,7 +75,7 @@ namespace MB
             public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
 
             #region Height
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 var height = ListPadding * 2;
 
@@ -102,7 +102,7 @@ namespace MB
             #endregion
 
             #region Draw
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
                 rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
@@ -116,7 +116,7 @@ namespace MB
                     DrawHeader(rect, true);
             }
 
-            protected virtual void DrawList(Rect rect)
+            public virtual void DrawList(Rect rect)
             {
                 gui.DoList(rect);
             }
@@ -138,7 +138,7 @@ namespace MB
 
                 rect.x += 10f;
 
-                IsExpanded = EditorGUI.Foldout(rect, IsExpanded, label, true);
+                IsExpanded = EditorGUI.Foldout(rect, IsExpanded, Label, true);
 
                 EditorGUI.indentLevel = indent;
             }

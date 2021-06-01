@@ -40,29 +40,29 @@ namespace MB
             {
                 base.Init();
 
-                enabled = property.FindPropertyRelative(nameof(enabled));
-                value = property.FindPropertyRelative(nameof(value));
+                enabled = Property.FindPropertyRelative(nameof(enabled));
+                value = Property.FindPropertyRelative(nameof(value));
             }
 
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 if (enabled.boolValue && value.isExpanded)
-                    return EditorGUI.GetPropertyHeight(value, label, true);
+                    return EditorGUI.GetPropertyHeight(value, Label, true);
 
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
                 rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
 
-                DrawToggle(ref rect, property, label);
+                DrawToggle(ref rect, Property, Label);
 
                 if (enabled.boolValue)
-                    DrawValue(ref rect, property, label);
+                    DrawValue(ref rect, Property, Label);
                 else
-                    DrawLabel(ref rect, property, label);
+                    DrawLabel(ref rect, Property, Label);
             }
 
             protected virtual void DrawToggle(ref Rect rect, SerializedProperty property, GUIContent label)

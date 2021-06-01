@@ -164,12 +164,12 @@ namespace MB
             {
                 base.Init();
 
-                asset = property.FindPropertyRelative(nameof(asset));
-                registered = property.FindPropertyRelative(nameof(registered));
-                active = property.FindPropertyRelative(nameof(active));
+                asset = Property.FindPropertyRelative(nameof(asset));
+                registered = Property.FindPropertyRelative(nameof(registered));
+                active = Property.FindPropertyRelative(nameof(active));
             }
 
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 var height = LineHeight;
 
@@ -184,9 +184,9 @@ namespace MB
                 return height;
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
-                DrawField(ref rect, label);
+                DrawField(ref rect, Label);
 
                 if (asset.objectReferenceValue != null)
                 {

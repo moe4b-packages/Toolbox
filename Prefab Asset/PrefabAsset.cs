@@ -48,17 +48,17 @@ namespace MB
             {
                 base.Init();
 
-                asset = property.FindPropertyRelative(nameof(asset));
+                asset = Property.FindPropertyRelative(nameof(asset));
             }
 
-            protected override float CalculateHeight()
+            public override float CalculateHeight()
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
-                DrawField(rect, label, asset);
+                DrawField(rect, Label, asset);
             }
         }
 

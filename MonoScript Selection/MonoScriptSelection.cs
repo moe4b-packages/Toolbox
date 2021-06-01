@@ -133,9 +133,9 @@ namespace MB
             {
                 base.Init();
 
-				asset = property.FindPropertyRelative(nameof(asset));
+				asset = Property.FindPropertyRelative(nameof(asset));
 
-				argument = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
+				argument = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 
 				var list = AssetQuery<MonoScript>.FindAll(IsScriptOfArgumentType);
 				list.Sort((right, left) => right.name.CompareTo(left.name));
@@ -167,19 +167,19 @@ namespace MB
 				return true;
 			}
 
-            protected override float CalculateHeight()
+			public override float CalculateHeight()
             {
 				return EditorGUIUtility.singleLineHeight;
 			}
 
-            protected override void Draw(Rect rect)
+			public override void Draw(Rect rect)
             {
                 base.Draw(rect);
 
 				var script = asset.objectReferenceValue as MonoScript;
 
 				if (script == null || map.Contains(script))
-					DrawPopup(rect, label, script);
+					DrawPopup(rect, Label, script);
 				else
 					DrawError(rect);
 			}

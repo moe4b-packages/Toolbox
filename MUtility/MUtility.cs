@@ -317,13 +317,13 @@ namespace MB
                 return areas;
             }
 
-            public static Rect SliceLine(ref Rect rect)
+            public static Rect SliceLine(ref Rect rect) => SliceLine(ref rect, EditorGUIUtility.singleLineHeight);
+            public static Rect SliceLine(ref Rect rect, float height)
             {
-                var area = new Rect(rect.x, rect.y, rect.width, EditorGUIUtility.singleLineHeight);
+                var area = new Rect(rect.x, rect.y, rect.width, height);
 
                 rect.y += area.height;
                 rect.height -= area.height;
-
 
                 return area;
             }
@@ -420,6 +420,42 @@ namespace MB
 
         public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
         public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
+
+        public static string Remove(this string text, params string[] phrases)
+        {
+            var builder = new StringBuilder(text);
+
+            for (int i = 0; i < phrases.Length; i++)
+                builder.Replace(phrases[i], string.Empty);
+
+            return builder.ToString();
+        }
+        public static string Remove(this string text, params char[] characters)
+        {
+            var set = new HashSet<char>(characters);
+
+            var builder = new StringBuilder(text.Length);
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (set.Contains(text[i]))
+                    continue;
+
+                builder.Append(text[i]);
+            }
+
+            return builder.ToString();
+        }
+
+        public static string Between(this string text, int start, int end) => text.Substring(start, end - start);
+
+        public static string RemoveSuffix(this string text, string prefix)
+        {
+            if (text.EndsWith(prefix))
+                return text.Substring(0, text.Length - prefix.Length);
+
+            return text;
+        }
     }
 
     #region Types
@@ -450,18 +486,18 @@ namespace MB
 #if UNITY_EDITOR
     public class PersistantPropertyDrawer : PropertyDrawer
     {
-        protected SerializedProperty property;
+        protected SerializedProperty Property;
 
-        public SerializedObject serializedObject => property.serializedObject;
+        public SerializedObject SerializedObject => Property.serializedObject;
 
-        protected GUIContent label;
+        protected GUIContent Label;
 
-        void Prepare(SerializedProperty reference, GUIContent label)
+        protected void Prepare(SerializedProperty reference, GUIContent label)
         {
-            if (property?.propertyPath == reference?.propertyPath) return;
+            if (Property?.propertyPath == reference?.propertyPath) return;
 
-            property = reference;
-            this.label = label;
+            Property = reference;
+            this.Label = label;
 
             Init();
         }
@@ -479,9 +515,9 @@ namespace MB
             return CalculateHeight();
         }
 
-        protected virtual float CalculateHeight()
+        public virtual float CalculateHeight()
         {
-            return EditorGUI.GetPropertyHeight(property, label, true);
+            return EditorGUI.GetPropertyHeight(Property, Label, true);
         }
         #endregion
 
@@ -493,7 +529,7 @@ namespace MB
             Draw(rect);
         }
 
-        protected virtual void Draw(Rect rect)
+        public virtual void Draw(Rect rect)
         {
 
         }

@@ -25,7 +25,7 @@ namespace MB
         [CustomPropertyDrawer(typeof(UDictionary), true)]
         public class Drawer : BaseDrawer
         {
-            protected override SerializedProperty GetList() => property.FindPropertyRelative("keys");
+            protected override SerializedProperty GetList() => Property.FindPropertyRelative("keys");
 
             public SerializedProperty keys;
             SerializedProperty values;
@@ -49,7 +49,7 @@ namespace MB
                 base.Init();
 
                 keys = list;
-                values = property.FindPropertyRelative("values");
+                values = Property.FindPropertyRelative("values");
 
                 duplicates = new HashSet<int>();
                 nullables = new HashSet<int>();
@@ -86,7 +86,7 @@ namespace MB
             #endregion
 
             #region Draw
-            protected override void Draw(Rect rect)
+            public override void Draw(Rect rect)
             {
                 if (IsAligned == false)
                 {
@@ -184,7 +184,7 @@ namespace MB
 
                 rect.width -= width;
 
-                EditorGUI.HelpBox(rect, $" Misalignment of {property.displayName} Detected", MessageType.Error);
+                EditorGUI.HelpBox(rect, $" Misalignment of {Property.displayName} Detected", MessageType.Error);
 
                 rect.x += rect.width + spacing;
                 rect.width = width - spacing;

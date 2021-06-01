@@ -35,7 +35,7 @@ namespace MB
             {
                 base.Init();
 
-				FormatLabel(ref label);
+				FormatLabel(ref Label);
 			}
 
             static void FormatLabel(ref GUIContent label)
@@ -110,23 +110,23 @@ namespace MB
             {
                 base.Init();
 
-				type = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
+				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 				isInterface = type.IsInterface;
 
-				component = property.FindPropertyRelative("component");
-				scope = property.FindPropertyRelative("scope");
+				component = Property.FindPropertyRelative("component");
+				scope = Property.FindPropertyRelative("scope");
 			}
 
-            protected override float CalculateHeight()
+			public override float CalculateHeight()
             {
 				return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+			public override void Draw(Rect rect)
             {
 				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 0, 75f, 25f);
 
-				DrawField(areas[0], label);
+				DrawField(areas[0], Label);
 				DrawScope(areas[1]);
 			}
 
@@ -141,7 +141,7 @@ namespace MB
 				}
 				else
 				{
-					var reference = QueryComponent.In(property.serializedObject.targetObject as Component, type, (ComponentQueryScope)scope.intValue);
+					var reference = QueryComponent.In(Property.serializedObject.targetObject as Component, type, (ComponentQueryScope)scope.intValue);
 
 					if (isInterface == false && Application.isPlaying == false) component.objectReferenceValue = reference;
 
@@ -258,11 +258,11 @@ namespace MB
 			{
 				get
 				{
-					return property.isExpanded;
+					return Property.isExpanded;
 				}
 				set
 				{
-					property.isExpanded = value;
+					Property.isExpanded = value;
 				}
 			}
 
@@ -274,13 +274,13 @@ namespace MB
             {
                 base.Init();
 
-				list = property.FindPropertyRelative("list");
-				scope = property.FindPropertyRelative("scope");
+				list = Property.FindPropertyRelative("list");
+				scope = Property.FindPropertyRelative("scope");
 
-				type = MUtility.SerializedPropertyType.Retrieve(property).GenericTypeArguments[0];
+				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 				isInterface = type.IsInterface;
 
-				component = serializedObject.targetObject as Component;
+				component = SerializedObject.targetObject as Component;
 
 				if (Application.isPlaying && isInterface == false)
 					gui = new ReorderableList(list.serializedObject, list, false, true, true, true);
@@ -300,7 +300,7 @@ namespace MB
 				gui.list = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
 			}
 
-            protected override float CalculateHeight()
+			public override float CalculateHeight()
             {
 				var height = 0f;
 
@@ -311,7 +311,7 @@ namespace MB
 				return height;
             }
 
-            protected override void Draw(Rect rect)
+			public override void Draw(Rect rect)
             {
 				rect = EditorGUI.IndentedRect(rect);
 				EditorGUI.indentLevel = 0;
@@ -351,7 +351,7 @@ namespace MB
 				rect.x += 10f;
 				rect.width -= 200;
 
-				Expanded = EditorGUI.Foldout(rect, Expanded, label, true);
+				Expanded = EditorGUI.Foldout(rect, Expanded, Label, true);
 
 				DrawScope(ref rect);
 

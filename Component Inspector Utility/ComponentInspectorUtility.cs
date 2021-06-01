@@ -40,16 +40,16 @@ namespace MB
             {
                 base.Init();
 
-				selected = property.FindPropertyRelative(nameof(selected));
+				selected = Property.FindPropertyRelative(nameof(selected));
 				Selection.Register(selected);
 			}
 
-            protected override float CalculateHeight()
+			public override float CalculateHeight()
             {
 				return EditorGUIUtility.singleLineHeight;
             }
 
-            protected override void Draw(Rect rect)
+			public override void Draw(Rect rect)
             {
 				if (selected.boolValue) DrawHighlight(rect);
 
@@ -79,7 +79,7 @@ namespace MB
 				{
 					Selection.Set(selected);
 
-					foreach (Component component in property.serializedObject.targetObjects)
+					foreach (Component component in Property.serializedObject.targetObjects)
 						ComponentUtility.MoveComponentUp(component);
 				}
 			}
@@ -89,7 +89,7 @@ namespace MB
 				{
 					Selection.Set(selected);
 
-					foreach (Component component in property.serializedObject.targetObjects)
+					foreach (Component component in Property.serializedObject.targetObjects)
 						ComponentUtility.MoveComponentDown(component);
 				}
 			}
@@ -98,7 +98,7 @@ namespace MB
 			{
 				if (GUI.Button(rect, "Duplicate"))
 				{
-					foreach (Component component in property.serializedObject.targetObjects)
+					foreach (Component component in Property.serializedObject.targetObjects)
 					{
 						ComponentUtility.CopyComponent(component);
 						ComponentUtility.PasteComponentAsNew(component.gameObject);
