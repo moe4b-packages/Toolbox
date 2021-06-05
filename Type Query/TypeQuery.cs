@@ -28,8 +28,12 @@ namespace MB
 
         public static List<Type> FindAll<T>()
         {
-            var target = typeof(T);
+            var type = typeof(T);
 
+            return FindAll(type);
+        }
+        public static List<Type> FindAll(Type target)
+        {
             return FindAll(Predicate);
 
             bool Predicate(Type type)

@@ -121,50 +121,26 @@ namespace MB
 		[CustomPropertyDrawer(typeof(MonoScriptSelection), true)]
 		public class Drawer : PersistantPropertyDrawer
 		{
-			SerializedProperty asset;
+			SerializedProperty Asset;
 
-			Type argument;
+			Type Argument;
 
-			Glossary<MonoScript, int> map;
-
-			GUIContent[] popup;
+			public PopupDrawer<MonoScript> Popup;
 
             protected override void Init()
             {
                 base.Init();
 
-				asset = Property.FindPropertyRelative(nameof(asset));
+				Asset = Property.FindPropertyRelative("asset");
 
-				argument = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
+				Argument = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 
 				var list = AssetQuery<MonoScript>.FindAll(IsScriptOfArgumentType);
-				list.Sort((right, left) => right.name.CompareTo(left.name));
+				list.Sort(SortMonoScripts);
 
-				map = new Glossary<MonoScript, int>(list.Count);
-
-				popup = new GUIContent[list.Count + 1];
-				popup[0] = new GUIContent("None");
-
-				for (int i = 0; i < list.Count; i++)
-				{
-					map.Add(list[i], i);
-
-					var text = list[i].name.ToDisplayString();
-					popup[i + 1] = new GUIContent(text);
-				}
-			}
-
-			bool IsScriptOfArgumentType(MonoScript script)
-			{
-				var type = TypeCache.Load(script);
-
-				if (type == argument)
-					return false;
-
-				if (argument.IsAssignableFrom(type) == false)
-					return false;
-
-				return true;
+				Popup = new PopupDrawer<MonoScript>(Label);
+				Popup.Populate(list, FormatMonoScriptName, Asset.objectReferenceValue as MonoScript);
+				Popup.OnSelect += SelectCallback;
 			}
 
 			public override float CalculateHeight()
@@ -174,31 +150,15 @@ namespace MB
 
 			public override void Draw(Rect rect)
             {
-                base.Draw(rect);
-
-				var script = asset.objectReferenceValue as MonoScript;
-
-				if (script == null || map.Contains(script))
-					DrawPopup(rect, Label, script);
-				else
+				if (Popup.IsNone && Asset.objectReferenceValue != null)
 					DrawError(rect);
+				else
+					Popup.Draw(rect);
 			}
 
-			void DrawPopup(Rect rect, GUIContent label, MonoScript script)
+			void SelectCallback(int index, bool isNone, MonoScript selection)
 			{
-				var index = script == null ? 0 : map[script] + 1;
-
-				EditorGUI.BeginChangeCheck();
-				{
-					index = EditorGUI.Popup(rect, label, index, popup);
-				}
-				if (EditorGUI.EndChangeCheck())
-				{
-					if (index == 0)
-						asset.objectReferenceValue = null;
-					else
-						asset.objectReferenceValue = map[index - 1];
-				}
+				Asset.objectReferenceValue = selection;
 			}
 
 			void DrawError(Rect rect)
@@ -208,13 +168,36 @@ namespace MB
 
 				rect.width -= width;
 
-				EditorGUI.HelpBox(rect, $"Type '{asset.objectReferenceValue.name.ToDisplayString()}' Invalid", MessageType.Error);
+				EditorGUI.HelpBox(rect, $"Type '{Asset.objectReferenceValue.name.ToDisplayString()}' Invalid", MessageType.Error);
 
 				rect.x += rect.width + spacing;
 				rect.width = width - spacing;
 
 				if (GUI.Button(rect, "Clear"))
-					asset.objectReferenceValue = null;
+					Asset.objectReferenceValue = null;
+			}
+
+			//Utility Methods
+
+			bool IsScriptOfArgumentType(MonoScript script)
+			{
+				var type = TypeCache.Load(script);
+
+				if (type == Argument)
+					return false;
+
+				if (Argument.IsAssignableFrom(type) == false)
+					return false;
+
+				return true;
+			}
+			int SortMonoScripts(MonoScript right, MonoScript left)
+			{
+				return right.name.CompareTo(left.name);
+			}
+			string FormatMonoScriptName(MonoScript script)
+			{
+				return MUtility.PrettifyName(script.name);
 			}
 		}
 #endif
@@ -222,6 +205,7 @@ namespace MB
 
 	[Serializable]
 	public class MonoScriptSelection<T> : MonoScriptSelection
+		where T : MonoBehaviour
 	{
 		public override Type Argument => typeof(T);
 	}

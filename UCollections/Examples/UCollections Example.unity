@@ -227,6 +227,7 @@ GameObject:
   - component: {fileID: 733603728}
   - component: {fileID: 733603726}
   - component: {fileID: 733603725}
+  - component: {fileID: 733603727}
   m_Layer: 0
   m_Name: Example
   m_TagString: Untagged
@@ -322,6 +323,20 @@ MonoBehaviour:
       - {fileID: 1494258756}
       values:
       - {x: 1, y: 2, z: 3}
+--- !u!114 &733603727
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 733603724}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25fa589770b2ca64fa54d5addf7cefe4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  list1:
+    collection: []
 --- !u!4 &733603728
 Transform:
   m_ObjectHideFlags: 0
