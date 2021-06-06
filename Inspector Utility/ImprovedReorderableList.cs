@@ -313,6 +313,8 @@ namespace MB
 				if (index < 0) index = Count;
 
 				AddElement(index);
+
+				InvokeElementChange();
 			}
 		}
 
@@ -322,7 +324,11 @@ namespace MB
 			if (Selection < 0) GUI.enabled = false;
 
 			if (GUI.Button(rect, ToolbarMinusContent, ToolbarButtonStyle))
+            {
 				RemoveElement(Selection);
+
+				InvokeElementChange();
+			}
 
 			GUI.enabled = true;
 		}
@@ -352,6 +358,13 @@ namespace MB
 			Property.DeleteArrayElementAtIndex(index);
 
 			Selection = index - 1;
+		}
+
+		public delegate void ChangeElementDelegate();
+		public event ChangeElementDelegate OnChangeElement;
+		void InvokeElementChange()
+		{
+			OnChangeElement?.Invoke();
 		}
 		#endregion
 
