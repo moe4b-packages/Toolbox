@@ -96,7 +96,7 @@ namespace MB
 			rect = EditorGUI.IndentedRect(rect);
 			EditorGUI.indentLevel = 0;
 
-			if (Selection >= Count) Selection = Count - 1;
+			if (Selection >= Count) Selection = -1;
 
 			HeaderGUI(ref rect);
 
@@ -201,6 +201,17 @@ namespace MB
 		public float ElementsHeight { get; private set; } = 0f;
 		public List<float> ElementsHeights { get; private set; } = new List<float>();
 
+		List<Rect> ElementsRects = new List<Rect>()
+		{
+			default,
+			default,
+			default,
+			default,
+			default,
+			default,
+			default,
+		};
+
 		public float ElementVerticalPadding { get; set; } = 2f;
 		public float ElementHorizontalPadding { get; set; } = 10f;
 
@@ -213,27 +224,92 @@ namespace MB
 			{
 				var area = MUtility.GUICoordinates.SliceLine(ref rect, ElementsHeights[i]);
 
-				DrawElementBackground(area, i);
+				if(Event.rawType == EventType.Repaint) ElementsRects[i] = area;
 
-				area.x += ElementHorizontalPadding / 2f;
-				area.width -= ElementHorizontalPadding;
-
-				area.y += ElementVerticalPadding;
-				area.height -= ElementVerticalPadding * 2f;
-
-				DrawElementHandle(area);
-
-				area.x += ElementHandleSize + ElementHandlePadding;
-				area.width -= ElementHandleSize + ElementHandlePadding;
-
-				DrawElement(area, i);
+				ElementGUI(area, i);
 			}
 		}
 
-		public void DrawElementBackground(Rect rect, int index)
-		{
-			ProcessElementMouseSelection(rect, index);
+		void ElementGUI(Rect area, int index)
+        {
+			ProcessElementMouseSelection(area, index);
 
+			DrawElementBackground(area, index);
+
+			if (IsDragging && DragDestination == index) DrawElementDragIndication(area);
+
+			area.x += ElementHorizontalPadding / 2f;
+			area.width -= ElementHorizontalPadding;
+
+			area.y += ElementVerticalPadding;
+			area.height -= ElementVerticalPadding * 2f;
+
+			DrawElementHandle(area, index);
+
+			area.x += ElementHandleSize + ElementHandlePadding;
+			area.width -= ElementHandleSize + ElementHandlePadding;
+
+			DrawElement(area, index);
+		}
+
+		void ProcessElementMouseSelection(Rect rect, int index)
+		{
+			if (Event.isMouse == false) return;
+			if (Event.button != 0) return;
+
+			var InsideBounds = rect.Contains(Event.mousePosition);
+
+			if (InsideBounds)
+			{
+				if (Event.rawType == EventType.MouseDown)
+				{
+					Selection = index;
+				}
+			}
+
+			if (Selection == index)
+			{
+				if (InsideBounds && Event.rawType == EventType.MouseDrag && IsDragging == false)
+				{
+					BeginDrag();
+				}
+
+				if (IsDragging)
+				{
+					if (Event.rawType == EventType.MouseDrag)
+						UpdateDrag();
+					else
+						EndDrag();
+				}
+			}
+
+			GUI.changed = true;
+		}
+
+		public const float DragIndicationHeight = 5f;
+
+		void DrawElementDragIndication(Rect rect)
+		{
+			if (DragDirection > 0)
+			{
+				rect.y -= DragIndicationHeight / 2f;
+				rect.height = DragIndicationHeight;
+			}
+			else if (DragDirection < 0)
+			{
+				rect.y += rect.height - (DragIndicationHeight / 2f);
+				rect.height = DragIndicationHeight;
+			}
+			else
+				return;
+
+			var color = new Color32(44, 93, 135, 255);
+
+			EditorGUI.DrawRect(rect, color);
+		}
+
+		void DrawElementBackground(Rect rect, int index)
+		{
 			if (Selection == index)
 			{
 				var color = IsFocused ? new Color32(44, 93, 135, 255) : new Color32(80, 80, 80, 255);
@@ -241,28 +317,36 @@ namespace MB
 				EditorGUI.DrawRect(rect, color);
 			}
 		}
-		void ProcessElementMouseSelection(Rect rect, int index)
+
+		public GUIStyle ElementDragHandleStyle = "RL DragHandle";
+		public GUIStyle ElementIndicatorArrowStyle = "ArrowNavigationRight";
+
+		public bool CenterElementHandle { get; set; } = true;
+
+		void DrawElementHandle(Rect rect, int index)
 		{
-			if (Event.isMouse == false) return;
-			if (Event.rawType != EventType.MouseDown) return;
-			if (Event.button != 0) return;
-
-			if (rect.Contains(Event.mousePosition) == false) return;
-
-			Selection = index;
-			IsFocused = true;
-
-			GUI.changed = true;
-		}
-
-		void DrawElementHandle(Rect rect)
-		{
-			GUIStyle style = "RL DragHandle";
-
 			var area = new Rect(rect.x, rect.y, ElementHandleSize, ElementHandleSize);
 
-			area.y += (rect.height / 2f) - (area.height / 2f);
-			area.y += 3f;
+			if (CenterElementHandle)
+				area.y += (rect.height / 2f) - (area.height / 2f);
+			else
+				area.y += 5f;
+
+			GUIStyle style;
+
+			if (DragDestination == index)
+			{
+				style = ElementIndicatorArrowStyle;
+
+				area.x -= 3f;
+				area.y -= 3f;
+			}
+            else
+            {
+				style = ElementDragHandleStyle;
+
+				area.y += 3f;
+			}
 
 			if (IsRepaintEvent) style.Draw(area, GUIContent.none, 0);
 		}
@@ -274,6 +358,52 @@ namespace MB
 			var target = Property.GetArrayElementAtIndex(index);
 
 			EditorGUI.PropertyField(rect, target, true);
+		}
+        #endregion
+
+        #region Dragging
+		public bool IsDragging { get; private set; }
+
+		int DragSource = -1;
+		int DragDestination = -1;
+
+		public int DragDirection => DragSource - DragDestination;
+
+		void BeginDrag()
+		{
+			IsDragging = true;
+
+			DragSource = Selection;
+			DragDestination = DragSource;
+
+			//Debug.Log($"Begin Drag: {DragSource}");
+		}
+
+		void UpdateDrag()
+		{
+			for (int i = 0; i < ElementsRects.Count; i++)
+			{
+				if (ElementsRects[i].Contains(Event.mousePosition))
+				{
+					DragDestination = i;
+					break;
+				}
+			}
+
+			//Debug.Log($"Update Drag: {DragSource} -> {DragDestination}");
+		}
+
+		void EndDrag()
+		{
+			//Debug.Log($"End Drag: {DragSource} -> {DragDestination}");
+
+			if (DragSource != DragDestination)
+				ReorderElement(DragSource, DragDestination);
+
+			IsDragging = false;
+
+			DragSource = -1;
+			DragDestination = -1;
 		}
 		#endregion
 
@@ -360,6 +490,13 @@ namespace MB
 			Selection = index - 1;
 		}
 
+		public delegate void ReorderElementDelegate(int source, int destination);
+		public ReorderElementDelegate ReorderElement { get; set; }
+		public void DefaultReorderElement(int source, int destination)
+		{
+			Property.MoveArrayElement(source, destination);
+		}
+
 		public delegate void ChangeElementDelegate();
 		public event ChangeElementDelegate OnChangeElement;
 		void InvokeElementChange()
@@ -382,6 +519,7 @@ namespace MB
 
 			RemoveElement = DefaultRemoveElement;
 			AddElement = DefaultAddElement;
+			ReorderElement = DefaultReorderElement;
 		}
 	}
 }

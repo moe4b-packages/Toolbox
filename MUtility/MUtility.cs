@@ -418,6 +418,14 @@ namespace MB
             return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
         }
 
+        public static void SetOrAdd<T>(this List<T> list, int index, T item)
+        {
+            if (list.ValidateCollectionBounds(index))
+                list[index] = item;
+            else
+                list.Add(item);
+        }
+
         #region String
         public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
         public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
