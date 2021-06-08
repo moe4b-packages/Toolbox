@@ -179,7 +179,7 @@ namespace MB
             {
                 if (Equals(ManagedObject, value)) return;
 
-                Undo.RecordObjects(Property.serializedObject.targetObjects, $"Set {Property.displayName}");
+                Undo.RecordObject(Property.serializedObject.targetObject, $"Set {Property.displayName}");
 
                 if (IsCollectionElement)
                     RootManagedCollection[Index] = value;

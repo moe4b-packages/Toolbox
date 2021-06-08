@@ -280,6 +280,14 @@ namespace MB
                 if (target == null) break;
             }
         }
+
+        public static Type GetCollectionArgument(Type type)
+        {
+            if (type.IsArray)
+                return type.GetElementType();
+
+            return type.GetGenericArguments()[0];
+        }
         #endregion
 
         #region Editor
@@ -469,6 +477,8 @@ namespace MB
         public static bool BeginsWith(this string text, char character) => text[0] == character;
         public static bool EndsWith(this string text, char character) => text[text.Length - 1] == character;
         #endregion
+
+        public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());
     }
 
     #region Types

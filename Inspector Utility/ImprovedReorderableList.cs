@@ -24,6 +24,8 @@ namespace MB
 		public SerializedProperty Property { get; protected set; }
 		public SerializedObject SerializedObject => Property.serializedObject;
 
+		public Type ElementType { get; protected set; }
+
 		public (GetExpansionDelegate Get, SetExpansionDelegate Set) ExpansionProperty { get; set; }
 
 		public delegate bool GetExpansionDelegate();
@@ -55,12 +57,17 @@ namespace MB
 		public bool IsFocused { get; protected set; }
 		static SerializedProperty GlobalFocus;
 
-		public bool RegisterUndo { get; set; } = true;
-
 		public static Event Event => Event.current;
 		public static bool IsRepaintEvent => Event.type == EventType.Repaint;
 
 		public const float OutlinePadding = 3;
+
+		public void UpdateState()
+        {
+			CalculateHeight();
+
+			GUI.changed = true;
+        }
 
         #region Calculate Height
         public float CalculateHeight()
@@ -83,6 +90,8 @@ namespace MB
 				}
 
 				BodyHeight = ElementsHeight + (BodyVerticalPadding * 2f) + (OutlinePadding * 2);
+				if (Count == 0) BodyHeight += EditorGUIUtility.singleLineHeight;
+
 				height += BodyHeight;
 
 				height += ToolbarHeight;
@@ -169,6 +178,8 @@ namespace MB
 		{
 			var area = MUtility.GUICoordinates.SliceLine(ref rect, HeaderHeight);
 
+			ProcessItemDrop(area);
+
 			DrawHeader(area);
 
 			area.x += TitleFoldoutOffset.x;
@@ -184,6 +195,18 @@ namespace MB
 		public DrawHeaderDelegate DrawHeader { get; set; }
 		public void DefaultDrawHeader(Rect rect)
 		{
+			if(IsDroppingItems)
+            {
+				EditorGUI.DrawRect(rect, new Color32(44, 93, 135, 255));
+
+				rect.xMin += 3;
+				rect.xMax -= 3;
+				rect.yMin += 3;
+				rect.yMax -= 3;
+
+				return;
+			}
+
 			EditorGUI.DrawRect(rect, PrimaryColor);
 		}
 
@@ -196,6 +219,88 @@ namespace MB
 		public void DefaultDrawTitle(Rect rect)
 		{
 			IsExpanded = EditorGUI.Foldout(rect, IsExpanded, " " + TitleText , true, TitleStyle);
+		}
+		#endregion
+
+		#region Item Drop
+		public bool SupportItemDrop { get; set; } = true;
+
+		public bool IsDroppingItems { get; private set; }
+
+		void ProcessItemDrop(Rect area)
+		{
+			if (SupportItemDrop == false) return;
+
+			var WithinBounds = area.Contains(Event.mousePosition);
+
+			if (Event.rawType == EventType.DragUpdated)
+			{
+				IsDroppingItems = ValidateItemDrop() && WithinBounds;
+
+				if (IsDroppingItems)
+					DragAndDrop.visualMode = DragAndDropVisualMode.Copy;
+			}
+			else if (Event.rawType == EventType.DragPerform)
+			{
+				if (IsDroppingItems)
+				{
+					DragAndDrop.AcceptDrag();
+					ApplyItemDrop();
+				}
+
+				IsDroppingItems = false;
+			}
+		}
+
+		bool ValidateItemDrop()
+		{
+			foreach (var item in DragAndDrop.objectReferences)
+			{
+				if (ElementType.IsAssignableFrom(item))
+					continue;
+
+				if (typeof(Component).IsAssignableFrom(ElementType) && item is GameObject)
+					continue;
+
+				return false;
+			}
+
+			return true;
+		}
+
+		void ApplyItemDrop()
+        {
+			var targets = new List<Object>();
+
+			foreach (var item in DragAndDrop.objectReferences)
+			{
+				if (item is GameObject && typeof(Component).IsAssignableFrom(ElementType))
+				{
+					var range = QueryComponents.InSelf((item as GameObject), ElementType);
+					targets.AddRange(range);
+				}
+				else
+				{
+					targets.Add(item);
+				}
+			}
+
+			foreach (var target in targets)
+			{
+				var index = Count;
+				Property.InsertArrayElementAtIndex(index);
+
+				var element = Property.GetArrayElementAtIndex(index);
+				element.objectReferenceValue = target;
+
+				Selection = index;
+			}
+
+			Undo.SetCurrentGroupName($"Drop Items to {TitleText}");
+
+			InvokeElementChange();
+
+			UpdateState();
 		}
 		#endregion
 
@@ -219,7 +324,18 @@ namespace MB
 
 			MUtility.GUICoordinates.SliceLine(ref area, BodyVerticalPadding);
 
-			ElementsGUI(area);
+			if (Count == 0)
+				DrawEmptyIndicator(area);
+			else
+				ElementsGUI(area);
+		}
+
+		void DrawEmptyIndicator(Rect rect)
+        {
+			rect.x += 15;
+			rect.y -= BodyVerticalPadding - OutlinePadding;
+
+			EditorGUI.LabelField(rect, "List is Empty");
 		}
 		#endregion
 
@@ -262,7 +378,7 @@ namespace MB
 
 			DrawElementBackground(area, index);
 
-			if (IsDragging && DragDestination == index) DrawElementDragIndication(area);
+			if (IsDraggingElement && DragElementDestination == index) DrawElementDragIndication(area);
 
 			area.x += ElementHorizontalPadding / 2f;
 			area.width -= ElementHorizontalPadding;
@@ -296,17 +412,17 @@ namespace MB
 
 			if (Selection == index)
 			{
-				if (InsideBounds && Event.rawType == EventType.MouseDrag && IsDragging == false)
+				if (InsideBounds && Event.rawType == EventType.MouseDrag && IsDraggingElement == false)
 				{
-					BeginDrag();
+					BeginElementDrag();
 				}
 
-				if (IsDragging)
+				if (IsDraggingElement)
 				{
 					if (Event.rawType == EventType.MouseDrag)
-						UpdateDrag();
+						UpdateElementDrag();
 					else
-						EndDrag();
+						EndElementDrag();
 				}
 			}
 
@@ -317,12 +433,12 @@ namespace MB
 
 		void DrawElementDragIndication(Rect rect)
 		{
-			if (DragDirection > 0)
+			if (DragElementDirection > 0)
 			{
 				rect.y -= DragIndicationHeight / 2f;
 				rect.height = DragIndicationHeight;
 			}
-			else if (DragDirection < 0)
+			else if (DragElementDirection < 0)
 			{
 				rect.y += rect.height - (DragIndicationHeight / 2f);
 				rect.height = DragIndicationHeight;
@@ -361,7 +477,7 @@ namespace MB
 
 			GUIStyle style;
 
-			if (DragDestination == index)
+			if (DragElementDestination == index)
 			{
 				style = ElementIndicatorArrowStyle;
 
@@ -388,31 +504,31 @@ namespace MB
 		}
         #endregion
 
-        #region Dragging
-		public bool IsDragging { get; private set; }
+        #region Element Dragging
+		public bool IsDraggingElement { get; private set; }
 
-		int DragSource = -1;
-		int DragDestination = -1;
+		int DragElementSource = -1;
+		int DragElementDestination = -1;
 
-		public int DragDirection => DragSource - DragDestination;
+		public int DragElementDirection => DragElementSource - DragElementDestination;
 
-		void BeginDrag()
+		void BeginElementDrag()
 		{
-			IsDragging = true;
+			IsDraggingElement = true;
 
-			DragSource = Selection;
-			DragDestination = DragSource;
+			DragElementSource = Selection;
+			DragElementDestination = DragElementSource;
 
 			//Debug.Log($"Begin Drag: {DragSource}");
 		}
 
-		void UpdateDrag()
+		void UpdateElementDrag()
 		{
 			for (int i = 0; i < ElementsRects.Count; i++)
 			{
 				if (ElementsRects[i].Contains(Event.mousePosition))
 				{
-					DragDestination = i;
+					DragElementDestination = i;
 					break;
 				}
 			}
@@ -420,21 +536,22 @@ namespace MB
 			//Debug.Log($"Update Drag: {DragSource} -> {DragDestination}");
 		}
 
-		void EndDrag()
+		void EndElementDrag()
 		{
 			//Debug.Log($"End Drag: {DragSource} -> {DragDestination}");
 
-			if (DragSource != DragDestination)
+			if (DragElementSource != DragElementDestination)
 			{
-				if (RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Reorder {TitleText} Element");
-				ReorderElement(DragSource, DragDestination);
+				ReorderElement(DragElementSource, DragElementDestination);
+				Undo.SetCurrentGroupName($"Reorder {TitleText} Element");
+
 				InvokeElementChange();
 			}
 
-			IsDragging = false;
+			IsDraggingElement = false;
 
-			DragSource = -1;
-			DragDestination = -1;
+			DragElementSource = -1;
+			DragElementDestination = -1;
 		}
 		#endregion
 
@@ -484,8 +601,9 @@ namespace MB
 				var index = Selection;
 				if (index < 0) index = Count;
 
-				if(RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Add Element to {TitleText}");
 				AddElement(index);
+				Undo.SetCurrentGroupName($"Add Element to {TitleText}");
+
 				InvokeElementChange();
 			}
 		}
@@ -497,8 +615,9 @@ namespace MB
 
 			if (GUI.Button(rect, ToolbarMinusContent, ToolbarButtonStyle))
             {
-				if (RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Remove Element From {TitleText}");
 				RemoveElement(Selection);
+				Undo.SetCurrentGroupName($"Remove Element From {TitleText}");
+
 				InvokeElementChange();
 			}
 
@@ -511,10 +630,7 @@ namespace MB
 		public AddElementDelegate AddElement { get; set; }
 		public void DefaultAddElement(int index)
 		{
-			Debug.Log(index);
-
 			Property.InsertArrayElementAtIndex(index);
-
 			Selection = index + 1;
 		}
 
@@ -550,6 +666,9 @@ namespace MB
 		public ImprovedReorderableList(SerializedProperty property)
 		{
 			this.Property = property;
+
+			ElementType = MUtility.SerializedPropertyType.Retrieve(property);
+			ElementType = MUtility.GetCollectionArgument(ElementType);
 
 			TitleText = property.displayName;
 			TitleStyle = new GUIStyle(EditorStyles.foldout);
