@@ -24,10 +24,18 @@ namespace MB
 		public SerializedProperty Property { get; protected set; }
 		public SerializedObject SerializedObject => Property.serializedObject;
 
+		public (GetExpansionDelegate Get, SetExpansionDelegate Set) ExpansionProperty { get; set; }
+
+		public delegate bool GetExpansionDelegate();
+		public bool DefaultGetExpansion() => Property.isExpanded;
+
+		public delegate void SetExpansionDelegate(bool value);
+		public void DefaultSetExpansion(bool value) => Property.isExpanded = value;
+
 		public bool IsExpanded
 		{
-			get => Property.isExpanded;
-			set => Property.isExpanded = value;
+			get => ExpansionProperty.Get();
+			set => ExpansionProperty.Set(value);
 		}
 
 		public int Count => Property.arraySize;
@@ -45,9 +53,14 @@ namespace MB
 		}
 
 		public bool IsFocused { get; protected set; }
+		static SerializedProperty GlobalFocus;
+
+		public bool RegisterUndo { get; set; } = true;
 
 		public static Event Event => Event.current;
 		public static bool IsRepaintEvent => Event.type == EventType.Repaint;
+
+		public const float OutlinePadding = 3;
 
         #region Calculate Height
         public float CalculateHeight()
@@ -69,11 +82,18 @@ namespace MB
 					ElementsHeights.Add(value);
 				}
 
-				BodyHeight = ElementsHeight + (BodyVerticalPadding * 2f);
-
+				BodyHeight = ElementsHeight + (BodyVerticalPadding * 2f) + (OutlinePadding * 2);
 				height += BodyHeight;
 
 				height += ToolbarHeight;
+			}
+			else
+            {
+				ElementsHeight = 0f;
+				ElementsHeights.Clear();
+
+				for (int i = 0; i < Count; i++)
+					ElementsHeights.Add(0);
 			}
 
 			return height;
@@ -97,6 +117,7 @@ namespace MB
 			EditorGUI.indentLevel = 0;
 
 			if (Selection >= Count) Selection = -1;
+			if (GlobalFocus != Property) IsFocused = false;
 
 			HeaderGUI(ref rect);
 
@@ -141,10 +162,8 @@ namespace MB
 
 		#region Heading & Title GUI
 		public float HeaderHeight { get; set; } = 20f;
-		public GUIStyle HeaderStyle { get; set; } = new GUIStyle(EditorStyles.foldout);
 
-		public string TitleText { get; set; }
-		public Vector2 TitleFoldoutOffset { get; set; } = new Vector2(20f, 0f);
+		public Color PrimaryColor { get; set; } = new Color32(48, 48, 48, 255);
 
 		void HeaderGUI(ref Rect rect)
 		{
@@ -165,16 +184,18 @@ namespace MB
 		public DrawHeaderDelegate DrawHeader { get; set; }
 		public void DefaultDrawHeader(Rect rect)
 		{
-			var color = new Color32(48, 48, 48, 255);
-
-			EditorGUI.DrawRect(rect, color);
+			EditorGUI.DrawRect(rect, PrimaryColor);
 		}
+
+		public string TitleText { get; set; }
+		public GUIStyle TitleStyle { get; set; }
+		public Vector2 TitleFoldoutOffset { get; set; } = new Vector2(20f, 0f);
 
 		public delegate void DrawTitleDelegate(Rect rect);
 		public DrawTitleDelegate DrawTitle { get; set; }
 		public void DefaultDrawTitle(Rect rect)
 		{
-			IsExpanded = EditorGUI.Foldout(rect, IsExpanded, TitleText, true, HeaderStyle);
+			IsExpanded = EditorGUI.Foldout(rect, IsExpanded, " " + TitleText , true, TitleStyle);
 		}
 		#endregion
 
@@ -185,13 +206,18 @@ namespace MB
 
 		void BodyGUI(ref Rect rect)
 		{
-			var color = new Color32(64, 65, 65, 255);
-
 			var area = MUtility.GUICoordinates.SliceLine(ref rect, BodyHeight);
+
+			EditorGUI.DrawRect(area, PrimaryColor);
+
+			area.yMax -= OutlinePadding;
+			area.xMin += OutlinePadding;
+			area.xMax -= OutlinePadding;
+
+			var color = new Color32(64, 65, 65, 255);
 			EditorGUI.DrawRect(area, color);
 
-			area.y += BodyVerticalPadding;
-			area.height -= BodyVerticalPadding * 2f;
+			MUtility.GUICoordinates.SliceLine(ref area, BodyVerticalPadding);
 
 			ElementsGUI(area);
 		}
@@ -224,14 +250,14 @@ namespace MB
 			{
 				var area = MUtility.GUICoordinates.SliceLine(ref rect, ElementsHeights[i]);
 
-				if(Event.rawType == EventType.Repaint) ElementsRects[i] = area;
-
 				ElementGUI(area, i);
 			}
 		}
 
 		void ElementGUI(Rect area, int index)
         {
+			if (Event.rawType == EventType.Repaint) ElementsRects.SetOrAdd(index, area);
+
 			ProcessElementMouseSelection(area, index);
 
 			DrawElementBackground(area, index);
@@ -264,6 +290,7 @@ namespace MB
 				if (Event.rawType == EventType.MouseDown)
 				{
 					Selection = index;
+					GlobalFocus = Property;
 				}
 			}
 
@@ -398,7 +425,11 @@ namespace MB
 			//Debug.Log($"End Drag: {DragSource} -> {DragDestination}");
 
 			if (DragSource != DragDestination)
+			{
+				if (RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Reorder {TitleText} Element");
 				ReorderElement(DragSource, DragDestination);
+				InvokeElementChange();
+			}
 
 			IsDragging = false;
 
@@ -408,7 +439,7 @@ namespace MB
 		#endregion
 
 		#region Toolbar GUI
-		public const float ToolbarHeight = 20f;
+		public const float ToolbarHeight = 24f;
 		public const float ToolbarWidth = 80f;
 
 		void ToolbarGUI(ref Rect rect)
@@ -420,6 +451,8 @@ namespace MB
 
 			DrawToolbar(area);
 
+			area.yMin += OutlinePadding;
+
 			var areas = MUtility.GUICoordinates.SplitHorizontally(area, 5, 2);
 			DrawToolbarAdd(areas[0]);
 			DrawToolbarRemove(areas[1]);
@@ -427,23 +460,32 @@ namespace MB
 
 		void DrawToolbar(Rect rect)
 		{
-			var color = new Color32(64, 65, 65, 255);
+			EditorGUI.DrawRect(rect, PrimaryColor);
 
+			rect.yMax -= OutlinePadding;
+			rect.xMin += OutlinePadding;
+			rect.xMax -= OutlinePadding;
+
+			var color = new Color32(64, 65, 65, 255);
 			EditorGUI.DrawRect(rect, color);
 		}
 
 		public static GUIStyle ToolbarButtonStyle = "RL FooterButton";
 
-		public static GUIContent ToolbarPlusContent = EditorGUIUtility.TrIconContent("Toolbar Plus");
+		public static GUIContent ToolbarSimplePlusContent = EditorGUIUtility.TrIconContent("Toolbar Plus");
+		public static GUIContent ToolbarMorePlusContent = EditorGUIUtility.TrIconContent("Toolbar Plus More");
+		public bool DrawMorePlus { get; set; } = false;
 		void DrawToolbarAdd(Rect rect)
 		{
-			if (GUI.Button(rect, ToolbarPlusContent, ToolbarButtonStyle))
+			var content = DrawMorePlus ? ToolbarMorePlusContent : ToolbarSimplePlusContent;
+
+			if (GUI.Button(rect, content, ToolbarButtonStyle))
 			{
 				var index = Selection;
 				if (index < 0) index = Count;
 
+				if(RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Add Element to {TitleText}");
 				AddElement(index);
-
 				InvokeElementChange();
 			}
 		}
@@ -455,8 +497,8 @@ namespace MB
 
 			if (GUI.Button(rect, ToolbarMinusContent, ToolbarButtonStyle))
             {
+				if (RegisterUndo) Undo.RecordObject(SerializedObject.targetObject, $"Remove Element From {TitleText}");
 				RemoveElement(Selection);
-
 				InvokeElementChange();
 			}
 
@@ -509,7 +551,10 @@ namespace MB
 		{
 			this.Property = property;
 
-			TitleText = " " + property.displayName;
+			TitleText = property.displayName;
+			TitleStyle = new GUIStyle(EditorStyles.foldout);
+
+			ExpansionProperty = (DefaultGetExpansion, DefaultSetExpansion);
 
 			DrawHeader = DefaultDrawHeader;
 			DrawTitle = DefaultDrawTitle;
