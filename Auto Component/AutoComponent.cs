@@ -31,14 +31,14 @@ namespace MB
 #if UNITY_EDITOR
 		public class BaseDrawer : PersistantPropertyDrawer
 		{
-            protected override void Init()
-            {
-                base.Init();
+			protected override void Init()
+			{
+				base.Init();
 
 				FormatLabel(ref Label);
 			}
 
-            static void FormatLabel(ref GUIContent label)
+			static void FormatLabel(ref GUIContent label)
 			{
 				var text = label.text;
 
@@ -104,9 +104,9 @@ namespace MB
 
 			public const float ElementSpacing = 5f;
 
-            protected override void Init()
-            {
-                base.Init();
+			protected override void Init()
+			{
+				base.Init();
 
 				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
 				isInterface = type.IsInterface;
@@ -116,12 +116,12 @@ namespace MB
 			}
 
 			public override float CalculateHeight()
-            {
+			{
 				return EditorGUIUtility.singleLineHeight;
-            }
+			}
 
 			public override void Draw(Rect rect)
-            {
+			{
 				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 0, 75f, 25f);
 
 				DrawField(areas[0], Label);
@@ -255,9 +255,9 @@ namespace MB
 
 			public const float ElementSpacing = 5f;
 
-            protected override void Init()
-            {
-                base.Init();
+			protected override void Init()
+			{
+				base.Init();
 
 				list = Property.FindPropertyRelative("list");
 				scope = Property.FindPropertyRelative("scope");
@@ -284,18 +284,18 @@ namespace MB
 				if (Application.isPlaying == false || isInterface) UpdateComponents();
 			}
 
-            float GetElementHeight(int index)
-            {
+			float GetElementHeight(int index)
+			{
 				return EditorGUIUtility.singleLineHeight;
-            }
+			}
 
-            void UpdateComponents()
+			void UpdateComponents()
 			{
 				UI.ManagedList = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
 			}
 
 			public override float CalculateHeight()
-            {
+			{
 				var height = 0f;
 
 				height += UI.CalculateHeight();
@@ -305,7 +305,7 @@ namespace MB
 			}
 
 			public override void Draw(Rect rect)
-            {
+			{
 				rect = EditorGUI.IndentedRect(rect);
 				EditorGUI.indentLevel = 0;
 
@@ -326,7 +326,7 @@ namespace MB
 			}
 
 			void DrawHeader(Rect rect)
-            {
+			{
 				UI.DefaultDrawHeader(rect);
 
 				DrawScope(rect);
@@ -364,9 +364,9 @@ namespace MB
 			{
 				var label = new GUIContent($"Element {index}");
 
-                switch (UI.Backing)
-                {
-                    case ImprovedReorderableList.BackingType.Serialized:
+				switch (UI.Backing)
+				{
+					case ImprovedReorderableList.BackingType.Serialized:
 						var element = UI.Property.GetArrayElementAtIndex(index);
 						EditorGUI.PropertyField(rect, element, label);
 						break;
@@ -375,7 +375,7 @@ namespace MB
 						var instance = UI.ManagedList[index] as Object;
 						EditorGUI.ObjectField(rect, label, instance, type, true);
 						break;
-                }
+				}
 			}
 		}
 #endif

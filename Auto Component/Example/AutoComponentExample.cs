@@ -42,7 +42,7 @@ namespace MB
 		public List<Component> Components => auto_components.Retrieve(this);
 
 		void Start()
-        {
+		{
 			Debug.Log(Collider);
 			foreach (var item in Samples)
 				Debug.Log(Colliders);
@@ -54,5 +54,5 @@ namespace MB
 			foreach (var item in Components)
 				Debug.Log(item);
 		}
-    }
+	}
 }

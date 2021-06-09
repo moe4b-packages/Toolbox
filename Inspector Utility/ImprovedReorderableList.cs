@@ -21,14 +21,14 @@ namespace MB
 {
 	public class ImprovedReorderableList
 	{
-        #region Managed
-        public IList ManagedList { get; set; }
+		#region Managed
+		public IList ManagedList { get; set; }
 
 		public bool IsManaged => ManagedList != null;
-        #endregion
+		#endregion
 
-        #region Serialized
-        public SerializedProperty Property { get; protected set; }
+		#region Serialized
+		public SerializedProperty Property { get; protected set; }
 		public SerializedObject SerializedObject => Property.serializedObject;
 
 		public bool IsSerialized => Property != null;
@@ -54,29 +54,29 @@ namespace MB
 
 		public Type ElementType { get; protected set; }
 
-        #region Expansion
-        public (GetExpansionDelegate Get, SetExpansionDelegate Set) ExpansionProperty { get; set; }
+		#region Expansion
+		public (GetExpansionDelegate Get, SetExpansionDelegate Set) ExpansionProperty { get; set; }
 
 		public delegate bool GetExpansionDelegate();
 		public bool DefaultGetExpansion()
-        {
-            switch (Backing)
-            {
-                case BackingType.Serialized:
+		{
+			switch (Backing)
+			{
+				case BackingType.Serialized:
 					return Property.isExpanded;
 
-                case BackingType.Managed:
+				case BackingType.Managed:
 					return ManagedExpansion;
-            }
+			}
 
 			return true;
-        }
+		}
 
 		public delegate void SetExpansionDelegate(bool value);
 		public void DefaultSetExpansion(bool value)
-        {
-            switch (Backing)
-            {
+		{
+			switch (Backing)
+			{
 				case BackingType.Serialized:
 					Property.isExpanded = value;
 					break;
@@ -85,10 +85,10 @@ namespace MB
 					ManagedExpansion = value;
 					break;
 			}
-        }
+		}
 
 		public void ReflectExpandFromProperty(SerializedProperty target)
-        {
+		{
 			ExpansionProperty = (Get, Set);
 
 			bool Get() => target.isExpanded;
@@ -102,12 +102,12 @@ namespace MB
 			get => ExpansionProperty.Get();
 			set => ExpansionProperty.Set(value);
 		}
-        #endregion
+		#endregion
 
-        public int Count
-        {
+		public int Count
+		{
 			get
-            {
+			{
 				switch (Backing)
 				{
 					case BackingType.Serialized:
@@ -119,7 +119,7 @@ namespace MB
 
 				throw new NotImplementedException();
 			}
-        }
+		}
 
 		#region Selections
 		public List<int> Selections { get; protected set; } = new List<int>();
@@ -144,23 +144,23 @@ namespace MB
 				AddSelection(i);
 		}
 		public void RemoveSelection(int index)
-        {
+		{
 			Selections.Remove(index);
 
 			SortSelection();
 		}
 
 		public void SortSelection()
-        {
+		{
 			Selections.Sort(Sort);
 
 			int Sort(int x, int y) => x.CompareTo(y);
 		}
 
 		public void ClearSelection()
-        {
+		{
 			Selections.Clear();
-        }
+		}
 
 		public int LowestSelection
 		{
@@ -184,9 +184,9 @@ namespace MB
 		}
 
 		public bool IsSelected(int index) => Selections.Contains(index);
-        #endregion
+		#endregion
 
-        public bool IsFocused { get; protected set; }
+		public bool IsFocused { get; protected set; }
 		static SerializedProperty GlobalFocus;
 
 		public static Event Event => Event.current;
@@ -197,14 +197,14 @@ namespace MB
 		public Color PrimaryColor { get; set; } = new Color32(48, 48, 48, 255);
 
 		public void UpdateState()
-        {
+		{
 			CalculateHeight();
 
 			GUI.changed = true;
-        }
+		}
 
-        #region Calculate Height
-        public float CalculateHeight()
+		#region Calculate Height
+		public float CalculateHeight()
 		{
 			var height = 0f;
 
@@ -231,7 +231,7 @@ namespace MB
 				height += ToolbarHeight;
 			}
 			else
-            {
+			{
 				ElementsHeight = 0f;
 				ElementsHeights.Clear();
 
@@ -258,9 +258,9 @@ namespace MB
 
 			return EditorGUIUtility.singleLineHeight;
 		}
-        #endregion
+		#endregion
 
-        public virtual void Draw(Rect rect)
+		public virtual void Draw(Rect rect)
 		{
 			ProcessElementsSelection(rect);
 
@@ -290,15 +290,17 @@ namespace MB
 		{
 			if (GUI.enabled == false) return;
 			if (Selections.Count == 0) return;
-
 			if (Event.isMouse && Event.rawType == EventType.MouseDown)
 			{
 				if (IsFocused)
+				{
 					IsFocused = rect.Contains(Event.mousePosition);
+
+					if (IsFocused == false) GUI.changed = true;
+				}
 			}
 
 			if (IsFocused == false) return;
-
 			if (Event.isKey && Event.rawType == EventType.KeyDown)
 			{
 				if (Event.keyCode == KeyCode.UpArrow)
@@ -308,6 +310,8 @@ namespace MB
 						var target = LowestSelection;
 						ClearSelection();
 						AddSelection(target - 1);
+
+						GUI.changed = true;
 					}
 
 					Event.Use();
@@ -315,18 +319,18 @@ namespace MB
 
 				if (Event.keyCode == KeyCode.DownArrow)
 				{
-					if(HighestSelection + 1 < Count)
-                    {
+					if (HighestSelection + 1 < Count)
+					{
 						var target = HighestSelection;
 						ClearSelection();
 						AddSelection(target + 1);
+
+						GUI.changed = true;
 					}
 
 					Event.Use();
 				}
 			}
-
-			GUI.changed = true;
 		}
 
 		#region Header
@@ -353,8 +357,8 @@ namespace MB
 		public DrawHeaderDelegate DrawHeader { get; set; }
 		public void DefaultDrawHeader(Rect rect)
 		{
-			if(IsDroppingItems)
-            {
+			if (IsDroppingItems)
+			{
 				EditorGUI.DrawRect(rect, new Color32(44, 93, 135, 255));
 
 				rect.xMin += 3;
@@ -372,21 +376,21 @@ namespace MB
 		#region Title
 		GUIContent Internal_TitleContent = new GUIContent();
 		public GUIContent TitleContent
-        {
+		{
 			get
-            {
+			{
 				return Internal_TitleContent;
 			}
 			set
-            {
+			{
 				value.text = " " + value.text;
 
 				Internal_TitleContent = value;
 			}
-        }
+		}
 
 		public string TitleText
-        {
+		{
 			get => TitleContent.text;
 			set
 			{
@@ -454,7 +458,7 @@ namespace MB
 		}
 
 		void ApplyItemDrop()
-        {
+		{
 			var targets = new List<Object>();
 
 			foreach (var item in DragAndDrop.objectReferences)
@@ -518,7 +522,7 @@ namespace MB
 		}
 
 		void DrawEmptyIndicator(Rect rect)
-        {
+		{
 			rect.x += 15;
 			rect.y -= BodyVerticalPadding - OutlinePadding;
 
@@ -549,7 +553,7 @@ namespace MB
 		}
 
 		void ElementGUI(Rect area, int index)
-        {
+		{
 			if (Event.rawType == EventType.Repaint) ElementsRects.SetOrAdd(index, area);
 
 			ProcessElementMouseSelection(area, index);
@@ -603,29 +607,12 @@ namespace MB
 					}
 
 					GlobalFocus = Property;
+					GUI.changed = true;
 				}
 			}
 
-			if (IsSelected(index))
-			{
-				if (Selections.Count == 1 && InsideBounds && Event.rawType == EventType.MouseDrag && IsDraggingElement == false)
-				{
-					BeginElementDrag();
-				}
-
-				if (IsDraggingElement)
-				{
-					if (Event.rawType == EventType.MouseDrag)
-						UpdateElementDrag();
-					else
-						EndElementDrag();
-				}
-			}
-
-			GUI.changed = true;
+			if (IsSelected(index)) ProcessElementDrag(InsideBounds);
 		}
-
-		public const float DragIndicationHeight = 5f;
 
 		void DrawElementDragIndication(Rect rect)
 		{
@@ -657,11 +644,10 @@ namespace MB
 			}
 		}
 
+		public const float DragIndicationHeight = 5f;
 		public GUIStyle ElementDragHandleStyle = "RL DragHandle";
 		public GUIStyle ElementIndicatorArrowStyle = "ArrowNavigationRight";
-
 		public bool CenterElementHandle { get; set; } = true;
-
 		void DrawElementHandle(Rect rect, int index)
 		{
 			var area = new Rect(rect.x, rect.y, ElementHandleSize, ElementHandleSize);
@@ -680,8 +666,8 @@ namespace MB
 				area.x -= 3f;
 				area.y -= 3f;
 			}
-            else
-            {
+			else
+			{
 				style = ElementDragHandleStyle;
 
 				area.y += 3f;
@@ -698,15 +684,35 @@ namespace MB
 
 			EditorGUI.PropertyField(rect, target, true);
 		}
-        #endregion
+		#endregion
 
-        #region Element Dragging
+		#region Element Dragging
 		public bool IsDraggingElement { get; private set; }
 
 		int DragElementSource = -1;
 		int DragElementDestination = -1;
 
 		public int DragElementDirection => DragElementSource - DragElementDestination;
+
+		void ProcessElementDrag(bool InsideBounds)
+		{
+			if (Selections.Count == 1 && InsideBounds && Event.rawType == EventType.MouseDrag && IsDraggingElement == false)
+			{
+				BeginElementDrag();
+
+				GUI.changed = true;
+			}
+
+			if (IsDraggingElement)
+			{
+				if (Event.rawType == EventType.MouseDrag)
+					UpdateElementDrag();
+				else
+					EndElementDrag();
+
+				GUI.changed = true;
+			}
+		}
 
 		void BeginElementDrag()
 		{
@@ -812,7 +818,7 @@ namespace MB
 			if (Selections.Count == 0) GUI.enabled = false;
 
 			if (GUI.Button(rect, ToolbarMinusContent, ToolbarButtonStyle))
-            {
+			{
 				var collection = Selections.ToArray();
 				ClearSelection();
 				RemoveElement(collection);
@@ -868,10 +874,10 @@ namespace MB
 		{
 			OnChangeElement?.Invoke();
 		}
-        #endregion
+		#endregion
 
-        private ImprovedReorderableList()
-        {
+		private ImprovedReorderableList()
+		{
 			ExpansionProperty = (DefaultGetExpansion, DefaultSetExpansion);
 
 			DrawHeader = DefaultDrawHeader;
@@ -896,7 +902,7 @@ namespace MB
 		}
 
 		public ImprovedReorderableList(IList managedList, Type elementType) : this()
-        {
+		{
 			this.ManagedList = managedList;
 			this.ElementType = elementType;
 

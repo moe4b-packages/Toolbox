@@ -308,7 +308,7 @@ namespace MB
         public void Clear()
         {
             list.Clear();
-            
+
             if (Cached) Dictionary.Clear();
         }
 
