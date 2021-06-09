@@ -695,7 +695,7 @@ namespace MB
 
 		void ProcessElementDrag(bool InsideBounds)
 		{
-			if (Selections.Count == 1 && InsideBounds && Event.rawType == EventType.MouseDrag && IsDraggingElement == false)
+			if (Selections.Count == 1 && InsideBounds && Event.rawType == EventType.MouseDrag && IsDraggingElement == false && IsFocused)
 			{
 				BeginElementDrag();
 

@@ -126,9 +126,7 @@ namespace MB
         public bool IsReadOnly => false;
 
         HashSet<T> cache;
-
         public bool Cached => cache != null;
-
         public HashSet<T> HashSet
         {
             get

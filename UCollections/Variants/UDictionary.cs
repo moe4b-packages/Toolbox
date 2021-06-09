@@ -231,9 +231,7 @@ namespace MB
         }
 
         Dictionary<TKey, TValue> cache;
-
         public bool Cached => cache != null;
-
         public Dictionary<TKey, TValue> Dictionary
         {
             get
