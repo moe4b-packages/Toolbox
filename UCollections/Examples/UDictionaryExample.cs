@@ -20,27 +20,18 @@ namespace MB
 {
     public class UDictionaryExample : MonoBehaviour
     {
-        public UDictionary1 dictionary1;
-        public UDictionary2 dictionary2;
-        public UDictionary3 dictionary3;
+        public UDictionary<string, string> dictionary1;
+        public UDictionary<Key, Value> dictionary2;
+        public UDictionary<Component, Vector3> dictionary3;
 
         public Nested nested;
         [Serializable]
         public class Nested
         {
-            public UDictionary1 dictionary1;
-            public UDictionary2 dictionary2;
-            public UDictionary3 dictionary3;
+            public UDictionary<string, string> dictionary1;
+            public UDictionary<Key, Value> dictionary2;
+            public UDictionary<Component, Vector3> dictionary3;
         }
-
-        [Serializable]
-        public class UDictionary1 : UDictionary<string, string> { }
-
-        [Serializable]
-        public class UDictionary2 : UDictionary<Key, Value> { }
-
-        [Serializable]
-        public class UDictionary3 : UDictionary<Component, Vector3> { }
 
         [Serializable]
         public struct Key

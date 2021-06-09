@@ -281,48 +281,62 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dictionary1:
-    keys:
-    - Hello
-    - Carl
-    - Mark
-    values:
-    - World
-    - Sagan
-    - Ruffalo
+    list:
+    - key: Hello
+      value: World
+    - key: Rustle
+      value: Mania
+    - key: Mark
+      value: Hamill
   dictionary2:
-    keys:
-    - ID: 42
-      file: HGTTG
-    values:
-    - firstName: Arthur
-      lastName: Dent
+    list:
+    - key:
+        ID: 007
+        file: Mi6
+      value:
+        firstName: James
+        lastName: Bond
+    - key:
+        ID: 47
+        file: ICA
+      value:
+        firstName: David
+        lastName: Bateson
   dictionary3:
-    keys:
-    - {fileID: 1494258756}
-    values:
-    - {x: 1, y: 2, z: 3}
+    list:
+    - key: {fileID: 200134301}
+      value: {x: 1, y: 1, z: 1}
+    - key: {fileID: 1494258756}
+      value: {x: 2, y: 2, z: 2}
   nested:
     dictionary1:
-      keys:
-      - Hello
-      - Mark
-      - Carl
-      values:
-      - World
-      - Ruffalo
-      - Sagan
+      list:
+      - key: Hello
+        value: World
+      - key: Rustle
+        value: Mania
+      - key: Mark
+        value: Hamill
     dictionary2:
-      keys:
-      - ID: 42
-        file: HGTTG
-      values:
-      - firstName: Arthur
-        lastName: Dent
+      list:
+      - key:
+          ID: 007
+          file: Mi6
+        value:
+          firstName: James
+          lastName: Bond
+      - key:
+          ID: 47
+          file: ICA
+        value:
+          firstName: David
+          lastName: Bateson
     dictionary3:
-      keys:
-      - {fileID: 1494258756}
-      values:
-      - {x: 1, y: 2, z: 3}
+      list:
+      - key: {fileID: 200134301}
+        value: {x: 1, y: 1, z: 1}
+      - key: {fileID: 1494258756}
+        value: {x: 2, y: 2, z: 2}
 --- !u!114 &733603727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -336,7 +350,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   list1:
-    collection: []
+    collection:
+    - Hello World
+    - How are you doing?
+    - Goodbye World
 --- !u!4 &733603728
 Transform:
   m_ObjectHideFlags: 0
@@ -434,3 +451,53 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1740016187
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1740016188}
+  - component: {fileID: 1740016189}
+  m_Layer: 0
+  m_Name: Sandbox
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1740016188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740016187}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1740016189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1740016187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2d47d89e8b1f2048979d7dab86ee27c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  color: {r: 0, g: 0, b: 0, a: 0}
+  example:
+    data: []
+  field:
+    list: []
+  colors:
+    list: []

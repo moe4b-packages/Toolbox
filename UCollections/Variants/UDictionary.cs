@@ -25,15 +25,13 @@ namespace MB
         [CustomPropertyDrawer(typeof(UDictionary), true)]
         public class Drawer : BaseDrawer
         {
-            protected override SerializedProperty GetList() => Property.FindPropertyRelative("keys");
+            protected override SerializedProperty GetList() => Property.FindPropertyRelative("list");
 
-            public SerializedProperty keys;
-            SerializedProperty values;
+            public SerializedProperty GetKey(int index) => List.GetArrayElementAtIndex(index).FindPropertyRelative("key");
+            public SerializedProperty GetValue(int index) => List.GetArrayElementAtIndex(index).FindPropertyRelative("value");
 
             HashSet<int> duplicates;
             HashSet<int> nullables;
-
-            public bool IsAligned => keys.arraySize == values.arraySize;
 
             public const float NestedElementSpacing = 2f;
 
@@ -48,37 +46,23 @@ namespace MB
             {
                 base.Init();
 
-                keys = list;
-                values = Property.FindPropertyRelative("values");
-
                 duplicates = new HashSet<int>();
                 nullables = new HashSet<int>();
                 UpdateState();
 
-                gui.onAddCallback = Add;
-                gui.onRemoveCallback = Remove;
-                gui.onReorderCallbackWithDetails += Reorder;
+                UI.OnChangeElement += ChangeElements;
             }
 
             #region Height
-            protected override float AppendHeight(float height)
-            {
-                if (IsAligned)
-                    return base.AppendHeight(height);
-                else
-                    return height + gui.headerHeight;
-            }
-
             protected override float GetElementHeight(int index)
             {
-                SerializedProperty key = keys.GetArrayElementAtIndex(index);
-                SerializedProperty value = values.GetArrayElementAtIndex(index);
+                var key = GetKey(index);
+                var value = GetValue(index);
 
                 var kHeight = GetChildrenSingleHeight(key, NestedElementSpacing);
                 var vHeight = GetChildrenSingleHeight(value, NestedElementSpacing);
 
                 var max = Math.Max(kHeight, vHeight);
-
                 max = Math.Max(max, SingleLineHeight);
 
                 return max + ElementHeightPadding;
@@ -88,12 +72,6 @@ namespace MB
             #region Draw
             public override void Draw(Rect rect)
             {
-                if (IsAligned == false)
-                {
-                    DrawAlignmentWarning(rect);
-                    return;
-                }
-
                 EditorGUI.BeginChangeCheck();
 
                 base.Draw(rect);
@@ -103,13 +81,13 @@ namespace MB
             }
 
             #region Draw Element
-            protected override void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
+            protected override void DrawElement(Rect rect, int index)
             {
                 rect.height -= ElementHeightPadding;
                 rect.y += ElementHeightPadding / 2;
 
-                var key = keys.GetArrayElementAtIndex(index);
-                var value = values.GetArrayElementAtIndex(index);
+                var key = GetKey(index);
+                var value = GetValue(index);
 
                 if (nullables.Contains(index))
                 {
@@ -176,72 +154,19 @@ namespace MB
                 }
             }
             #endregion
-
-            void DrawAlignmentWarning(Rect rect)
-            {
-                var width = 80f;
-                var spacing = 5f;
-
-                rect.width -= width;
-
-                EditorGUI.HelpBox(rect, $" Misalignment of {Property.displayName} Detected", MessageType.Error);
-
-                rect.x += rect.width + spacing;
-                rect.width = width - spacing;
-
-                if (GUI.Button(rect, "Fix"))
-                {
-                    if (keys.arraySize > values.arraySize)
-                    {
-                        var difference = keys.arraySize - values.arraySize;
-
-                        DeleteArrayRange(keys, difference);
-                    }
-                    else if (keys.arraySize < values.arraySize)
-                    {
-                        var difference = values.arraySize - keys.arraySize;
-
-                        DeleteArrayRange(values, difference);
-                    }
-                }
-            }
             #endregion
 
-            #region Operation Callbacks
-            void Add(ReorderableList list)
-            {
-                values.InsertArrayElementAtIndex(values.arraySize);
-
-                defaults.DoAddButton(list);
-
-                UpdateState();
-            }
-
-            void Remove(ReorderableList list)
-            {
-                ForceDeleteArrayElement(keys, list.index);
-                ForceDeleteArrayElement(values, list.index);
-
-                if (list.index >= list.count) list.index = list.count - 1;
-
-                UpdateState();
-            }
-
-            void Reorder(ReorderableList list, int oldIndex, int newIndex)
-            {
-                values.MoveArrayElement(oldIndex, newIndex);
-            }
-            #endregion
+            void ChangeElements() => UpdateState();
 
             void UpdateState()
             {
                 duplicates.Clear();
                 nullables.Clear();
 
-                var elements = new SerializedProperty[keys.arraySize];
+                var elements = new SerializedProperty[List.arraySize];
 
                 for (int i = 0; i < elements.Length; i++)
-                    elements[i] = keys.GetArrayElementAtIndex(i);
+                    elements[i] = GetKey(i);
 
                 for (int x = 0; x < elements.Length; x++)
                 {
@@ -270,18 +195,40 @@ namespace MB
     public class UDictionary<TKey, TValue> : UDictionary, IDictionary<TKey, TValue>
     {
         [SerializeField]
-        List<TKey> keys;
-        public List<TKey> Keys => keys;
-        ICollection<TKey> IDictionary<TKey, TValue>.Keys => keys;
+        List<KeyValuePair> list = default;
+        public List<KeyValuePair> List => list;
 
-        [SerializeField]
-        List<TValue> values;
-        public List<TValue> Values => values;
-        ICollection<TValue> IDictionary<TKey, TValue>.Values => values;
+        [Serializable]
+        public struct KeyValuePair
+        {
+            [SerializeField]
+            TKey key;
+            public TKey Key => key;
 
-        public override int Count => keys.Count;
+            [SerializeField]
+            TValue value;
+            public TValue Value => value;
+
+            public KeyValuePair(TKey key, TValue value)
+            {
+                this.key = key;
+                this.value = value;
+            }
+        }
+
+        public ICollection<TKey> Keys => Dictionary.Keys;
+        public ICollection<TValue> Values => Dictionary.Values;
+
+        public override int Count => list.Count;
 
         public bool IsReadOnly => false;
+
+        public int IndexOf(TKey key)
+        {
+            return list.FindIndex(Predicate);
+
+            bool Predicate(KeyValuePair pair) => Equals(pair.Key, key);
+        }
 
         Dictionary<TKey, TValue> cache;
 
@@ -295,12 +242,8 @@ namespace MB
                 {
                     cache = new Dictionary<TKey, TValue>();
 
-                    for (int i = 0; i < keys.Count; i++)
-                    {
-                        if (keys[i] == null) continue;
-
-                        cache[keys[i]] = values[i];
-                    }
+                    for (int i = 0; i < List.Count; i++)
+                        cache[list[i].Key] = list[i].Value;
                 }
 
                 return cache;
@@ -312,7 +255,7 @@ namespace MB
             get => Dictionary[key];
             set
             {
-                var index = keys.IndexOf(key);
+                var index = IndexOf(key);
 
                 if (index < 0)
                 {
@@ -320,7 +263,7 @@ namespace MB
                 }
                 else
                 {
-                    values[index] = value;
+                    list[index] = new KeyValuePair(key, value);
                     if (Cached) Dictionary[key] = value;
                 }
             }
@@ -335,8 +278,8 @@ namespace MB
         {
             if (ContainsKey(key)) throw new ArgumentException($"Key {key} Already Added With Collection");
 
-            keys.Add(key);
-            values.Add(value);
+            var pair = new KeyValuePair(key, value);
+            list.Add(pair);
 
             if (Cached) Dictionary.Add(key, value);
         }
@@ -350,12 +293,11 @@ namespace MB
 
         public bool Remove(TKey key)
         {
-            var index = keys.IndexOf(key);
+            var index = IndexOf(key);
 
             if (index < 0) return false;
 
-            keys.RemoveAt(index);
-            values.RemoveAt(index);
+            list.RemoveAt(index);
 
             if (Cached) Dictionary.Remove(key);
 
@@ -365,9 +307,8 @@ namespace MB
 
         public void Clear()
         {
-            keys.Clear();
-            values.Clear();
-
+            list.Clear();
+            
             if (Cached) Dictionary.Clear();
         }
 
@@ -378,8 +319,7 @@ namespace MB
 
         public UDictionary()
         {
-            values = new List<TValue>();
-            keys = new List<TKey>();
+            list = new List<KeyValuePair>();
         }
     }
 }

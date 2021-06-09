@@ -51,8 +51,6 @@ namespace MB
 					text = char.ToUpper(text[0]) + text.Substring(1);
 				}
 
-				text = text.Insert(0, " ");
-
 				label = new GUIContent(text, label.image, label.tooltip);
 			}
 		}
@@ -251,20 +249,7 @@ namespace MB
 
 			Component component;
 
-			ReorderableList gui;
-			ReorderableList.Defaults defaults;
-
-			public bool Expanded
-			{
-				get
-				{
-					return Property.isExpanded;
-				}
-				set
-				{
-					Property.isExpanded = value;
-				}
-			}
+			ImprovedReorderableList UI;
 
 			public const float Padding = 20;
 
@@ -283,33 +268,41 @@ namespace MB
 				component = SerializedObject.targetObject as Component;
 
 				if (Application.isPlaying && isInterface == false)
-					gui = new ReorderableList(list.serializedObject, list, false, true, true, true);
+					UI = new ImprovedReorderableList(list);
 				else
-					gui = new ReorderableList(null, type, false, true, true, true);
+					UI = new ImprovedReorderableList(null, type);
 
-				gui.drawHeaderCallback = DrawHeader;
-				gui.drawElementCallback = DrawElement;
+				UI.TitleContent = Label;
+				UI.ReflectExpandFromProperty(Property);
 
-				defaults = new ReorderableList.Defaults();
+				UI.DrawHeader = DrawHeader;
+				UI.DrawTitle = DrawTitle;
+
+				UI.GetElementHeight = GetElementHeight;
+				UI.DrawElement = DrawElement;
 
 				if (Application.isPlaying == false || isInterface) UpdateComponents();
 			}
 
+            float GetElementHeight(int index)
+            {
+				return EditorGUIUtility.singleLineHeight;
+            }
+
             void UpdateComponents()
 			{
-				gui.list = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
+				UI.ManagedList = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
 			}
 
 			public override float CalculateHeight()
             {
 				var height = 0f;
 
-				height += Expanded ? gui.GetHeight() : gui.headerHeight;
-
+				height += UI.CalculateHeight();
 				height += Padding;
 
 				return height;
-            }
+			}
 
 			public override void Draw(Rect rect)
             {
@@ -319,10 +312,7 @@ namespace MB
 				rect.y += Padding / 2;
 				rect.height -= Padding;
 
-				if (Expanded)
-					DrawList(ref rect);
-				else
-					DrawHeader(rect, true);
+				DrawList(ref rect);
 			}
 
 			void DrawList(ref Rect rect)
@@ -330,73 +320,62 @@ namespace MB
 				GUI.enabled = false;
 
 				UpdateComponents();
-
-				gui.DoList(rect);
+				UI.Draw(rect);
 
 				GUI.enabled = true;
 			}
 
-			void DrawHeader(Rect rect) => DrawHeader(rect, false);
-			void DrawHeader(Rect rect, bool complete)
+			void DrawHeader(Rect rect)
+            {
+				UI.DefaultDrawHeader(rect);
+
+				DrawScope(rect);
+			}
+
+			void DrawTitle(Rect rect)
 			{
 				GUI.enabled = true;
 
-				if (complete)
-				{
-					defaults.DrawHeaderBackground(rect);
-
-					rect.x += 6;
-				}
-
-				rect.x += 10f;
-				rect.width -= 200;
-
-				Expanded = EditorGUI.Foldout(rect, Expanded, Label, true);
-
-				DrawScope(ref rect);
+				UI.DefaultDrawTitle(rect);
 
 				GUI.enabled = false;
 			}
 
-			void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
+			void DrawScope(Rect rect)
 			{
-				var label = new GUIContent($"Element {index}");
-
-				if (gui.list == null)
-				{
-					var element = gui.serializedProperty.GetArrayElementAtIndex(index);
-
-					EditorGUI.PropertyField(rect, element, label);
-				}
-				else
-				{
-					var instance = gui.list[index] as Object;
-
-					EditorGUI.ObjectField(rect, label, instance, type, true);
-				}
-			}
-
-			void DrawScope(ref Rect rect)
-			{
-				if (Application.isPlaying) GUI.enabled = false;
+				GUI.enabled = !Application.isPlaying;
 
 				var labelWidth = EditorGUIUtility.labelWidth;
 				EditorGUIUtility.labelWidth = 50;
 
-				rect.x += rect.width - 128 + 200;
-				rect.width = 120;
+				rect.y += 1;
 
-				if (Expanded == false)
-				{
-					rect.x -= 12;
-					rect.y += 1;
-				}
+				rect.x = rect.width - 200;
+				rect.width = 200;
 
 				EditorGUI.PropertyField(rect, scope);
 
 				EditorGUIUtility.labelWidth = labelWidth;
 
 				GUI.enabled = false;
+			}
+
+			void DrawElement(Rect rect, int index)
+			{
+				var label = new GUIContent($"Element {index}");
+
+                switch (UI.Backing)
+                {
+                    case ImprovedReorderableList.BackingType.Serialized:
+						var element = UI.Property.GetArrayElementAtIndex(index);
+						EditorGUI.PropertyField(rect, element, label);
+						break;
+
+					case ImprovedReorderableList.BackingType.Managed:
+						var instance = UI.ManagedList[index] as Object;
+						EditorGUI.ObjectField(rect, label, instance, type, true);
+						break;
+                }
 			}
 		}
 #endif

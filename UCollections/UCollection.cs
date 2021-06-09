@@ -29,50 +29,31 @@ namespace MB
 #if UNITY_EDITOR
         public abstract class BaseDrawer : PersistantPropertyDrawer
         {
-            public bool IsExpanded
-            {
-                get => Property.isExpanded;
-                set => Property.isExpanded = value;
-            }
-
-            protected SerializedProperty list;
+            protected SerializedProperty List;
             protected abstract SerializedProperty GetList();
+
+            protected ImprovedReorderableList UI;
+
+            public float ListPadding = 5f;
+
+            public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
+
+            public const float ElementHeightPadding = 6f;
+            public const float ElementFoldoutPadding = 15f;
 
             protected override void Init()
             {
                 base.Init();
 
-                FormatLabel(ref Label);
+                List = GetList();
 
-                list = GetList();
+                UI = new ImprovedReorderableList(List);
 
-                defaults = new ReorderableList.Defaults();
+                UI.TitleText = Property.displayName;
 
-                gui = new ReorderableList(Property.serializedObject, list, true, true, true, true);
-
-                gui.drawHeaderCallback = DrawHeader;
-                gui.elementHeightCallback = GetElementHeight;
-                gui.drawElementCallback = DrawElement;
+                UI.GetElementHeight = GetElementHeight;
+                UI.DrawElement = DrawElement;
             }
-
-            static void FormatLabel(ref GUIContent label)
-            {
-                var text = label.text;
-
-                text = text.Insert(0, " ");
-
-                label = new GUIContent(text, label.image, label.tooltip);
-            }
-
-            protected ReorderableList gui;
-            protected ReorderableList.Defaults defaults;
-
-            public const float ElementHeightPadding = 6f;
-            public const float ElementFoldoutPadding = 15f;
-
-            public float ListPadding = 5f;
-
-            public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
 
             #region Height
             public override float CalculateHeight()
@@ -84,14 +65,14 @@ namespace MB
 
             protected virtual float AppendHeight(float height)
             {
-                height += IsExpanded ? gui.GetHeight() : gui.headerHeight;
+                height += UI.CalculateHeight();
 
                 return height;
             }
 
             protected virtual float GetElementHeight(int index)
             {
-                SerializedProperty element = list.GetArrayElementAtIndex(index);
+                SerializedProperty element = List.GetArrayElementAtIndex(index);
 
                 var height = EditorGUI.GetPropertyHeight(element);
 
@@ -110,45 +91,15 @@ namespace MB
                 rect.y += ListPadding;
                 rect.height -= ListPadding + ListPadding;
 
-                if (IsExpanded)
-                    DrawList(rect);
-                else
-                    DrawHeader(rect, true);
+                UI.Draw(rect);
             }
 
-            public virtual void DrawList(Rect rect)
-            {
-                gui.DoList(rect);
-            }
-
-            protected virtual void DrawHeader(Rect rect) => DrawHeader(rect, false);
-            protected virtual void DrawHeader(Rect rect, bool full)
-            {
-                if (full)
-                {
-                    defaults.DrawHeaderBackground(rect);
-
-                    rect.x += 6;
-                    rect.y += 0;
-                }
-
-                var indent = EditorGUI.indentLevel;
-
-                EditorGUI.indentLevel = 0;
-
-                rect.x += 10f;
-
-                IsExpanded = EditorGUI.Foldout(rect, IsExpanded, Label, true);
-
-                EditorGUI.indentLevel = indent;
-            }
-
-            protected virtual void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
+            protected virtual void DrawElement(Rect rect, int index)
             {
                 rect.height -= ElementHeightPadding;
                 rect.y += ElementHeightPadding / 2;
 
-                var element = list.GetArrayElementAtIndex(index);
+                var element = List.GetArrayElementAtIndex(index);
 
                 DrawField(rect, element);
             }

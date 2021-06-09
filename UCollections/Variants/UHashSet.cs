@@ -56,7 +56,7 @@ namespace MB
                     UpdateState();
             }
 
-            protected override void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
+            protected override void DrawElement(Rect rect, int index)
             {
                 if (nullables.Contains(index))
                 {
@@ -78,7 +78,7 @@ namespace MB
                     rect.x += KeyInfoContextWidth;
                 }
 
-                base.DrawElement(rect, index, isActive, isFocused);
+                base.DrawElement(rect, index);
             }
 
             void UpdateState()
@@ -86,10 +86,10 @@ namespace MB
                 duplicates.Clear();
                 nullables.Clear();
 
-                var elements = new SerializedProperty[list.arraySize];
+                var elements = new SerializedProperty[List.arraySize];
 
                 for (int i = 0; i < elements.Length; i++)
-                    elements[i] = list.GetArrayElementAtIndex(i);
+                    elements[i] = List.GetArrayElementAtIndex(i);
 
                 for (int x = 0; x < elements.Length; x++)
                 {

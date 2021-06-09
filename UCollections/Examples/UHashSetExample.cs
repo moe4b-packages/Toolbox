@@ -20,27 +20,18 @@ namespace MB
 {
     public class UHashSetExample : MonoBehaviour
     {
-        public UHashSet1 hash1;
-        public UHashSet2 hash2;
-        public UHashSet3 hash3;
+        public UHashSet<string> hash1;
+        public UHashSet<Value> hash2;
+        public UHashSet<Component> hash3;
         
         public Nested nested;
         [Serializable]
         public class Nested
         {
-            public UHashSet1 hash1;
-            public UHashSet2 hash2;
-            public UHashSet3 hash3;
+            public UHashSet<string> hash1;
+            public UHashSet<Value> hash2;
+            public UHashSet<Component> hash3;
         }
-
-        [Serializable]
-        public class UHashSet1 : UHashSet<string> { }
-
-        [Serializable]
-        public class UHashSet2 : UHashSet<Value> { }
-
-        [Serializable]
-        public class UHashSet3 : UHashSet<Component> { }
 
         [Serializable]
         public struct Value
