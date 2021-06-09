@@ -130,8 +130,6 @@ namespace MB
 
 			Selections.Add(index);
 			IsFocused = true;
-
-			SortSelection();
 		}
 		public void SelectBetween(int x, int y)
 		{
@@ -146,15 +144,16 @@ namespace MB
 		public void RemoveSelection(int index)
 		{
 			Selections.Remove(index);
-
-			SortSelection();
 		}
 
-		public void SortSelection()
-		{
-			Selections.Sort(Sort);
+		public IList<int> RetrieveSortedSelection()
+        {
+			var array = Selections.ToArray();
 
+			Array.Sort(array, Sort);
 			int Sort(int x, int y) => x.CompareTo(y);
+
+			return array;
 		}
 
 		public void ClearSelection()
@@ -169,7 +168,7 @@ namespace MB
 				if (Selections.Count == 0)
 					return -1;
 
-				return Selections.First();
+				return Selections.Min();
 			}
 		}
 		public int HighestSelection
@@ -179,7 +178,7 @@ namespace MB
 				if (Selections.Count == 0)
 					return -1;
 
-				return Selections.Last();
+				return Selections.Max();
 			}
 		}
 
@@ -819,7 +818,7 @@ namespace MB
 
 			if (GUI.Button(rect, ToolbarMinusContent, ToolbarButtonStyle))
 			{
-				var collection = Selections.ToArray();
+				var collection = RetrieveSortedSelection();
 				ClearSelection();
 				RemoveElement(collection);
 
