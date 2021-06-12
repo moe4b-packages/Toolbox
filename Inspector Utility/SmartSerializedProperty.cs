@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.IO;
 using System.Linq;
@@ -9,10 +10,8 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.AI;
 
-#if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
-#endif
 
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -498,3 +497,4 @@ namespace MB
         }
     }
 }
+#endif

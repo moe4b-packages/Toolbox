@@ -220,6 +220,11 @@ namespace MB
         /// <returns></returns>
         public static bool CheckElementsInclusion<T>(IEnumerable<T> original, IEnumerable<T> latest, IEqualityComparer<T> comparer = null)
         {
+            if (original == null && original == null) return true;
+
+            if (original == null && original != null) return false;
+            if (original != null && original == null) return false;
+
             if (comparer == null) comparer = EqualityComparer<T>.Default;
 
             var hashset = new HashSet<T>(original, comparer);
