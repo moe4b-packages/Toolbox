@@ -338,7 +338,7 @@ namespace MB
 		{
 			var area = MUtility.GUICoordinates.SliceLine(ref rect, HeaderHeight);
 
-			ProcessItemDrop(area);
+			ProcessItemsDrop(area);
 
 			DrawHeader(area);
 
@@ -413,7 +413,7 @@ namespace MB
 
 		public bool IsDroppingItems { get; private set; }
 
-		void ProcessItemDrop(Rect area)
+		void ProcessItemsDrop(Rect area)
 		{
 			if (SupportItemDrop == false) return;
 			if (GUI.enabled == false) return;
@@ -432,7 +432,7 @@ namespace MB
 				if (IsDroppingItems)
 				{
 					DragAndDrop.AcceptDrag();
-					ApplyItemDrop();
+					EndItemsDrop();
 				}
 
 				IsDroppingItems = false;
@@ -455,8 +455,8 @@ namespace MB
 			return true;
 		}
 
-		void ApplyItemDrop()
-		{
+		void EndItemsDrop()
+        {
 			var targets = new List<Object>();
 
 			foreach (var item in DragAndDrop.objectReferences)
@@ -474,7 +474,18 @@ namespace MB
 
 			ClearSelection();
 
-			foreach (var target in targets)
+			DropItems(targets);
+			InvokeElementsChange();
+			UpdateState();
+
+			Undo.SetCurrentGroupName($"Drop Items to {TitleText}");
+		}
+
+		public delegate void DropItemsDelegate(List<Object> list);
+		public DropItemsDelegate DropItems { get; set; }
+		public void DefaultDropItems(List<Object> list)
+		{
+			foreach (var target in list)
 			{
 				var index = Count;
 				Property.InsertArrayElementAtIndex(index);
@@ -484,12 +495,6 @@ namespace MB
 
 				AddSelection(index);
 			}
-
-			Undo.SetCurrentGroupName($"Drop Items to {TitleText}");
-
-			InvokeElementChange();
-
-			UpdateState();
 		}
 		#endregion
 
@@ -745,7 +750,7 @@ namespace MB
 				ReorderElement(DragElementSource, DragElementDestination);
 				Undo.SetCurrentGroupName($"Reorder {TitleText} Element");
 
-				InvokeElementChange();
+				InvokeElementsChange();
 			}
 
 			IsDraggingElement = false;
@@ -806,7 +811,7 @@ namespace MB
 				AddElement(index);
 				Undo.SetCurrentGroupName($"Add Element to {TitleText}");
 
-				InvokeElementChange();
+				InvokeElementsChange();
 			}
 		}
 
@@ -823,7 +828,7 @@ namespace MB
 
 				Undo.SetCurrentGroupName($"Remove Elements From {TitleText}");
 
-				InvokeElementChange();
+				InvokeElementsChange();
 			}
 
 			GUI.enabled = true;
@@ -866,11 +871,11 @@ namespace MB
 			Property.MoveArrayElement(source, destination);
 		}
 
-		public delegate void ChangeElementDelegate();
-		public event ChangeElementDelegate OnChangeElement;
-		void InvokeElementChange()
+		public delegate void ElementsChangeDelegate();
+		public event ElementsChangeDelegate OnElementsChange;
+		void InvokeElementsChange()
 		{
-			OnChangeElement?.Invoke();
+			OnElementsChange?.Invoke();
 		}
 		#endregion
 
@@ -887,6 +892,7 @@ namespace MB
 			RemoveElement = DefaultRemoveElement;
 			AddElement = DefaultAddElement;
 			ReorderElement = DefaultReorderElement;
+			DropItems = DefaultDropItems;
 		}
 
 		public ImprovedReorderableList(SerializedProperty property) : this()

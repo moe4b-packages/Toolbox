@@ -50,7 +50,7 @@ namespace MB
                 nullables = new HashSet<int>();
                 UpdateState();
 
-                UI.OnChangeElement += ChangeElements;
+                UI.OnElementsChange += ChangeElements;
             }
 
             #region Height
