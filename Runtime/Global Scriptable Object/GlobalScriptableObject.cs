@@ -26,11 +26,7 @@ namespace MB
     /// </summary>
     public class GlobalScriptableObject : ScriptableObject
     {
-#if UNITY_EDITOR
-        [InitializeOnLoadMethod]
-#else
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-#endif
+        [InitializeOnAllLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Initiate()
         {
             var list = TypeQuery.FindAll(Predicate);

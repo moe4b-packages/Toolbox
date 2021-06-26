@@ -134,46 +134,14 @@ namespace MB
             return defaultValue;
         }
 
-        public ToggleValue() : this(false, default(TValue))
-        {
-
-        }
-        public ToggleValue(bool enabled, TValue value)
+        public ToggleValue() : this(default, false) { }
+        public ToggleValue(TValue value) : this(value, true) { }
+        public ToggleValue(TValue value, bool enabled)
         {
             this.enabled = enabled;
-
             this.value = value;
         }
 
-        public static implicit operator ToggleValue<TValue>(TValue value) => new ToggleValue<TValue>(true, value);
+        public static implicit operator ToggleValue<TValue>(TValue value) => new ToggleValue<TValue>(value);
     }
-
-    #region Defaults
-    [Serializable]
-    public class IntToggleValue : ToggleValue<int> { }
-
-    [Serializable]
-    public class FloatToggleValue : ToggleValue<float> { }
-
-    [Serializable]
-    public class BoolToggleValue : ToggleValue<bool> { }
-
-    [Serializable]
-    public class StringToggleValue : ToggleValue<string> { }
-
-    [Serializable]
-    public class ColorToggleValue : ToggleValue<Color>
-    {
-        public ColorToggleValue()
-        {
-            value = Color.white;
-        }
-    }
-
-    [Serializable]
-    public class Vector2ToggleValue : ToggleValue<Vector2> { }
-
-    [Serializable]
-    public class Vector3ToggleValue : ToggleValue<Vector3> { }
-    #endregion
 }

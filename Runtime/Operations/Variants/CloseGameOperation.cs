@@ -19,7 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-    public class QuitGameOperation : Operation
+    public class CloseGameOperation : Operation
     {
         public override void Execute()
         {

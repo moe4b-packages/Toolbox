@@ -203,49 +203,18 @@ namespace MB
             set => this.value = value;
         }
 
+        public static implicit operator TValue(OptionalValue<TValue> target) => target.value;
+
         public override string ToString() => $"{value}";
 
-        public OptionalValue() : this(false, default)
-        {
-
-        }
-        public OptionalValue(bool enabled, TValue value)
+        public OptionalValue() : this(default, false) { }
+        public OptionalValue(TValue value) : this(value, false) { }
+        public OptionalValue(TValue value, bool enabled)
         {
             this.enabled = enabled;
             this.value = value;
         }
 
-        public static implicit operator TValue(OptionalValue<TValue> target) => target.value;
-
-        public static implicit operator OptionalValue<TValue>(TValue value) => new OptionalValue<TValue>(false, value);
+        public static implicit operator OptionalValue<TValue>(TValue value) => new OptionalValue<TValue>(value);
     }
-
-    #region Defaults
-    [Serializable]
-    public class IntOptionalValue : OptionalValue<int> { }
-
-    [Serializable]
-    public class FloatOptionalValue : OptionalValue<float> { }
-
-    [Serializable]
-    public class BoolOptionalValue : OptionalValue<bool> { }
-
-    [Serializable]
-    public class StringOptionalValue : OptionalValue<string> { }
-
-    [Serializable]
-    public class ColorOptionalValue : OptionalValue<Color>
-    {
-        public ColorOptionalValue()
-        {
-            value = Color.white;
-        }
-    }
-
-    [Serializable]
-    public class Vector2OptionalValue : OptionalValue<Vector2> { }
-
-    [Serializable]
-    public class Vector3OptionalValue : OptionalValue<Vector3> { }
-    #endregion
 }
