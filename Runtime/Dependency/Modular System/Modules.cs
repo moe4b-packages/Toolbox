@@ -23,6 +23,8 @@ namespace MB
 	{
 		void Register(IBehaviours behaviours);
 		void Register(IBehaviours behaviours, ModuleScope scope);
+
+		void Set();
 	}
 
 	[Serializable]

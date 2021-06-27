@@ -21,7 +21,9 @@ namespace MB
 {
 	public interface IBehaviours : IGenericModularCollection
 	{
+		void Configure();
 
+		void Init();
 	}
 
 	[Serializable]
