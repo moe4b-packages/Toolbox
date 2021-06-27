@@ -19,104 +19,17 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-	public interface IBehaviours
+	public interface IBehaviours : IGenericModularCollection
 	{
-		TTarget Find<TTarget>()
-			where TTarget : class;
 
-		List<TTarget> FindAll<TTarget>()
-			where TTarget : class;
 	}
 
 	[Serializable]
-	public class Behaviours<TReference> : Behaviours<TReference, IBehaviour<TReference>>
-		where TReference : Component
-	{
-		public Behaviours(TReference reference) : base(reference) { }
-	}
-
-	[Serializable]
-	public abstract class Behaviours<TReference, TBehaviour> : IBehaviours
+	public abstract class Behaviours<TReference, TBehaviour> : GenericModularCollection<TBehaviour>, IBehaviours
 		where TReference : Component
 		where TBehaviour : IBehaviour<TReference>
 	{
 		public TReference Reference { get; protected set; }
-
-		public List<TBehaviour> List { get; protected set; }
-
-		public virtual void Add(TBehaviour behaviour)
-		{
-			List.Add(behaviour);
-		}
-
-		public virtual void AddAll(IEnumerable<TBehaviour> range)
-        {
-			foreach (var item in range)
-				Add(item);
-        }
-
-		public virtual bool Remove(TBehaviour behaviour)
-        {
-			return List.Remove(behaviour);
-        }
-
-		#region Iteration
-		public void ForAll(Action<TBehaviour> action)
-		{
-			for (int i = 0; i < List.Count; i++)
-				action(List[i]);
-		}
-
-		public void ForAll<TTarget>(Action<TTarget> action)
-			where TTarget : class
-		{
-			for (int i = 0; i < List.Count; i++)
-				if (List[i] is TTarget target)
-					action(target);
-		}
-		#endregion
-
-		#region Query
-		public TTarget Find<TTarget>()
-			where TTarget : class
-		{
-			ValidateQuery<TTarget>();
-
-			for (int i = 0; i < List.Count; i++)
-				if (List[i] is TTarget target)
-					return target;
-
-			return null;
-		}
-
-		public List<TTarget> FindAll<TTarget>()
-			where TTarget : class
-		{
-			ValidateQuery<TTarget>();
-
-			var selection = new List<TTarget>();
-
-			for (int i = 0; i < List.Count; i++)
-				if (List[i] is TTarget target)
-					selection.Add(target);
-
-			return selection;
-		}
-
-		public void ValidateQuery<T>()
-		{
-#if UNITY_EDITOR
-			var type = typeof(T);
-			if (type.IsInterface) return;
-
-			var behaviour = typeof(TBehaviour);
-
-			if (behaviour.IsAssignableFrom(type) == false)
-				throw new Exception($"Invalid Query For {type} Within Collection of {behaviour}'s" +
-					$", Please Ensure that {type} Inherits from {behaviour}");
-#endif
-		}
-		#endregion
 
 		public virtual void Configure()
 		{
@@ -130,15 +43,19 @@ namespace MB
 				List[i].Init();
 		}
 
-		public Behaviours(TReference reference)
+		public Behaviours(TReference reference) : base()
 		{
-			List = new List<TBehaviour>();
-
 			var selection = reference.GetComponentsInChildren<TBehaviour>(true);
 
-			for (int i = 0; i < selection.Length; i++)
-				Add(selection[i]);
+			AddAll(selection);
 		}
+	}
+
+	[Serializable]
+	public class Behaviours<TReference> : Behaviours<TReference, IBehaviour<TReference>>
+		where TReference : Component
+	{
+		public Behaviours(TReference reference) : base(reference) { }
 	}
 
 	public interface IBehaviour<TReference>
