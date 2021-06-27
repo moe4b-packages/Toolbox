@@ -24,11 +24,19 @@ namespace MB
     {
         [SerializeField]
         float min;
-        public float Min { get { return min; } }
+        public float Min
+        {
+            get => min;
+            set => min = value;
+        }
 
         [SerializeField]
         float max;
-        public float Max { get { return max; } }
+        public float Max
+        {
+            get => max;
+            set => max = value;
+        }
 
         public float Random => UnityEngine.Random.Range(min, max);
 
