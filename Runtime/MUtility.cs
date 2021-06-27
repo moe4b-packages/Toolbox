@@ -254,6 +254,13 @@ namespace MB
 
             return true;
         }
+
+        public static T GetRandomElement<T>(IList<T> list)
+        {
+            var index = Random.Range(0, list.Count);
+
+            return list[index];
+        }
         #endregion
 
         #region Audio
@@ -359,6 +366,8 @@ namespace MB
 
             list[index] = item;
         }
+
+        public static T GetRandomElement<T>(IList<T> list) => MUtility.GetRandomElement(list);
 
         #region String
         public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);

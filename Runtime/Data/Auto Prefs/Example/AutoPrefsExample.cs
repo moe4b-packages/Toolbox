@@ -85,59 +85,5 @@ namespace MB
 
             public override string ToString() => $"{number} | {text} | {date}";
         }
-
-        public static class CustomJsonConveters
-        {
-            public static JsonConverter[] Collection { get; private set; } = new JsonConverter[]
-            {
-            new IPAddressConverter(),
-            new ColorConverter(),
-            };
-
-            public class IPAddressConverter : JsonConverter
-            {
-                public override bool CanConvert(Type type) => typeof(IPAddress).IsAssignableFrom(type);
-
-                public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-                {
-                    var text = value.ToString();
-
-                    writer.WriteValue(text);
-                }
-                public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-                {
-                    var text = (string)reader.Value;
-
-                    if (text == null) return null;
-
-                    if (text == "localhost") return IPAddress.Loopback;
-
-                    return IPAddress.Parse(text);
-                }
-            }
-
-            public class ColorConverter : JsonConverter
-            {
-                public override bool CanConvert(Type type) => typeof(Color).IsAssignableFrom(type);
-
-                public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-                {
-                    var instance = (Color)value;
-
-                    var hex = "#" + ColorUtility.ToHtmlStringRGBA(instance);
-
-                    writer.WriteValue(hex);
-                }
-                public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
-                {
-                    var hex = (string)reader.Value;
-
-                    if (ColorUtility.TryParseHtmlString(hex, out var color) == false)
-                        throw new Exception($"Invalid Hex Color '{hex}' Read");
-
-                    return color;
-                }
-            }
-        }
     }
 }
