@@ -24,8 +24,16 @@ namespace MB
         public Dictionary<TValue, TKey> Keys { get; protected set; }
         public Dictionary<TKey, TValue> Values { get; protected set; }
 
-        public TValue this[TKey key] => Values[key];
-        public TKey this[TValue value] => Keys[value];
+        public TValue this[TKey parameter]
+        {
+            get => Values[parameter];
+            set => Set(parameter, value);
+        }
+        public TKey this[TValue parameter]
+        {
+            get => Keys[parameter];
+            set => Set(value, parameter);
+        }
 
         public virtual void Add(TKey key, TValue value)
         {
