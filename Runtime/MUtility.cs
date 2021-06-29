@@ -18,9 +18,13 @@ using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 using UnityEngine.LowLevel;
-using System.Collections.Concurrent;
+
 using System.Text;
 using System.Reflection;
+using System.Collections.Concurrent;
+
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace MB
 {
@@ -333,6 +337,13 @@ namespace MB
             return type.GetGenericArguments()[0];
         }
         #endregion
+
+        public static Thread ASyncThread(Func<Task> function)
+        {
+            void Run() => function().Wait();
+
+            return new Thread(Run);
+        }
     }
 
     public static partial class MUtilityExtensions
