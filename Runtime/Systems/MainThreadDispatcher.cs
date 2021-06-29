@@ -36,7 +36,7 @@ namespace MB
 
 		public static ConcurrentQueue<Action> Queue { get; private set; }
 
-		public const int ASyncPollRate = 1;
+		public static int ASyncPollRate { get; set; } = 1;
 
 		public static void Execute(Action method)
         {
