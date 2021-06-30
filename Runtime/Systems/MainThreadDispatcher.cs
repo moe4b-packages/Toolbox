@@ -38,6 +38,12 @@ namespace MB
 
 		public static int ASyncPollRate { get; set; } = 1;
 
+		static void Update()
+		{
+			while (Queue.TryDequeue(out var action))
+				action();
+		}
+
 		public static void Execute(Action method)
         {
 			Queue.Enqueue(method);
@@ -74,12 +80,6 @@ namespace MB
 				await Task.Delay(ASyncPollRate);
 
 			return result;
-		}
-
-		static void Update()
-		{
-			while (Queue.TryDequeue(out var action))
-				action();
 		}
 
 		static MainThreadDispatcher()
