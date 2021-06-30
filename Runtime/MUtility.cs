@@ -383,6 +383,7 @@ namespace MB
         #region String
         public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
         public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
+        public static string Join(this IEnumerable<string> collection) => Join(collection, "");
 
         public static string RemoveAll(this string text, params string[] phrases)
         {
