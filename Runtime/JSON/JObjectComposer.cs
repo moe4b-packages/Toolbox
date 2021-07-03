@@ -165,7 +165,7 @@ namespace MB
             }
         }
 
-        public virtual object Read(Type data, string path, object fallback = default)
+        public virtual object Read(string path, Type data, object fallback = default)
         {
             Retrieve(path, out var token, out var id);
 

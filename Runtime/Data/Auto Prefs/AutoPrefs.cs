@@ -213,7 +213,7 @@ namespace MB
         }
         public static object Read(Type data, string key, object fallback = default)
         {
-            return Composer.Read(data, key, fallback);
+            return Composer.Read(key, data, fallback);
         }
 
         public static bool Remove(string key) => Composer.Remove(key);
