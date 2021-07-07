@@ -349,7 +349,7 @@ namespace MB
 
     public static partial class MUtilityExtensions
     {
-        public static string ToDisplayString<T>(this T value) => MUtility.PrettifyName(value);
+        public static string ToPrettyString<T>(this T value) => MUtility.PrettifyName(value);
 
         public static Color SetAlpha(this Color color, float value)
         {

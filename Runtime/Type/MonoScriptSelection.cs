@@ -171,7 +171,7 @@ namespace MB
 
 				rect.width -= width;
 
-				EditorGUI.HelpBox(rect, $"Type '{Asset.objectReferenceValue.name.ToDisplayString()}' Invalid", MessageType.Error);
+				EditorGUI.HelpBox(rect, $"Type '{Asset.objectReferenceValue.name.ToPrettyString()}' Invalid", MessageType.Error);
 
 				rect.x += rect.width + spacing;
 				rect.width = width - spacing;

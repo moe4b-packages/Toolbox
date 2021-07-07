@@ -93,7 +93,7 @@ namespace MB
 				{
 					if (component.objectReferenceValue == options[i]) selection = i + 1;
 
-					popup[i + 1] = $"{i + 1}. {options[i].GetType().Name.ToDisplayString()}";
+					popup[i + 1] = $"{i + 1}. {options[i].GetType().Name.ToPrettyString()}";
 				}
 
 				if (selection == 0 && options.Length > 0) selection = 1;
