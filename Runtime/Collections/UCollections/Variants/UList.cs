@@ -65,7 +65,7 @@ namespace MB
             set => ICollection[index] = value;
         }
 
-        public IEnumerator<T> GetEnumerator() => collection.GetEnumerator();
+        public IEnumerator<T> GetEnumerator() => Collection.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => Collection.GetEnumerator();
 
         public int IndexOf(T item) => collection.IndexOf(item);

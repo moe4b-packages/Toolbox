@@ -131,5 +131,15 @@ namespace MB
             }
         }
     }
+
+    public static partial class MUtilityExtensions
+    {
+        public static void WriteText(this TextAsset asset, string contents)
+        {
+            var path = AssetDatabase.GetAssetPath(asset);
+
+            File.WriteAllText(path, contents);
+        }
+    }
 }
 #endif

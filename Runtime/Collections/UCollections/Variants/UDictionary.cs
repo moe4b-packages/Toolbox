@@ -163,6 +163,9 @@ namespace MB
                 duplicates.Clear();
                 nullables.Clear();
 
+                //TODO Deal With False Markups
+                return;
+
                 var elements = new SerializedProperty[List.arraySize];
 
                 for (int i = 0; i < elements.Length; i++)

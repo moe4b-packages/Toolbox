@@ -106,25 +106,26 @@ namespace MB
             {
                 var current = text[i];
 
-                if (i + 1 < text.Length && i > 0)
+                var next = ValidateIndexBounds(text.Length, i + 1) ? text[i + 1] : default;
+                var previous = ValidateIndexBounds(text.Length, i - 1) ? text[i - 1] : default;
+
+                if (char.IsUpper(current))
                 {
-                    var next = text[i + 1];
-                    var previous = text[i - 1];
-
-                    if (char.IsUpper(current) && char.IsLower(previous))
-                        builder.Append(" ");
-
-                    if (char.IsNumber(current) && !char.IsNumber(previous))
-                        builder.Append(" ");
-
-                    if (!char.IsNumber(current) && char.IsNumber(previous))
-                        builder.Append(" ");
+                    if (char.IsLower(previous))
+                        builder.Append(' ');
+                    else if (char.IsUpper(previous) && char.IsLower(next))
+                        builder.Append(' ');
                 }
 
-                if (text[i] == '_')
-                    builder.Append(" ");
-                else
-                    builder.Append(text[i]);
+                if (char.IsNumber(current) && !char.IsNumber(previous))
+                    builder.Append(' ');
+
+                if (!char.IsNumber(current) && char.IsNumber(previous))
+                    builder.Append(' ');
+
+                if (text[i] == '_') current = ' ';
+
+                builder.Append(current);
             }
 
             return builder.ToString();
