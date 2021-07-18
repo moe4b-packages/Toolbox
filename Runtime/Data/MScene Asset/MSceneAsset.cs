@@ -234,6 +234,9 @@ namespace MB
 
             public int GetHashCode(MSceneAsset target)
             {
+                if (target == null) return 0;
+                if (target.asset == null) return 0;
+
                 return target.asset.GetHashCode();
             }
         }

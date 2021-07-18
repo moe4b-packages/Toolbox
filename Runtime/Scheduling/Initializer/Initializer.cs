@@ -35,7 +35,7 @@ namespace MB
 
         public static IList<IInitialize> Query(UObjectSurrogate surrogate)
         {
-            var list = surrogate.GameObject.GetComponentsInChildren<IInitialize>();
+            var list = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
 
             return list;
         }
