@@ -107,7 +107,7 @@ namespace MB
 			return surrogate.GameObject.GetComponent<T>();
 		}
 
-		public static T InChildren<T>(UObjectSurrogate surrogate, bool includeInactive = false)
+		public static T InChildren<T>(UObjectSurrogate surrogate, bool includeInactive = true)
 			where T : class
 		{
 			return surrogate.GameObject.GetComponentInChildren<T>(includeInactive);
@@ -129,11 +129,11 @@ namespace MB
 			}
 		}
 
-		public static T InScene<T>(UObjectSurrogate surrogate, bool includeInactive = false) where T : class
+		public static T InScene<T>(UObjectSurrogate surrogate, bool includeInactive = true) where T : class
 		{
 			return InScene<T>(surrogate.GameObject.scene, includeInactive: includeInactive);
 		}
-		public static T InScene<T>(Scene scene, bool includeInactive = false) where T : class
+		public static T InScene<T>(Scene scene, bool includeInactive = true) where T : class
 		{
 			var roots = scene.GetRootGameObjects();
 
@@ -147,7 +147,7 @@ namespace MB
 			return null;
 		}
 
-		public static T InGlobal<T>(bool incaludeInactive = false)
+		public static T InGlobal<T>(bool incaludeInactive = true)
 			where T : class
 		{
 			var target = typeof(T);
@@ -214,7 +214,7 @@ namespace MB
 			return surrogate.GameObject.GetComponent(type);
 		}
 
-		public static Component InChildren(UObjectSurrogate surrogate, Type type, bool includeInactive = false)
+		public static Component InChildren(UObjectSurrogate surrogate, Type type, bool includeInactive = true)
 		{
 			return surrogate.GameObject.GetComponentInChildren(type, includeInactive);
 		}
@@ -234,11 +234,11 @@ namespace MB
 			}
 		}
 
-		public static Component InScene(UObjectSurrogate surrogate, Type type, bool includeInactive = false)
+		public static Component InScene(UObjectSurrogate surrogate, Type type, bool includeInactive = true)
 		{
 			return InScene(surrogate.GameObject.scene, type, includeInactive: includeInactive);
 		}
-		public static Component InScene(Scene scene, Type type, bool includeInactive = false)
+		public static Component InScene(Scene scene, Type type, bool includeInactive = true)
 		{
 			var roots = scene.GetRootGameObjects();
 
@@ -252,7 +252,7 @@ namespace MB
 			return null;
 		}
 
-		public static Component InGlobal(Type type, bool includeInactive = false)
+		public static Component InGlobal(Type type, bool includeInactive = true)
 		{
 			if (type.IsInterface)
 			{
@@ -340,7 +340,7 @@ namespace MB
 			return surrogate.GameObject.GetComponents<T>();
 		}
 
-		public static T[] InChildren<T>(UObjectSurrogate surrogate, bool includeInactive = false)
+		public static T[] InChildren<T>(UObjectSurrogate surrogate, bool includeInactive = true)
 			where T : class
 		{
 			return surrogate.GameObject.GetComponentsInChildren<T>(includeInactive);
@@ -365,11 +365,11 @@ namespace MB
 			return list.ToArray();
 		}
 
-		public static List<T> InScene<T>(UObjectSurrogate surrogate, bool includeInactive = false) where T : class
+		public static List<T> InScene<T>(UObjectSurrogate surrogate, bool includeInactive = true) where T : class
 		{
 			return InScene<T>(surrogate.GameObject.scene, includeInactive: includeInactive);
 		}
-		public static List<T> InScene<T>(Scene scene, bool includeInactive = false) where T : class
+		public static List<T> InScene<T>(Scene scene, bool includeInactive = true) where T : class
 		{
 			var list = new List<T>();
 
@@ -462,7 +462,7 @@ namespace MB
 			return surrogate.GameObject.GetComponents(type);
 		}
 
-		public static Component[] InChildren(UObjectSurrogate surrogate, Type type, bool includeInactive = false)
+		public static Component[] InChildren(UObjectSurrogate surrogate, Type type, bool includeInactive = true)
 		{
 			return surrogate.GameObject.GetComponentsInChildren(type, includeInactive);
 		}
@@ -485,11 +485,11 @@ namespace MB
 			return list.ToArray();
 		}
 
-		public static List<Component> InScene(UObjectSurrogate surrogate, Type type, bool includeInactive = false)
+		public static List<Component> InScene(UObjectSurrogate surrogate, Type type, bool includeInactive = true)
 		{
 			return InScene(surrogate.GameObject.scene, type, includeInactive: includeInactive);
 		}
-		public static List<Component> InScene(Scene scene, Type type, bool includeInactive = false)
+		public static List<Component> InScene(Scene scene, Type type, bool includeInactive = true)
 		{
 			var list = new List<Component>();
 
@@ -504,7 +504,7 @@ namespace MB
 			return list;
 		}
 
-		public static Component[] InGlobal(Type type, bool incaludeInactive = false)
+		public static Component[] InGlobal(Type type, bool incaludeInactive = true)
 		{
 			var list = new List<Component>();
 
