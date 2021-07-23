@@ -74,11 +74,11 @@ namespace MB
 
         public enum Scope
         {
-            Self = ComponentQueryScope.Self,
-            Children = ComponentQueryScope.Children,
-            Parents = ComponentQueryScope.Parents,
-            Scene = ComponentQueryScope.Scene,
-            Global = ComponentQueryScope.Global
+            Self = QueryComponentScope.Self,
+            Children = QueryComponentScope.Children,
+            Parents = QueryComponentScope.Parents,
+            Scene = QueryComponentScope.Scene,
+            Global = QueryComponentScope.Global
         }
 
         public const Scope Self = Scope.Self;
@@ -87,8 +87,8 @@ namespace MB
         public const Scope Scene = Scope.Scene;
         public const Scope Global = Scope.Global;
 
-        public static ComponentQueryScope ConvertScope(Scope scope) => (ComponentQueryScope)(int)scope;
-        public static Scope ConvertScope(ComponentQueryScope scope) => (Scope)(int)scope;
+        public static QueryComponentScope ConvertScope(Scope scope) => (QueryComponentScope)(int)scope;
+        public static Scope ConvertScope(QueryComponentScope scope) => (Scope)(int)scope;
 
         public class Element
         {

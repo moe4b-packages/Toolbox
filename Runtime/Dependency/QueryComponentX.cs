@@ -23,12 +23,50 @@ namespace MB
 	/// A helper class to query for components using types or generics,
 	/// supports querying for interfaces as well as classes
 	/// </summary>
+	public static class QueryComponentX
+	{
+		public static class Scope
+		{
+			public static Type Type { get; } = typeof(QueryComponentScope);
+
+			public static QueryComponentScope[] Values { get; private set; }
+
+			public static IList<QueryComponentScope> FlagToArray(QueryComponentScope flag)
+			{
+				var list = new List<QueryComponentScope>();
+
+				for (int i = 0; i < Values.Length; i++)
+					if (flag.HasFlag(Values[i]))
+						list.Add(Values[i]);
+
+				return list;
+			}
+
+			public static QueryComponentScope ArrayToFlag(params QueryComponentScope[] array)
+			{
+				var value = QueryComponentScope.None;
+
+				for (int i = 0; i < array.Length; i++)
+					value |= array[i];
+
+				return value;
+			}
+
+			static Scope()
+			{
+				Values = (QueryComponentScope[])Enum.GetValues(Type);
+			}
+		}
+	}
+
 	public static class QueryComponent
 	{
 		#region Generic
-		public static T In<T>(UObjectSurrogate surrogate, params ComponentQueryScope[] scopes)
+		public static T In<T>(UObjectSurrogate surrogate, params QueryComponentScope[] scopes)
 			where T : class
         {
+			if (scopes.Length == 0) scopes = new QueryComponentScope[] { QueryComponentScope.Self, QueryComponentScope.Children };
+
 			for (int i = 0; i < scopes.Length; i++)
 			{
 				var component = In<T>(surrogate, scopes[i]);
@@ -38,30 +76,30 @@ namespace MB
 
 			return null;
 		}
-		public static T In<T>(UObjectSurrogate surrogate, ComponentQueryScope scope)
+		public static T In<T>(UObjectSurrogate surrogate, QueryComponentScope scope)
 			where T: class
         {
-            switch (scope)
-            {
-				case ComponentQueryScope.Self:
+			switch (scope)
+			{
+				case QueryComponentScope.Self:
 					return InSelf<T>(surrogate);
 
-				case ComponentQueryScope.Children:
+				case QueryComponentScope.Children:
 					return InChildren<T>(surrogate);
 
-				case ComponentQueryScope.Parents:
+				case QueryComponentScope.Parents:
 					return InParents<T>(surrogate);
 
-				case ComponentQueryScope.Scene:
+				case QueryComponentScope.Scene:
 					return InScene<T>(surrogate);
 
-				case ComponentQueryScope.Global:
+				case QueryComponentScope.Global:
 					return InGlobal<T>();
 
 				default:
 					throw new NotImplementedException();
-            }
-        }
+			}
+		}
 
 		public static T InSelf<T>(UObjectSurrogate surrogate)
 			where T : class
@@ -134,8 +172,10 @@ namespace MB
 		#endregion
 
 		#region Type
-		public static Component In(UObjectSurrogate surrogate, Type type, params ComponentQueryScope[] scopes)
+		public static Component In(UObjectSurrogate surrogate, Type type, params QueryComponentScope[] scopes)
 		{
+			if (scopes.Length == 0) scopes = new QueryComponentScope[] { QueryComponentScope.Self, QueryComponentScope.Children };
+
 			for (int i = 0; i < scopes.Length; i++)
 			{
 				var component = In(surrogate, type, scopes[i]);
@@ -145,23 +185,23 @@ namespace MB
 
 			return null;
 		}
-		public static Component In(UObjectSurrogate surrogate, Type type, ComponentQueryScope scope)
+		public static Component In(UObjectSurrogate surrogate, Type type, QueryComponentScope scope)
 		{
 			switch (scope)
 			{
-				case ComponentQueryScope.Self:
+				case QueryComponentScope.Self:
 					return InSelf(surrogate, type);
 
-				case ComponentQueryScope.Children:
+				case QueryComponentScope.Children:
 					return InChildren(surrogate, type);
 
-				case ComponentQueryScope.Parents:
+				case QueryComponentScope.Parents:
 					return InParents(surrogate, type);
 
-				case ComponentQueryScope.Scene:
+				case QueryComponentScope.Scene:
 					return InScene(surrogate, type);
 
-				case ComponentQueryScope.Global:
+				case QueryComponentScope.Global:
 					return InGlobal(type);
 
 				default:
@@ -237,62 +277,61 @@ namespace MB
 		}
 		#endregion
 
-		public static ComponentQueryScope Self => ComponentQueryScope.Self;
-		public static ComponentQueryScope Children => ComponentQueryScope.Children;
-		public static ComponentQueryScope Parents => ComponentQueryScope.Parents;
-		public static ComponentQueryScope Scene => ComponentQueryScope.Scene;
-		public static ComponentQueryScope Global => ComponentQueryScope.Global;
+		public static QueryComponentScope Self => QueryComponentScope.Self;
+		public static QueryComponentScope Children => QueryComponentScope.Children;
+		public static QueryComponentScope Parents => QueryComponentScope.Parents;
+		public static QueryComponentScope Scene => QueryComponentScope.Scene;
+		public static QueryComponentScope Global => QueryComponentScope.Global;
 	}
 
 	public static class QueryComponents
 	{
 		#region Generic
-		public static HashSet<T> In<T>(UObjectSurrogate surrogate, params ComponentQueryScope[] scopes)
+		public static List<T> In<T>(UObjectSurrogate surrogate, params QueryComponentScope[] scopes)
 			where T : class
 		{
-			var scope = ComponentQueryScope.None;
+			var flag = QueryComponentX.Scope.ArrayToFlag(scopes);
 
-			for (int i = 0; i < scopes.Length; i++)
-				scope |= scopes[i];
+			if (flag == QueryComponentScope.None) flag = QueryComponentScope.Self | QueryComponentScope.Children;
 
-			return In<T>(surrogate, scope);
+			return In<T>(surrogate, flag);
 		}
-		public static HashSet<T> In<T>(UObjectSurrogate surrogate, ComponentQueryScope scope)
+		public static List<T> In<T>(UObjectSurrogate surrogate, QueryComponentScope scope)
 			where T : class
 		{
 			var hashset = new HashSet<T>();
 
-			if (scope.HasFlag(ComponentQueryScope.Global))
+			if (scope.HasFlag(QueryComponentScope.Global))
 			{
 				var range = InGlobal<T>();
 				hashset.UnionWith(range);
 			}
-			else if(scope.HasFlag(ComponentQueryScope.Scene))
+			else if(scope.HasFlag(QueryComponentScope.Scene))
             {
 				var range = InScene<T>(surrogate);
 				hashset.UnionWith(range);
             }
 			else
 			{
-				if (scope.HasFlag(ComponentQueryScope.Children))
+				if (scope.HasFlag(QueryComponentScope.Children))
 				{
 					var range = InChildren<T>(surrogate);
 					hashset.UnionWith(range);
 				}
-				else if (scope.HasFlag(ComponentQueryScope.Self))
+				else if (scope.HasFlag(QueryComponentScope.Self))
 				{
 					var range = InSelf<T>(surrogate);
 					hashset.UnionWith(range);
 				}
 
-				if (scope.HasFlag(ComponentQueryScope.Parents))
+				if (scope.HasFlag(QueryComponentScope.Parents))
 				{
 					var range = InParents<T>(surrogate);
 					hashset.UnionWith(range);
 				}
 			}
 
-			return hashset;
+			return hashset.ToList();
 		}
 
 		public static T[] InSelf<T>(UObjectSurrogate surrogate)
@@ -373,50 +412,49 @@ namespace MB
 		#endregion
 
 		#region Type
-		public static HashSet<Component> In(UObjectSurrogate surrogate, Type type, params ComponentQueryScope[] scopes)
+		public static List<Component> In(UObjectSurrogate surrogate, Type type, params QueryComponentScope[] scopes)
 		{
-			var scope = ComponentQueryScope.None;
+			var flag = QueryComponentX.Scope.ArrayToFlag(scopes);
 
-            for (int i = 0; i < scopes.Length; i++)
-				scope |= scopes[i];
+			if (flag == QueryComponentScope.None) flag = QueryComponentScope.Self | QueryComponentScope.Children;
 
-			return In(surrogate, type, scope);
+			return In(surrogate, type, flag);
 		}
-		public static HashSet<Component> In(UObjectSurrogate surrogate, Type type, ComponentQueryScope scope)
+		public static List<Component> In(UObjectSurrogate surrogate, Type type, QueryComponentScope scope)
 		{
 			var hashset = new HashSet<Component>();
 
-			if(scope.HasFlag(ComponentQueryScope.Global))
+			if(scope.HasFlag(QueryComponentScope.Global))
             {
 				var range = InGlobal(type);
 				hashset.UnionWith(range);
 			}
-			else if (scope.HasFlag(ComponentQueryScope.Scene))
+			else if (scope.HasFlag(QueryComponentScope.Scene))
 			{
 				var range = InScene(surrogate, type);
 				hashset.UnionWith(range);
 			}
 			else
             {
-				if (scope.HasFlag(ComponentQueryScope.Children))
+				if (scope.HasFlag(QueryComponentScope.Children))
 				{
 					var range = InChildren(surrogate, type);
 					hashset.UnionWith(range);
 				}
-				else if (scope.HasFlag(ComponentQueryScope.Self))
+				else if (scope.HasFlag(QueryComponentScope.Self))
 				{
 					var range = InSelf(surrogate, type);
 					hashset.UnionWith(range);
 				}
 
-				if (scope.HasFlag(ComponentQueryScope.Parents))
+				if (scope.HasFlag(QueryComponentScope.Parents))
 				{
 					var range = InParents(surrogate, type);
 					hashset.UnionWith(range);
 				}
 			}
 
-			return hashset;
+			return hashset.ToList();
 		}
 
 		public static Component[] InSelf(UObjectSurrogate surrogate, Type type)
@@ -494,15 +532,15 @@ namespace MB
 		}
 		#endregion
 
-		public static ComponentQueryScope Self => ComponentQueryScope.Self;
-		public static ComponentQueryScope Children => ComponentQueryScope.Children;
-		public static ComponentQueryScope Parents => ComponentQueryScope.Parents;
-		public static ComponentQueryScope Scene => ComponentQueryScope.Scene;
-		public static ComponentQueryScope Global => ComponentQueryScope.Global;
+		public static QueryComponentScope Self => QueryComponentScope.Self;
+		public static QueryComponentScope Children => QueryComponentScope.Children;
+		public static QueryComponentScope Parents => QueryComponentScope.Parents;
+		public static QueryComponentScope Scene => QueryComponentScope.Scene;
+		public static QueryComponentScope Global => QueryComponentScope.Global;
 	}
 
 	[Flags]
-	public enum ComponentQueryScope
+	public enum QueryComponentScope
 	{
 		None = 0,
 

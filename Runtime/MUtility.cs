@@ -345,6 +345,13 @@ namespace MB
 
             return new Thread(Run);
         }
+
+        public static Exception FormatDependencyException<TDependency>(object dependent)
+        {
+            var text = $"Invalid Dependency of {typeof(TDependency)} by {dependent}";
+
+            return new Exception(text);
+        }
     }
 
     public static partial class MUtilityExtensions

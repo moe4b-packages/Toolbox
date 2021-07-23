@@ -127,11 +127,12 @@ namespace MB
         protected TValue value;
         public TValue Value { get { return value; } }
 
-        public virtual TValue Evaluate(TValue defaultValue)
+        public virtual TValue Evaluate() => Evaluate(default);
+        public virtual TValue Evaluate(TValue fallback)
         {
             if (enabled) return value;
 
-            return defaultValue;
+            return fallback;
         }
 
         public ToggleValue() : this(default, false) { }

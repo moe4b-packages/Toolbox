@@ -41,7 +41,9 @@ namespace MB
             this.angle = angle;
         }
 
-        public static Coordinates From(Transform transform) => From(transform, Space.World);
+        public const Space DefaultSpace = Space.Self;
+
+        public static Coordinates From(Transform transform) => From(transform, DefaultSpace);
         public static Coordinates From(Transform transform, Space space)
         {
             switch (space)
@@ -100,7 +102,7 @@ namespace MB
         public static Coordinates GetCoordinates(this Transform transform) => Coordinates.From(transform);
         public static Coordinates GetCoordinates(this Transform transform, Space space) => Coordinates.From(transform, space);
 
-        public static void SetCoordinates(this Transform transform, Coordinates coordinates) => SetCoordinates(transform, coordinates, Space.World);
+        public static void SetCoordinates(this Transform transform, Coordinates coordinates) => SetCoordinates(transform, coordinates, Coordinates.DefaultSpace);
         public static void SetCoordinates(this Transform transform, Coordinates coordinates, Space space)
         {
             switch (space)

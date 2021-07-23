@@ -208,7 +208,7 @@ namespace MB
 
 	[Serializable]
 	public class MonoScriptSelection<T> : MonoScriptSelection
-		where T : MonoBehaviour
+		where T : class
 	{
 		public override Type Argument => typeof(T);
 	}

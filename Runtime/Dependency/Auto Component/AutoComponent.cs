@@ -67,11 +67,11 @@ namespace MB
 
 		public enum DependencyScope
 		{
-			Self = ComponentQueryScope.Self,
-			Children = ComponentQueryScope.Children,
-			Parents = ComponentQueryScope.Parents,
-			Scene = ComponentQueryScope.Scene,
-			Global = ComponentQueryScope.Global,
+			Self = QueryComponentScope.Self,
+			Children = QueryComponentScope.Children,
+			Parents = QueryComponentScope.Parents,
+			Scene = QueryComponentScope.Scene,
+			Global = QueryComponentScope.Global,
 			Manual = 1 << 7,
 		}
 
@@ -89,8 +89,8 @@ namespace MB
 
 		//Static Utility
 
-		public static DependencyScope ConvertScope(ComponentQueryScope scope) => (DependencyScope)(int)scope;
-		public static ComponentQueryScope ConvertScope(DependencyScope scope) => (ComponentQueryScope)(int)scope;
+		public static DependencyScope ConvertScope(QueryComponentScope scope) => (DependencyScope)(int)scope;
+		public static QueryComponentScope ConvertScope(DependencyScope scope) => (QueryComponentScope)(int)scope;
 
 #if UNITY_EDITOR
 		[CustomPropertyDrawer(typeof(AutoComponent), true)]
@@ -139,7 +139,7 @@ namespace MB
 				}
 				else
 				{
-					var reference = QueryComponent.In(Property.serializedObject.targetObject as Component, type, (ComponentQueryScope)scope.intValue);
+					var reference = QueryComponent.In(Property.serializedObject.targetObject as Component, type, (QueryComponentScope)scope.intValue);
 
 					if (isInterface == false && Application.isPlaying == false) component.objectReferenceValue = reference;
 
@@ -214,11 +214,11 @@ namespace MB
 
 			Everything = ~0,
 
-			Self = ComponentQueryScope.Self,
-			Children = ComponentQueryScope.Children,
-			Parents = ComponentQueryScope.Parents,
-			Scene = ComponentQueryScope.Scene,
-			Global = ComponentQueryScope.Global,
+			Self = QueryComponentScope.Self,
+			Children = QueryComponentScope.Children,
+			Parents = QueryComponentScope.Parents,
+			Scene = QueryComponentScope.Scene,
+			Global = QueryComponentScope.Global,
 		}
 
 		public static DependencyScope Self => DependencyScope.Self;
@@ -234,8 +234,8 @@ namespace MB
 
 		//Static Utility
 
-		public static DependencyScope ConvertScope(ComponentQueryScope scope) => (DependencyScope)(int)scope;
-		public static ComponentQueryScope ConvertScope(DependencyScope scope) => (ComponentQueryScope)(int)scope;
+		public static DependencyScope ConvertScope(QueryComponentScope scope) => (DependencyScope)(int)scope;
+		public static QueryComponentScope ConvertScope(DependencyScope scope) => (QueryComponentScope)(int)scope;
 
 #if UNITY_EDITOR
 		[CustomPropertyDrawer(typeof(AutoComponents), true)]
@@ -291,7 +291,7 @@ namespace MB
 
 			void UpdateComponents()
 			{
-				UI.ManagedList = QueryComponents.In(component, type, (ComponentQueryScope)scope.intValue).ToList();
+				UI.ManagedList = QueryComponents.In(component, type, (QueryComponentScope)scope.intValue);
 			}
 
 			public override float CalculateHeight()
@@ -394,7 +394,7 @@ namespace MB
 		{
 			if (cached == false)
 			{
-				list = QueryComponents.In<T>(self, ConvertScope(scope)).ToList();
+				list = QueryComponents.In<T>(self, ConvertScope(scope));
 
 				cached = true;
 			}
