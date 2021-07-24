@@ -32,7 +32,11 @@ namespace MB
         {
             [SerializeField]
             string _ID = default;
-            public string ID => _ID;
+            public string ID
+            {
+                get => _ID;
+                set => _ID = value;
+            }
 
             [SerializeField]
             UnityEvent onInvoke = default;
@@ -42,13 +46,15 @@ namespace MB
             {
                 onInvoke?.Invoke();
             }
+
+            public Entry()
+            {
+                ID = string.Empty;
+            }
         }
 
         public Dictionary<string, Entry> Dictionary { get; protected set; }
-        void ParseDictionary()
-        {
-            Dictionary = entries.ToDictionary(x => x.ID);
-        }
+        public Entry this[string id] => Dictionary[id];
 
         public delegate void TriggerDelegate(string id);
 		public event TriggerDelegate OnTrigger;
@@ -62,12 +68,10 @@ namespace MB
 
         void Awake()
         {
-            ParseDictionary();
-        }
+            Dictionary = new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase);
 
-        void OnValidate()
-        {
-            ParseDictionary();
+            foreach (var entry in entries)
+                Dictionary[entry.ID] = entry;
         }
     }
 }
