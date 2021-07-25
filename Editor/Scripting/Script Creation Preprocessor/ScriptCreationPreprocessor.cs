@@ -156,23 +156,27 @@ namespace MB
 
         public static void OnWillCreateAsset(string path)
         {
-            path = path.Replace(".meta", "");
+            path = path.Remove(".meta");
 
-            var extension = Path.GetExtension(path);
-            if (extension != ".cs") return;
-
-            Assemblies.Query(path, out var assembly);
+            if (Path.GetExtension(path) != ".cs") return;
 
             var text = File.ReadAllText(path);
-
-            text = ProcessNamespace(assembly, text);
-
+            text = Process(path, text);
             File.WriteAllText(path, text);
 
             AssetDatabase.Refresh();
         }
 
-        static string ProcessNamespace(AssemblyDefinitionAsset assembly, string text)
+        static string Process(string path, string text)
+        {
+            Assemblies.Query(path, out var assembly);
+
+            text = SetNamespace(text, assembly);
+
+            return text;
+        }
+
+        static string SetNamespace(string text, AssemblyDefinitionAsset assembly)
         {
             Assemblies.TryGetRootNamespace(assembly, out var name, GlobalNamespace);
 

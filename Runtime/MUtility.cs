@@ -393,7 +393,7 @@ namespace MB
         public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
         public static string Join(this IEnumerable<string> collection) => Join(collection, "");
 
-        public static string RemoveAll(this string text, params string[] phrases)
+        public static string Remove(this string text, params string[] phrases)
         {
             var builder = new StringBuilder(text);
 
@@ -402,7 +402,7 @@ namespace MB
 
             return builder.ToString();
         }
-        public static string RemoveAll(this string text, params char[] characters)
+        public static string Remove(this string text, params char[] characters)
         {
             var set = new HashSet<char>(characters);
 
@@ -430,7 +430,30 @@ namespace MB
         }
 
         public static bool BeginsWith(this string text, char character) => text[0] == character;
+        public static bool BeginsWith(this string text, string target)
+        {
+            if (target.Length > text.Length) return false;
+
+            for (int i = 0; i < target.Length; i++)
+                if (text[i] != target[i])
+                    return false;
+
+            return true;
+        }
+
         public static bool EndsWith(this string text, char character) => text[text.Length - 1] == character;
+        public static bool EndsWith(this string text, string target)
+        {
+            if (target.Length > text.Length) return false;
+
+            var offset = text.Length - target.Length;
+
+            for (int i = 0; i < target.Length; i++)
+                if (text[i + offset] != target[i])
+                    return false;
+
+            return true;
+        }
         #endregion
 
         public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());

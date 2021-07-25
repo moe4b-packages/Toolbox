@@ -36,7 +36,6 @@ namespace MB
 
                 return SplitHorizontally(rect, padding, percentages);
             }
-
             public static Rect[] SplitHorizontally(Rect rect, float padding, params float[] cuts)
             {
                 padding /= 2f;
@@ -68,6 +67,24 @@ namespace MB
 
                 return area;
             }
+
+            #region Vertical Measure
+            public static void BeginVerticalMeasure()
+            {
+                VerticalMeasureStart = EditorGUILayout.GetControlRect(false, 0f);
+            }
+
+            static Rect VerticalMeasureStart;
+
+            public static bool EndVerticalMeasure(out float height)
+            {
+                var VerticalMeasureEnd = EditorGUILayout.GetControlRect(false, 0f);
+
+                height = Mathf.Abs(VerticalMeasureEnd.y - VerticalMeasureStart.y);
+
+                return Event.current.rawType == EventType.Repaint;
+            }
+            #endregion
         }
 
         public static class SerializedPropertyType

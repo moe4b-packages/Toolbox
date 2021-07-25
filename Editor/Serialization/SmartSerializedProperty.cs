@@ -470,7 +470,7 @@ namespace MB
 
         static int ParsePathSegmentIndex(string text)
         {
-            text = text.RemoveAll('[', ']');
+            text = MUtilityExtensions.Remove(text, '[', ']');
 
             return int.Parse(text);
         }
