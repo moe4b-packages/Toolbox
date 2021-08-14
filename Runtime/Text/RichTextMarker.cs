@@ -12,23 +12,22 @@ using System.Collections.Generic;
 using UnityEngine;
 #endif
 
-namespace MB
+namespace MNet
 {
-	/// <summary>
-	/// A rich text markup utlity class for decorating texts for use in UI
-	/// </summary>
 	public static class RichTextMarker
 	{
-		public static string Bold(this string text) => $"<b>{text}</b>";
+		public static string Bold(object target) => $"<b>{target}</b>";
 
-		public static string Italic(this string text) => $"<i>{text}</i>";
+		public static string Italic(object target) => $"<i>{target}</i>";
 
-		public static string Size(this string text, int value) => $"<size={value}>{text}</size>";
+		public static string Size(object target, int value) => $"<size={value}>{target}</size>";
 
-		public static string Colorize(this string text, ColorSurrogate color) => $"<color=#{color}>{text}</color>";
+		public static string Colorize(object target, ColorSurrogate color) => $"<color=#{color}>{target}</color>";
 
-		public static string Style(this string text, bool bold = false, bool italic = false, int? size = null, ColorSurrogate? color = null)
+		public static string Style(object target, bool bold = false, bool italic = false, int? size = null, ColorSurrogate? color = null)
 		{
+			var text = target.ToString();
+
 			if (bold)
 				text = Bold(text);
 
@@ -56,8 +55,8 @@ namespace MB
 				this.hex = hex;
 			}
 
-			public static implicit operator ColorSurrogate (string text)
-            {
+			public static implicit operator ColorSurrogate(string text)
+			{
 				text = text.TrimStart('#');
 
 				return new ColorSurrogate(text);
