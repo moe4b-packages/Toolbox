@@ -27,87 +27,105 @@ namespace MB
 	{
 #if UNITY_EDITOR
 		[CustomPropertyDrawer(typeof(InterfaceComponentSelection), true)]
-		public class Drawer : PersistantPropertyDrawer
+		public class Drawer : PropertyDrawer
 		{
-			SerializedProperty gameObject;
-			SerializedProperty component;
+			SerializedProperty FindGameObjectProperty(SerializedProperty property) => property.FindPropertyRelative("gameObject");
+			SerializedProperty FindComponentProperty(SerializedProperty property) => property.FindPropertyRelative("component");
 
-			Type type;
-
-			Component[] options;
-			string[] popup;
-			int selection;
-
-            protected override void Init()
-            {
-                base.Init();
-
-				gameObject = Property.FindPropertyRelative(nameof(gameObject));
-				component = Property.FindPropertyRelative(nameof(component));
-
-				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
-
-				UpdateComponents();
-			}
-
-			public override float CalculateHeight()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
 				return EditorGUIUtility.singleLineHeight;
 			}
 
-			public override void Draw(Rect rect)
-            {
-				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 5, 70f, 30f);
-
-				DrawGameObject(areas[0], Label);
-				DrawComponent(areas[1]);
-			}
-
-            void DrawGameObject(Rect rect, GUIContent label)
+			void UpdateState(SerializedProperty gameObject, SerializedProperty component, Type type)
 			{
-				rect.x -= 2.5f;
-
-				EditorGUI.BeginChangeCheck();
-				{
-					EditorGUI.PropertyField(rect, gameObject, label);
-				}
-				if (EditorGUI.EndChangeCheck())
-					UpdateComponents();
-			}
-
-			void UpdateComponents()
-            {
 				var target = gameObject.objectReferenceValue as GameObject;
 
 				if (target == null)
-					options = new Component[] { };
-				else
-					options = target.GetComponents(type);
-
-				popup = new string[options.Length + 1];
-
-				popup[0] = "None";
-				selection = 0;
-
-				for (int i = 0; i < options.Length; i++)
-				{
-					if (component.objectReferenceValue == options[i]) selection = i + 1;
-
-					popup[i + 1] = $"{i + 1}. {options[i].GetType().Name.ToPrettyString()}";
-				}
-
-				if (selection == 0 && options.Length > 0) selection = 1;
-			}
-
-			void DrawComponent(Rect rect)
-			{
-				selection = EditorGUI.Popup(rect, selection, popup);
-
-				if (selection == 0)
 					component.objectReferenceValue = null;
 				else
-					component.objectReferenceValue = options[selection - 1];
+					component.objectReferenceValue = target.GetComponent(type);
 			}
+
+			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+            {
+				var type = property.MakeSmart().ManagedType.GenericTypeArguments[0];
+
+				var gameObject = FindGameObjectProperty(property);
+				var component = FindComponentProperty(property);
+
+				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 5, 70f, 30f);
+
+				EditorGUI.BeginChangeCheck();
+				{
+					DrawGameObject(areas[0], label, gameObject);
+				}
+				if (EditorGUI.EndChangeCheck())
+					UpdateState(gameObject, component, type);
+
+				DrawComponent(areas[1], gameObject, component, type);
+			}
+
+			void DrawGameObject(Rect rect, GUIContent label, SerializedProperty gameObject)
+			{
+				rect.x -= 2.5f;
+
+				EditorGUI.PropertyField(rect, gameObject, label);
+			}
+
+			void DrawComponent(Rect rect, SerializedProperty gameObject, SerializedProperty component, Type type)
+			{
+				var label = FormatComponentName(component.objectReferenceValue as Component);
+				var content = new GUIContent(label);
+
+				if (EditorGUI.DropdownButton(rect, content, FocusType.Passive))
+				{
+					Dropdown.Show(gameObject.objectReferenceValue as GameObject, type, rect, Handler);
+
+					void Handler(Component target)
+                    {
+						component.objectReferenceValue = target;
+						component.serializedObject.ApplyModifiedProperties();
+                    }
+				}
+			}
+		}
+
+		public static class Dropdown
+        {
+			public delegate void HandlerDelegate(Component component);
+			public static void Show(GameObject gameObject, Type type, Rect rect, HandlerDelegate handler)
+			{
+				var menu = new GenericMenu();
+
+				var components = gameObject.GetComponents(type);
+
+				menu.AddItem(new GUIContent("None"), false, Callback, null);
+
+				for (int i = 0; i < components.Length; i++)
+                {
+					var label = FormatComponentName(components[i]);
+					var content = new GUIContent(label);
+
+					menu.AddItem(content, false, Callback, components[i]);
+				}
+
+				void Callback(object target)
+                {
+					var component = target as Component;
+
+					handler(component);
+                }
+
+				menu.DropDown(rect);
+			}
+		}
+
+		public static string FormatComponentName(Component component)
+        {
+			if (component == null) return "None";
+
+			return MUtility.PrettifyName(component.GetType().Name);
 		}
 #endif
 	}

@@ -20,18 +20,18 @@ namespace MB
 {
     public class PersistantPropertyDrawer : PropertyDrawer
     {
-        protected SerializedProperty Property;
+        protected SerializedProperty property;
 
-        public SerializedObject SerializedObject => Property.serializedObject;
+        public SerializedObject SerializedObject => property.serializedObject;
 
-        protected GUIContent Label;
+        protected GUIContent label;
 
         protected void Prepare(SerializedProperty reference, GUIContent label)
         {
-            if (Property?.propertyPath == reference?.propertyPath) return;
+            if (property?.propertyPath == reference?.propertyPath) return;
 
-            Property = reference;
-            this.Label = label;
+            property = reference;
+            this.label = label;
 
             Init();
         }
@@ -51,7 +51,7 @@ namespace MB
 
         public virtual float CalculateHeight()
         {
-            return EditorGUI.GetPropertyHeight(Property, Label, true);
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
         #endregion
 

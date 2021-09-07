@@ -35,7 +35,7 @@ namespace MB
 			{
 				base.Init();
 
-				FormatLabel(ref Label);
+				FormatLabel(ref label);
 			}
 
 			static void FormatLabel(ref GUIContent label)
@@ -108,11 +108,11 @@ namespace MB
 			{
 				base.Init();
 
-				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
+				type = property.MakeSmart().ManagedType;
 				isInterface = type.IsInterface;
 
-				component = Property.FindPropertyRelative("component");
-				scope = Property.FindPropertyRelative("scope");
+				component = property.FindPropertyRelative("component");
+				scope = property.FindPropertyRelative("scope");
 			}
 
 			public override float CalculateHeight()
@@ -124,7 +124,7 @@ namespace MB
 			{
 				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 0, 75f, 25f);
 
-				DrawField(areas[0], Label);
+				DrawField(areas[0], label);
 				DrawScope(areas[1]);
 			}
 
@@ -139,7 +139,7 @@ namespace MB
 				}
 				else
 				{
-					var reference = QueryComponent.In(Property.serializedObject.targetObject as Component, type, (QueryComponentScope)scope.intValue);
+					var reference = QueryComponent.In(property.serializedObject.targetObject as Component, type, (QueryComponentScope)scope.intValue);
 
 					if (isInterface == false && Application.isPlaying == false) component.objectReferenceValue = reference;
 
@@ -259,10 +259,10 @@ namespace MB
 			{
 				base.Init();
 
-				list = Property.FindPropertyRelative("list");
-				scope = Property.FindPropertyRelative("scope");
+				list = property.FindPropertyRelative("list");
+				scope = property.FindPropertyRelative("scope");
 
-				type = MUtility.SerializedPropertyType.Retrieve(Property).GenericTypeArguments[0];
+				type = property.MakeSmart().ManagedType;
 				isInterface = type.IsInterface;
 
 				component = SerializedObject.targetObject as Component;
@@ -272,8 +272,8 @@ namespace MB
 				else
 					UI = new ImprovedReorderableList(null, type);
 
-				UI.TitleContent = Label;
-				UI.ReflectExpandFromProperty(Property);
+				UI.TitleContent = label;
+				UI.ReflectExpandFromProperty(property);
 
 				UI.DrawHeader = DrawHeader;
 				UI.DrawTitle = DrawTitle;
@@ -284,7 +284,7 @@ namespace MB
 				if (Application.isPlaying == false || isInterface) UpdateComponents();
 			}
 
-			float GetElementHeight(int index)
+			float GetElementHeight(ImprovedReorderableList list, int index)
 			{
 				return EditorGUIUtility.singleLineHeight;
 			}
@@ -325,18 +325,18 @@ namespace MB
 				GUI.enabled = true;
 			}
 
-			void DrawHeader(Rect rect)
+			void DrawHeader(ImprovedReorderableList list, Rect rect)
 			{
-				UI.DefaultDrawHeader(rect);
+				UI.DefaultDrawHeader(list, rect);
 
 				DrawScope(rect);
 			}
 
-			void DrawTitle(Rect rect)
+			void DrawTitle(ImprovedReorderableList list, Rect rect)
 			{
 				GUI.enabled = true;
 
-				UI.DefaultDrawTitle(rect);
+				UI.DefaultDrawTitle(list, rect);
 
 				GUI.enabled = false;
 			}
@@ -360,7 +360,7 @@ namespace MB
 				GUI.enabled = false;
 			}
 
-			void DrawElement(Rect rect, int index)
+			void DrawElement(ImprovedReorderableList list, Rect rect, int index)
 			{
 				var label = new GUIContent($"Element {index}");
 

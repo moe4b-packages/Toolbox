@@ -23,18 +23,18 @@ namespace MB
     {
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
-        public class Drawer : PersistantPropertyDrawer
+        public class Drawer : PropertyDrawer
         {
-            public override float CalculateHeight()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
-                return EditorGUI.GetPropertyHeight(Property, Label, true);
+                return EditorGUI.GetPropertyHeight(property, label, true);
             }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
                 GUI.enabled = false;
 
-                EditorGUI.PropertyField(rect, Property, Label, true);
+                EditorGUI.PropertyField(rect, property, label, true);
 
                 GUI.enabled = true;
             }

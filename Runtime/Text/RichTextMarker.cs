@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using UnityEngine;
 #endif
 
-namespace MNet
+namespace MB
 {
 	public static class RichTextMarker
 	{

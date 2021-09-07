@@ -27,12 +27,9 @@ namespace MB
         public abstract int Count { get; }
 
 #if UNITY_EDITOR
-        public abstract class BaseDrawer : PersistantPropertyDrawer
+        public abstract class BaseDrawer : PropertyDrawer
         {
-            protected SerializedProperty List;
-            protected abstract SerializedProperty GetList();
-
-            protected ImprovedReorderableList UI;
+            protected abstract SerializedProperty FindListProperty(SerializedProperty property);
 
             public float ListPadding = 5f;
 
@@ -41,38 +38,24 @@ namespace MB
             public const float ElementHeightPadding = 6f;
             public const float ElementFoldoutPadding = 15f;
 
-            protected override void Init()
-            {
-                base.Init();
-
-                List = GetList();
-
-                UI = new ImprovedReorderableList(List);
-
-                UI.TitleText = Property.displayName;
-
-                UI.GetElementHeight = GetElementHeight;
-                UI.DrawElement = DrawElement;
-            }
-
             #region Height
-            public override float CalculateHeight()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
                 var height = ListPadding * 2;
 
-                return AppendHeight(height);
-            }
+                var list = FindListProperty(property);
 
-            protected virtual float AppendHeight(float height)
-            {
+                var UI = ImprovedReorderableList.Collection.Retrieve(list);
+                UI.GetElementHeight = GetElementHeight;
+
                 height += UI.CalculateHeight();
 
                 return height;
             }
 
-            protected virtual float GetElementHeight(int index)
+            protected virtual float GetElementHeight(ImprovedReorderableList list, int index)
             {
-                SerializedProperty element = List.GetArrayElementAtIndex(index);
+                var element = list.Property.GetArrayElementAtIndex(index);
 
                 var height = EditorGUI.GetPropertyHeight(element);
 
@@ -83,8 +66,15 @@ namespace MB
             #endregion
 
             #region Draw
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
+                var list = FindListProperty(property);
+
+                var UI = ImprovedReorderableList.Collection.Retrieve(list);
+                UI.TitleText = property.displayName;
+                UI.GetElementHeight = GetElementHeight;
+                UI.DrawElement = DrawElement;
+
                 rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
 
@@ -94,12 +84,12 @@ namespace MB
                 UI.Draw(rect);
             }
 
-            protected virtual void DrawElement(Rect rect, int index)
+            protected virtual void DrawElement(ImprovedReorderableList list, Rect rect, int index)
             {
                 rect.height -= ElementHeightPadding;
                 rect.y += ElementHeightPadding / 2;
 
-                var element = List.GetArrayElementAtIndex(index);
+                var element = list.Property.GetArrayElementAtIndex(index);
 
                 DrawField(rect, element);
             }

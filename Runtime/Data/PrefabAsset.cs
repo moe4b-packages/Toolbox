@@ -40,25 +40,20 @@ namespace MB
 
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(PrefabAsset))]
-        public class Drawer : PersistantPropertyDrawer
+        public class Drawer : PropertyDrawer
         {
-            SerializedProperty asset;
+            SerializedProperty FindAsset(SerializedProperty property) => property.FindPropertyRelative("asset");
 
-            protected override void Init()
-            {
-                base.Init();
-
-                asset = Property.FindPropertyRelative(nameof(asset));
-            }
-
-            public override float CalculateHeight()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
-                DrawField(rect, Label, asset);
+                var asset = FindAsset(property);
+
+                DrawField(rect, label, asset);
             }
         }
 

@@ -31,41 +31,39 @@ namespace MB
 
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(ToggleValue), true)]
-        public class Drawer : PersistantPropertyDrawer
+        public class Drawer : PropertyDrawer
         {
-            protected SerializedProperty enabled;
-            protected SerializedProperty value;
+            SerializedProperty FindEnabledProperty(SerializedProperty property) => property.FindPropertyRelative("enabled");
+            SerializedProperty FindValueProperty(SerializedProperty property) => property.FindPropertyRelative("value");
 
-            protected override void Init()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
-                base.Init();
+                var enabled = FindEnabledProperty(property);
+                var value = FindValueProperty(property);
 
-                enabled = Property.FindPropertyRelative(nameof(enabled));
-                value = Property.FindPropertyRelative(nameof(value));
-            }
-
-            public override float CalculateHeight()
-            {
                 if (enabled.boolValue && value.isExpanded)
-                    return EditorGUI.GetPropertyHeight(value, Label, true);
+                    return EditorGUI.GetPropertyHeight(value, label, true);
 
                 return EditorGUIUtility.singleLineHeight;
             }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
+                var enabled = FindEnabledProperty(property);
+                var value = FindValueProperty(property);
+
                 rect = EditorGUI.IndentedRect(rect);
                 EditorGUI.indentLevel = 0;
 
-                DrawToggle(ref rect, Property, Label);
+                DrawToggle(ref rect, enabled, label);
 
                 if (enabled.boolValue)
-                    DrawValue(ref rect, Property, Label);
+                    DrawValue(ref rect, value, label);
                 else
-                    DrawLabel(ref rect, Property, Label);
+                    DrawLabel(ref rect, label);
             }
 
-            protected virtual void DrawToggle(ref Rect rect, SerializedProperty property, GUIContent label)
+            protected virtual void DrawToggle(ref Rect rect, SerializedProperty enabled, GUIContent label)
             {
                 var size = EditorGUIUtility.singleLineHeight - 2f;
 
@@ -77,7 +75,7 @@ namespace MB
                 rect.width -= size + offset;
             }
 
-            protected virtual void DrawLabel(ref Rect rect, SerializedProperty property, GUIContent label)
+            protected virtual void DrawLabel(ref Rect rect, GUIContent label)
             {
                 var width = GUI.skin.label.CalcSize(label).x + 10f;
 
@@ -87,10 +85,8 @@ namespace MB
                 rect.width -= width;
             }
 
-            protected virtual void DrawValue(ref Rect rect, SerializedProperty property, GUIContent label)
+            protected virtual void DrawValue(ref Rect rect, SerializedProperty value, GUIContent label)
             {
-                var value = property.FindPropertyRelative("value");
-
                 var labelWidth = GUI.skin.label.CalcSize(label).x;
 
                 EditorGUIUtility.labelWidth = labelWidth + 5f;

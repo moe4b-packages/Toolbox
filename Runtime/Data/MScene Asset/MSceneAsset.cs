@@ -152,25 +152,21 @@ namespace MB
         }
 
         [CustomPropertyDrawer(typeof(MSceneAsset))]
-        public class Drawer : PersistantPropertyDrawer
+        public class Drawer : PropertyDrawer
         {
-            SerializedProperty asset;
-            SerializedProperty registered;
-            SerializedProperty active;
-
             public static float LineHeight => EditorGUIUtility.singleLineHeight;
 
-            protected override void Init()
+            public static void FindProperties(SerializedProperty property, out SerializedProperty asset, out SerializedProperty registered, out SerializedProperty active)
             {
-                base.Init();
-
-                asset = Property.FindPropertyRelative(nameof(asset));
-                registered = Property.FindPropertyRelative(nameof(registered));
-                active = Property.FindPropertyRelative(nameof(active));
+                asset = property.FindPropertyRelative(nameof(asset));
+                registered = property.FindPropertyRelative(nameof(registered));
+                active = property.FindPropertyRelative(nameof(active));
             }
 
-            public override float CalculateHeight()
+            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
+                FindProperties(property, out var asset, out var registered, out var active);
+
                 var height = LineHeight;
 
                 if (asset.objectReferenceValue != null)
@@ -184,23 +180,25 @@ namespace MB
                 return height;
             }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
-                DrawField(ref rect, Label);
+                FindProperties(property, out var asset, out var registered, out var active);
+
+                DrawField(ref rect, label, asset);
 
                 if (asset.objectReferenceValue != null)
                 {
                     if (registered.boolValue == false)
-                        DrawInstruction(ref rect, $"Scene not Registered to Build Settings", MessageType.Warning, "Register", Register);
+                        DrawInstruction(ref rect, $"Scene not Registered to Build Settings", MessageType.Warning, "Register", () => Register(asset.objectReferenceValue));
                     else if (active.boolValue == false)
-                        DrawInstruction(ref rect, $"Scene not Active within Build Settings", MessageType.Warning, "Activate", Activate);
+                        DrawInstruction(ref rect, $"Scene not Active within Build Settings", MessageType.Warning, "Activate", () => Activate(asset.objectReferenceValue));
                 }
             }
 
-            void Register() => MSceneAsset.Register(asset.objectReferenceValue);
-            void Activate() => MSceneAsset.Activate(asset.objectReferenceValue);
+            void Register(Object target) => MSceneAsset.Register(target);
+            void Activate(Object target) => MSceneAsset.Activate(target);
 
-            void DrawField(ref Rect rect, GUIContent label)
+            void DrawField(ref Rect rect, GUIContent label, SerializedProperty asset)
             {
                 var area = MUtility.GUICoordinates.SliceLine(ref rect);
 

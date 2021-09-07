@@ -25,90 +25,18 @@ namespace MB
         [CustomPropertyDrawer(typeof(UHashSet), true)]
         public class Drawer : BaseDrawer
         {
-            HashSet<int> duplicates;
-            HashSet<int> nullables;
-
             public const float KeyInfoContextWidth = 20f;
 
-            static GUIContent ConflictGUIContent = GetIconContent("console.warnicon.sml", "Conflicting Key, Data Might be Lost");
-            static GUIContent NullGUIContent = GetIconContent("console.erroricon.sml", "Null Key, Will be Ignored");
-
-            protected override SerializedProperty GetList() => Property.FindPropertyRelative("list");
-
-            protected override void Init()
+            protected override SerializedProperty FindListProperty(SerializedProperty property)
             {
-                base.Init();
-
-                duplicates = new HashSet<int>();
-                nullables = new HashSet<int>();
-                UpdateState();
+                return property.FindPropertyRelative("list");
             }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
                 EditorGUIUtility.labelWidth = 120f;
 
-                EditorGUI.BeginChangeCheck();
-
-                base.Draw(rect);
-
-                if (EditorGUI.EndChangeCheck())
-                    UpdateState();
-            }
-
-            protected override void DrawElement(Rect rect, int index)
-            {
-                if (nullables.Contains(index))
-                {
-                    var area = new Rect(rect.x, rect.y, KeyInfoContextWidth, rect.height);
-
-                    EditorGUI.LabelField(area, NullGUIContent);
-
-                    rect.width -= KeyInfoContextWidth;
-                    rect.x += KeyInfoContextWidth;
-                }
-
-                if (duplicates.Contains(index))
-                {
-                    var area = new Rect(rect.x, rect.y, KeyInfoContextWidth, rect.height);
-
-                    EditorGUI.LabelField(area, ConflictGUIContent);
-
-                    rect.width -= KeyInfoContextWidth;
-                    rect.x += KeyInfoContextWidth;
-                }
-
-                base.DrawElement(rect, index);
-            }
-
-            void UpdateState()
-            {
-                duplicates.Clear();
-                nullables.Clear();
-
-                var elements = new SerializedProperty[List.arraySize];
-
-                for (int i = 0; i < elements.Length; i++)
-                    elements[i] = List.GetArrayElementAtIndex(i);
-
-                for (int x = 0; x < elements.Length; x++)
-                {
-                    if (elements[x].propertyType == SerializedPropertyType.ObjectReference && elements[x].objectReferenceValue == null)
-                        nullables.Add(x);
-
-                    if (duplicates.Contains(x) || nullables.Contains(x)) continue;
-
-                    for (int y = 0; y < elements.Length; y++)
-                    {
-                        if (x == y) continue;
-
-                        if (SerializedProperty.DataEquals(elements[x], elements[y]))
-                        {
-                            duplicates.Add(x);
-                            duplicates.Add(y);
-                        }
-                    }
-                }
+                base.OnGUI(rect, property, label);
             }
         }
 #endif

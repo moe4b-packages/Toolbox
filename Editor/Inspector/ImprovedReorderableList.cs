@@ -31,6 +31,8 @@ namespace MB
 		public SerializedObject SerializedObject => Property.serializedObject;
 
 		public bool IsSerialized => Property != null;
+
+		public void Set(SerializedProperty reference) => Property = reference;
 		#endregion
 
 		public BackingType Backing
@@ -185,7 +187,7 @@ namespace MB
 		#endregion
 
 		public bool IsFocused { get; protected set; }
-		static SerializedProperty GlobalFocus;
+		static string GlobalFocus;
 
 		public static Event Event => Event.current;
 		public static bool IsRepaintEvent => Event.type == EventType.Repaint;
@@ -215,7 +217,7 @@ namespace MB
 
 				for (int i = 0; i < Count; i++)
 				{
-					var value = GetElementHeight(i) + (ElementVerticalPadding * 2f);
+					var value = GetElementHeight(this, i) + (ElementVerticalPadding * 2f);
 
 					ElementsHeight += value;
 					ElementsHeights.Add(value);
@@ -240,9 +242,9 @@ namespace MB
 			return height;
 		}
 
-		public delegate float GetElementHeightCallback(int index);
+		public delegate float GetElementHeightCallback(ImprovedReorderableList list, int index);
 		public GetElementHeightCallback GetElementHeight { get; set; }
-		public float DefaultGetElementHeight(int index)
+		public float DefaultGetElementHeight(ImprovedReorderableList list, int index)
 		{
 			switch (Backing)
 			{
@@ -266,7 +268,8 @@ namespace MB
 			EditorGUI.indentLevel = 0;
 
 			ValidateSelections();
-			if (GlobalFocus != Property) IsFocused = false;
+
+			if (FormatID(Property) != GlobalFocus) IsFocused = false;
 
 			HeaderGUI(ref rect);
 
@@ -340,7 +343,7 @@ namespace MB
 
 			ProcessItemsDrop(area);
 
-			DrawHeader(area);
+			DrawHeader(this, area);
 
 			area.x += TitleFoldoutOffset.x;
 			area.width -= TitleFoldoutOffset.x;
@@ -348,12 +351,12 @@ namespace MB
 			area.y += TitleFoldoutOffset.y;
 			area.height -= TitleFoldoutOffset.y;
 
-			DrawTitle(area);
+			DrawTitle(this, area);
 		}
 
-		public delegate void DrawHeaderDelegate(Rect rect);
+		public delegate void DrawHeaderDelegate(ImprovedReorderableList list, Rect rect);
 		public DrawHeaderDelegate DrawHeader { get; set; }
-		public void DefaultDrawHeader(Rect rect)
+		public void DefaultDrawHeader(ImprovedReorderableList list, Rect rect)
 		{
 			if (IsDroppingItems)
 			{
@@ -400,9 +403,9 @@ namespace MB
 
 		public Vector2 TitleFoldoutOffset { get; set; } = new Vector2(20f, 0f);
 
-		public delegate void DrawTitleDelegate(Rect rect);
+		public delegate void DrawTitleDelegate(ImprovedReorderableList list, Rect rect);
 		public DrawTitleDelegate DrawTitle { get; set; }
-		public void DefaultDrawTitle(Rect rect)
+		public void DefaultDrawTitle(ImprovedReorderableList list, Rect rect)
 		{
 			IsExpanded = EditorGUI.Foldout(rect, IsExpanded, TitleContent, true, TitleStyle);
 		}
@@ -474,18 +477,18 @@ namespace MB
 
 			ClearSelection();
 
-			DropItems(targets);
+			DropItems(this, targets);
 			InvokeElementsChange();
 			UpdateState();
 
 			Undo.SetCurrentGroupName($"Drop Items to {TitleText}");
 		}
 
-		public delegate void DropItemsDelegate(List<Object> list);
+		public delegate void DropItemsDelegate(ImprovedReorderableList list, List<Object> contents);
 		public DropItemsDelegate DropItems { get; set; }
-		public void DefaultDropItems(List<Object> list)
+		public void DefaultDropItems(ImprovedReorderableList list, List<Object> contents)
 		{
-			foreach (var target in list)
+			foreach (var target in contents)
 			{
 				var index = Count;
 				Property.InsertArrayElementAtIndex(index);
@@ -576,7 +579,7 @@ namespace MB
 			area.x += ElementHandleSize + ElementHandlePadding;
 			area.width -= ElementHandleSize + ElementHandlePadding;
 
-			DrawElement(area, index);
+			DrawElement(this, area, index);
 		}
 
 		void ProcessElementMouseSelection(Rect rect, int index)
@@ -609,7 +612,7 @@ namespace MB
 						AddSelection(index);
 					}
 
-					GlobalFocus = Property;
+					GlobalFocus = FormatID(Property);
 					GUI.changed = true;
 				}
 			}
@@ -679,9 +682,9 @@ namespace MB
 			if (IsRepaintEvent) style.Draw(area, GUIContent.none, 0);
 		}
 
-		public delegate void DrawElementDelegate(Rect rect, int index);
+		public delegate void DrawElementDelegate(ImprovedReorderableList list, Rect rect, int index);
 		public DrawElementDelegate DrawElement { get; set; }
-		public void DefaultDrawElement(Rect rect, int index)
+		public void DefaultDrawElement(ImprovedReorderableList list, Rect rect, int index)
 		{
 			var target = Property.GetArrayElementAtIndex(index);
 
@@ -747,7 +750,7 @@ namespace MB
 
 			if (DragElementSource != DragElementDestination)
 			{
-				ReorderElement(DragElementSource, DragElementDestination);
+				ReorderElement(this, DragElementSource, DragElementDestination);
 				Undo.SetCurrentGroupName($"Reorder {TitleText} Element");
 
 				InvokeElementsChange();
@@ -808,7 +811,7 @@ namespace MB
 
 				ClearSelection();
 
-				AddElement(index);
+				AddElement(this, index);
 				Undo.SetCurrentGroupName($"Add Element to {TitleText}");
 
 				InvokeElementsChange();
@@ -824,7 +827,7 @@ namespace MB
 			{
 				var collection = RetrieveSortedSelection();
 				ClearSelection();
-				RemoveElement(collection);
+				RemoveElement(this, collection);
 
 				Undo.SetCurrentGroupName($"Remove Elements From {TitleText}");
 
@@ -836,9 +839,9 @@ namespace MB
 		#endregion
 
 		#region Controls
-		public delegate void AddElementDelegate(int index);
+		public delegate void AddElementDelegate(ImprovedReorderableList list, int index);
 		public AddElementDelegate AddElement { get; set; }
-		public void DefaultAddElement(int index)
+		public void DefaultAddElement(ImprovedReorderableList list, int index)
 		{
 			Property.InsertArrayElementAtIndex(index);
 
@@ -847,9 +850,9 @@ namespace MB
 			AddSelection(index);
 		}
 
-		public delegate void RemoveElementDelegate(IList<int> indexes);
+		public delegate void RemoveElementDelegate(ImprovedReorderableList list, IList<int> indexes);
 		public RemoveElementDelegate RemoveElement { get; set; }
-		public void DefaultRemoveElement(IList<int> indexes)
+		public void DefaultRemoveElement(ImprovedReorderableList list, IList<int> indexes)
 		{
 			for (int i = indexes.Count; i-- > 0;)
 			{
@@ -864,9 +867,9 @@ namespace MB
 			AddSelection(indexes[0] - 1);
 		}
 
-		public delegate void ReorderElementDelegate(int source, int destination);
+		public delegate void ReorderElementDelegate(ImprovedReorderableList list, int source, int destination);
 		public ReorderElementDelegate ReorderElement { get; set; }
-		public void DefaultReorderElement(int source, int destination)
+		public void DefaultReorderElement(ImprovedReorderableList list, int source, int destination)
 		{
 			Property.MoveArrayElement(source, destination);
 		}
@@ -911,6 +914,40 @@ namespace MB
 			this.ElementType = elementType;
 
 			TitleText = $"{elementType.Name} List";
+		}
+
+		//Static Utility
+
+		public static class Collection
+        {
+			public static Dictionary<string, ImprovedReorderableList> Dictionary { get; }
+
+			public static ImprovedReorderableList Retrieve(SerializedProperty property)
+			{
+				var id = FormatID(property);
+
+				if (Dictionary.TryGetValue(id, out var list) == false)
+                {
+					list = new ImprovedReorderableList(property);
+					Dictionary[id] = list;
+				}
+				else
+                {
+					list.Set(property);
+				}
+
+				return list;
+			}
+
+			static Collection()
+			{
+				Dictionary = new Dictionary<string, ImprovedReorderableList>();
+			}
+		}
+
+		public static string FormatID(SerializedProperty property)
+		{
+			return $"{property.serializedObject.targetObject.GetType().Name}.{property.propertyPath}";
 		}
 	}
 }

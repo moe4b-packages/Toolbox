@@ -26,13 +26,16 @@ namespace MB
         [CustomPropertyDrawer(typeof(UList), true)]
         public class Drawer : BaseDrawer
         {
-            protected override SerializedProperty GetList() => Property.FindPropertyRelative("collection");
+            protected override SerializedProperty FindListProperty(SerializedProperty property)
+            {
+                return property.FindPropertyRelative("collection");
+            }
 
-            public override void Draw(Rect rect)
+            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
                 EditorGUIUtility.labelWidth = 120f;
 
-                base.Draw(rect);
+                base.OnGUI(rect, property, label);
             }
         }
 #endif

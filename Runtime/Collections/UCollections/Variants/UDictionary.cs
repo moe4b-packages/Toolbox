@@ -25,39 +25,29 @@ namespace MB
         [CustomPropertyDrawer(typeof(UDictionary), true)]
         public class Drawer : BaseDrawer
         {
-            protected override SerializedProperty GetList() => Property.FindPropertyRelative("list");
+            protected override SerializedProperty FindListProperty(SerializedProperty property)
+            {
+                return property.FindPropertyRelative("list");
+            }
 
-            public SerializedProperty GetKey(int index) => List.GetArrayElementAtIndex(index).FindPropertyRelative("key");
-            public SerializedProperty GetValue(int index) => List.GetArrayElementAtIndex(index).FindPropertyRelative("value");
-
-            HashSet<int> duplicates;
-            HashSet<int> nullables;
+            public SerializedProperty GetKey(SerializedProperty list, int index)
+            {
+                return list.GetArrayElementAtIndex(index).FindPropertyRelative("key");
+            }
+            public SerializedProperty GetValue(SerializedProperty list, int index)
+            {
+                return list.GetArrayElementAtIndex(index).FindPropertyRelative("value");
+            }
 
             public const float NestedElementSpacing = 2f;
 
             public const float KeyValuePadding = 10f;
 
-            public const float KeyInfoContextWidth = 20f;
-
-            static GUIContent ConflictGUIContent = GetIconContent("console.warnicon.sml", "Conflicting Key, Data Might be Lost");
-            static GUIContent NullGUIContent = GetIconContent("console.erroricon.sml", "Null Key, Will be Ignored");
-
-            protected override void Init()
-            {
-                base.Init();
-
-                duplicates = new HashSet<int>();
-                nullables = new HashSet<int>();
-                UpdateState();
-
-                UI.OnElementsChange += ChangeElements;
-            }
-
             #region Height
-            protected override float GetElementHeight(int index)
+            protected override float GetElementHeight(ImprovedReorderableList list, int index)
             {
-                var key = GetKey(index);
-                var value = GetValue(index);
+                var key = GetKey(list.Property, index);
+                var value = GetValue(list.Property, index);
 
                 var kHeight = GetChildrenSingleHeight(key, NestedElementSpacing);
                 var vHeight = GetChildrenSingleHeight(value, NestedElementSpacing);
@@ -70,52 +60,21 @@ namespace MB
             #endregion
 
             #region Draw
-            public override void Draw(Rect rect)
-            {
-                EditorGUI.BeginChangeCheck();
-
-                base.Draw(rect);
-
-                if (EditorGUI.EndChangeCheck())
-                    UpdateState();
-            }
-
-            #region Draw Element
-            protected override void DrawElement(Rect rect, int index)
+            protected override void DrawElement(ImprovedReorderableList list, Rect rect, int index)
             {
                 rect.height -= ElementHeightPadding;
                 rect.y += ElementHeightPadding / 2;
 
-                var key = GetKey(index);
-                var value = GetValue(index);
-
-                if (nullables.Contains(index))
-                {
-                    var area = new Rect(rect.x + 2.5f, rect.y, KeyInfoContextWidth, rect.height);
-
-                    EditorGUI.LabelField(area, NullGUIContent);
-
-                    rect.width -= KeyInfoContextWidth;
-                    rect.x += KeyInfoContextWidth;
-                }
-
-                if (duplicates.Contains(index))
-                {
-                    var area = new Rect(rect.x + 2.5f, rect.y, KeyInfoContextWidth, rect.height);
-
-                    EditorGUI.LabelField(area, ConflictGUIContent);
-
-                    rect.width -= KeyInfoContextWidth;
-                    rect.x += KeyInfoContextWidth;
-                }
-
                 var areas = Split(rect, 40, 60);
 
-                DrawKey(areas[0], key, index);
-                DrawValue(areas[1], value, index);
+                var key = GetKey(list.Property, index);
+                var value = GetValue(list.Property, index);
+
+                DrawKey(areas[0], key);
+                DrawValue(areas[1], value);
             }
 
-            void DrawKey(Rect rect, SerializedProperty property, int index)
+            void DrawKey(Rect rect, SerializedProperty property)
             {
                 EditorGUIUtility.labelWidth = 60;
 
@@ -125,7 +84,7 @@ namespace MB
                 DrawField(rect, property);
             }
 
-            void DrawValue(Rect rect, SerializedProperty property, int index)
+            void DrawValue(Rect rect, SerializedProperty property)
             {
                 EditorGUIUtility.labelWidth = 80;
 
@@ -154,42 +113,6 @@ namespace MB
                 }
             }
             #endregion
-            #endregion
-
-            void ChangeElements() => UpdateState();
-
-            void UpdateState()
-            {
-                duplicates.Clear();
-                nullables.Clear();
-
-                //TODO Deal With False Markups
-                return;
-
-                var elements = new SerializedProperty[List.arraySize];
-
-                for (int i = 0; i < elements.Length; i++)
-                    elements[i] = GetKey(i);
-
-                for (int x = 0; x < elements.Length; x++)
-                {
-                    if (elements[x].propertyType == SerializedPropertyType.ObjectReference && elements[x].objectReferenceValue == null)
-                        nullables.Add(x);
-
-                    if (duplicates.Contains(x) || nullables.Contains(x)) continue;
-
-                    for (int y = 0; y < elements.Length; y++)
-                    {
-                        if (x == y) continue;
-
-                        if (SerializedProperty.DataEquals(elements[x], elements[y]))
-                        {
-                            duplicates.Add(x);
-                            duplicates.Add(y);
-                        }
-                    }
-                }
-            }
         }
 #endif
     }
