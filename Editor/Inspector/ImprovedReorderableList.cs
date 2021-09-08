@@ -27,12 +27,10 @@ namespace MB
 		#endregion
 
 		#region Serialized
-		public SerializedProperty Property { get; protected set; }
+		public SerializedProperty Property { get; set; }
 		public SerializedObject SerializedObject => Property.serializedObject;
 
 		public bool IsSerialized => Property != null;
-
-		public void Set(SerializedProperty reference) => Property = reference;
 		#endregion
 
 		public BackingType Backing
@@ -933,7 +931,7 @@ namespace MB
 				}
 				else
                 {
-					list.Set(property);
+					list.Property = property;
 				}
 
 				return list;
