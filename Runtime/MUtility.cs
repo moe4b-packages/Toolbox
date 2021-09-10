@@ -85,16 +85,46 @@ namespace MB
             return Application.platform;
         }
 
+        #region Player Loop
         public static void RegisterPlayerLoop<TType>(PlayerLoopSystem.UpdateFunction callback)
         {
             var loop = PlayerLoop.GetCurrentPlayerLoop();
 
-            for (int i = 0; i < loop.subSystemList.Length; ++i)
-                if (loop.subSystemList[i].type == typeof(TType))
-                    loop.subSystemList[i].updateDelegate += callback;
+            var index = LocatePlayerLoop<TType>(ref loop);
+
+            if (index == -1)
+                throw new Exception($"No PlayerLoop Entry Found for {typeof(TType)}");
+
+            loop.subSystemList[index].updateDelegate += callback;
 
             PlayerLoop.SetPlayerLoop(loop);
+
+            Application.quitting += () => UnregisterPlayerLoop<TType>(callback);
         }
+
+        public static int LocatePlayerLoop<TType>(ref PlayerLoopSystem loop)
+        {
+            for (int i = 0; i < loop.subSystemList.Length; ++i)
+                if (loop.subSystemList[i].type == typeof(TType))
+                    return i;
+
+            return -1;
+        }
+
+        public static bool UnregisterPlayerLoop<TType>(PlayerLoopSystem.UpdateFunction callback)
+        {
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+
+            var index = LocatePlayerLoop<TType>(ref loop);
+
+            if (index == -1) return false;
+
+            loop.subSystemList[index].updateDelegate -= callback;
+
+            PlayerLoop.SetPlayerLoop(loop);
+            return true;
+        }
+        #endregion
 
         public static string PrettifyName<T>(T value)
         {

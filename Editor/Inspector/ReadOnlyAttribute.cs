@@ -21,6 +21,22 @@ namespace MB
 {
     public class ReadOnlyAttribute : PropertyAttribute
     {
+        public ReadOnlyPlayMode Mode { get; }
+
+        public ReadOnlyAttribute() : this(ReadOnlyPlayMode.EditMode | ReadOnlyPlayMode.PlayMode) { }
+        public ReadOnlyAttribute(ReadOnlyPlayMode mode)
+        {
+            this.Mode = mode;
+        }
+
+        public static bool CheckPlayMode(ReadOnlyPlayMode mode)
+        {
+            if (mode.HasFlag(ReadOnlyPlayMode.EditMode) && Application.isPlaying == false) return true;
+            if (mode.HasFlag(ReadOnlyPlayMode.PlayMode) && Application.isPlaying == true) return true;
+
+            return false;
+        }
+
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(ReadOnlyAttribute))]
         public class Drawer : PropertyDrawer
@@ -32,7 +48,18 @@ namespace MB
 
             public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
-                GUI.enabled = false;
+                if(attribute == null)
+                {
+                    GUI.enabled = false;
+                }
+                else
+                {
+                    var mode = (attribute as ReadOnlyAttribute).Mode;
+
+                    var valid = CheckPlayMode(mode);
+
+                    GUI.enabled = !CheckPlayMode(mode);
+                }
 
                 EditorGUI.PropertyField(rect, property, label, true);
 
@@ -40,5 +67,12 @@ namespace MB
             }
         }
 #endif
+    }
+
+    [Flags]
+    public enum ReadOnlyPlayMode
+    {
+        EditMode = 1 << 0,
+        PlayMode = 1 << 1,
     }
 }
