@@ -50,7 +50,7 @@ namespace MB
 					if (string.IsNullOrEmpty(id))
 						cache = null;
 					else
-                    {
+					{
 						cache = Type.GetType(id);
 
 						if (Argument.IsAssignableFrom(cache) == false)
@@ -91,7 +91,7 @@ namespace MB
 		}
 
 		public override string ToString()
-        {
+		{
 			if (Type == null)
 				return "null";
 
@@ -297,12 +297,14 @@ namespace MB
 	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 	public sealed class NoneMonoScriptSelectableAttribute : Attribute
 	{
+#if UNITY_EDITOR
 		public static bool IsDefined(MonoScript script)
 		{
 			var type = script.GetClass();
 
 			return IsDefined(type);
 		}
+#endif
 		public static bool IsDefined(Type type)
 		{
 			var attribute = type.GetCustomAttribute<NoneMonoScriptSelectableAttribute>();
