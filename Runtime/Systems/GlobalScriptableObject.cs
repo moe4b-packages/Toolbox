@@ -26,7 +26,11 @@ namespace MB
     /// </summary>
     public class GlobalScriptableObject : ScriptableObject
     {
-        [InitializeOnAllLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+#else
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#endif
         static void Initiate()
         {
             var list = TypeQuery.FindAll(Predicate);
@@ -53,6 +57,36 @@ namespace MB
 
             return true;
         }
+
+#if UNITY_EDITOR
+        public static T CreateAsset<T>(string name)
+            where T : GlobalScriptableObject
+        {
+            var asset = CreateInstance<T>();
+
+            var directory = new DirectoryInfo($"Assets/{Toolbox.Name}/Resources");
+            if (directory.Exists == false) directory.Create();
+
+            AssetDatabase.CreateAsset(asset, $"{directory}/{name}.asset");
+
+            return asset;
+        }
+
+        public static void DeleteAssets<T>(IList<T> list, T exception)
+            where T : GlobalScriptableObject
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] == exception) continue;
+
+                var path = AssetDatabase.GetAssetPath(list[i]);
+
+                AssetDatabase.DeleteAsset(path);
+            }
+
+            AssetDatabase.SaveAssets();
+        }
+#endif
     }
 
     public class GlobalScriptableObject<T> : GlobalScriptableObject
@@ -70,7 +104,7 @@ namespace MB
             {
 #if UNITY_EDITOR
                 Debug.LogWarning($"No {Name} Instance Found, Creating Asset");
-                Instance = CreateAsset();
+                Instance = CreateAsset<T>(Name);
 #else
                 Debug.LogWarning($"No {Name} Instance Found, Ignoring System Load");
                 return;
@@ -98,33 +132,5 @@ namespace MB
         }
 
         public static IList<T> RetrieveAll() => Resources.LoadAll<T>("");
-
-#if UNITY_EDITOR
-        static T CreateAsset()
-        {
-            var asset = CreateInstance<T>();
-
-            var directory = new DirectoryInfo($"Assets/{Toolbox.Name}/Resources");
-            if (directory.Exists == false) directory.Create();
-
-            AssetDatabase.CreateAsset(asset, $"{directory}/{Name}.asset");
-
-            return asset;
-        }
-
-        static void DeleteAssets(IList<T> list, T exception)
-        {
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (list[i] == exception) continue;
-
-                var path = AssetDatabase.GetAssetPath(list[i]);
-
-                AssetDatabase.DeleteAsset(path);
-            }
-
-            AssetDatabase.SaveAssets();
-        }
-#endif
     }
 }

@@ -26,8 +26,8 @@ namespace MB
 	public class ScriptableObjectInitializer : GlobalScriptableObject<ScriptableObjectInitializer>, IScriptableObjectBuildPreProcess
 	{
         [SerializeField]
-        protected List<ScriptableObject> list;
-        public IReadOnlyList<ScriptableObject> List { get { return list; } }
+        List<ScriptableObject> list;
+        public List<ScriptableObject> List => list;
 
         protected override void Load()
         {
@@ -55,6 +55,8 @@ namespace MB
 #if UNITY_EDITOR
         public virtual void Refresh()
         {
+            if (this == null) return;
+
             var targets = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
 
             if(MUtility.CheckElementsInclusion(list, targets) == false)
@@ -66,6 +68,11 @@ namespace MB
 
         public void PreProcessBuild() => Refresh();
 #endif
+
+        public ScriptableObjectInitializer()
+        {
+            list = new List<ScriptableObject>();
+        }
 
 #if UNITY_EDITOR
         class BuildProcessor : IPreprocessBuildWithReport

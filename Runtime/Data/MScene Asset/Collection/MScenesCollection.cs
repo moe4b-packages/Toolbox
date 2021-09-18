@@ -76,5 +76,10 @@ namespace MB
             return targets;
         }
 #endif
+
+        public MScenesCollection()
+        {
+            list = new List<MSceneAsset>();
+        }
     }
 }
