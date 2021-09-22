@@ -462,9 +462,9 @@ namespace MB
 
 			foreach (var item in DragAndDrop.objectReferences)
 			{
-				if (item is GameObject && typeof(Component).IsAssignableFrom(ElementType))
+				if (item is GameObject gameObject && typeof(Component).IsAssignableFrom(ElementType))
 				{
-					var range = QueryComponents.InSelf((item as GameObject), ElementType);
+					var range = QueryComponents.InSelf(gameObject, ElementType);
 					targets.AddRange(range);
 				}
 				else

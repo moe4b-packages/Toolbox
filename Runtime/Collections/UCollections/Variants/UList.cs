@@ -82,6 +82,8 @@ namespace MB
         public void Add(T item) => Add(item);
         public int Add(object value) => ICollection.Add(value);
 
+        public void AddRange(IEnumerable<T> range) => Collection.AddRange(range);
+
         public void Clear() => collection.Clear();
 
         public bool Contains(T item) => collection.Contains(item);

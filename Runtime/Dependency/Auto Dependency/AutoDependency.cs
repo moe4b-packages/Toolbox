@@ -28,9 +28,9 @@ namespace MB
     {
         public static void ResolveAll(UObjectSurrogate surrogate)
         {
-            var components = QueryComponents.InChildren<MonoBehaviour>(surrogate, true);
+            var components = QueryComponents.In<MonoBehaviour>(surrogate);
 
-            for (int i = 0; i < components.Length; i++)
+            for (int i = 0; i < components.Count; i++)
                 ResolveComponent(components[i]);
         }
 

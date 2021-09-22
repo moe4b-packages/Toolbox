@@ -24,11 +24,12 @@ namespace MB
     /// just pass one of these whenever a function requires this object
     /// </summary>
     [Serializable]
-    public struct UObjectSurrogate
+    public readonly ref struct UObjectSurrogate
     {
-        public GameObject GameObject { get; private set; }
+        public readonly GameObject GameObject { get; }
+        public readonly Scene Scene => GameObject.scene;
 
-        public Transform Transform => GameObject.transform;
+        public readonly Transform Transform => GameObject.transform;
 
         public UObjectSurrogate(GameObject gameObject)
         {
