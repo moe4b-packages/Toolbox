@@ -58,7 +58,8 @@ namespace MB
 		public delegate void LogDelegate(object target);
 		public static LogDelegate LogMethod { get; set; } = Debug.Log;
 
-		public static ExecutionTimer New => new ExecutionTimer("");
+		public static ExecutionTimer New => Create("");
+		public static ExecutionTimer Create(string name) => new ExecutionTimer(name);
 
 		static ExecutionTimer instance;
 
