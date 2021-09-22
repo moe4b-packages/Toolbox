@@ -53,10 +53,10 @@ namespace MB
 				return new Handle<T>(item);
 			}
 
-			public static ClearDelegate<T> ClearMethod;
+			public static ResetDelegate<T> ResetMethod;
 			internal static void Return(T item)
 			{
-				ClearMethod(item);
+				ResetMethod(item);
 
 				if (root == null)
 					root = item;
@@ -71,16 +71,16 @@ namespace MB
 				CreateMethod = Create;
 				static T Create() => new T();
 
-				ClearMethod = Clear;
-				static void Clear(T item)
-                {
-					Debug.LogWarning($"No Clear Method Implemented for Disposable Pool of '{typeof(T)}', You Might Want to Set That");
+				ResetMethod = Reset;
+				static void Reset(T item)
+				{
+					Debug.LogWarning($"No Reset Method Implemented for Disposable Pool of '{typeof(T)}', You Might Want to Set That Before using the Pool");
 				}
 			}
 		}
 
 		public delegate T CreateDelegate<T>() where T : class, new();
-		public delegate void ClearDelegate<T>(T item) where T : class, new();
+		public delegate void ResetDelegate<T>(T item) where T : class, new();
 
 		public readonly struct Handle<T> : IDisposable
 			where T : class, new()
@@ -106,18 +106,18 @@ namespace MB
 				get => Object<Collections.List<T>>.CreateMethod;
 				set => Object<Collections.List<T>>.CreateMethod = value;
 			}
-			public static ClearDelegate<Collections.List<T>> ClearMethod
+			public static ResetDelegate<Collections.List<T>> ResetMethod
 			{
-				get => Object<Collections.List<T>>.ClearMethod;
-				set => Object<Collections.List<T>>.ClearMethod = value;
+				get => Object<Collections.List<T>>.ResetMethod;
+				set => Object<Collections.List<T>>.ResetMethod = value;
 			}
 
 			public static Handle<Collections.List<T>> Lease(out Collections.List<T> collection) => Object<Collections.List<T>>.Lease(out collection);
 
 			static List()
 			{
-				ClearMethod = Clear;
-				static void Clear(Collections.List<T> collection) => collection.Clear();
+				ResetMethod = Reset;
+				static void Reset(Collections.List<T> collection) => collection.Clear();
 			}
 		}
 
@@ -128,18 +128,18 @@ namespace MB
 				get => Object<Collections.HashSet<T>>.CreateMethod;
 				set => Object<Collections.HashSet<T>>.CreateMethod = value;
 			}
-			public static ClearDelegate<Collections.HashSet<T>> ClearMethod
+			public static ResetDelegate<Collections.HashSet<T>> ResetMethod
 			{
-				get => Object<Collections.HashSet<T>>.ClearMethod;
-				set => Object<Collections.HashSet<T>>.ClearMethod = value;
+				get => Object<Collections.HashSet<T>>.ResetMethod;
+				set => Object<Collections.HashSet<T>>.ResetMethod = value;
 			}
 
 			public static Handle<Collections.HashSet<T>> Lease(out Collections.HashSet<T> collection) => Object<Collections.HashSet<T>>.Lease(out collection);
 
 			static HashSet()
 			{
-				ClearMethod = Clear;
-				static void Clear(Collections.HashSet<T> collection) => collection.Clear();
+				ResetMethod = Reset;
+				static void Reset(Collections.HashSet<T> collection) => collection.Clear();
 			}
 		}
 
@@ -150,40 +150,40 @@ namespace MB
 				get => Object<Collections.Dictionary<TKey, TValue>>.CreateMethod;
 				set => Object<Collections.Dictionary<TKey, TValue>>.CreateMethod = value;
 			}
-			public static ClearDelegate<Collections.Dictionary<TKey, TValue>> ClearMethod
+			public static ResetDelegate<Collections.Dictionary<TKey, TValue>> ResetMethod
 			{
-				get => Object<Collections.Dictionary<TKey, TValue>>.ClearMethod;
-				set => Object<Collections.Dictionary<TKey, TValue>>.ClearMethod = value;
+				get => Object<Collections.Dictionary<TKey, TValue>>.ResetMethod;
+				set => Object<Collections.Dictionary<TKey, TValue>>.ResetMethod = value;
 			}
 
 			public static Handle<Collections.Dictionary<TKey, TValue>> Lease(out Collections.Dictionary<TKey, TValue> collection) => Object<Collections.Dictionary<TKey, TValue>>.Lease(out collection);
 
 			static Dictionary()
 			{
-				ClearMethod = Clear;
-				static void Clear(Collections.Dictionary<TKey, TValue> collection) => collection.Clear();
+				ResetMethod = Reset;
+				static void Reset(Collections.Dictionary<TKey, TValue> collection) => collection.Clear();
 			}
 		}
 
 		public static class StringBuilder
-        {
+		{
 			public static CreateDelegate<Text.StringBuilder> CreateMethod
 			{
 				get => Object<Text.StringBuilder>.CreateMethod;
 				set => Object<Text.StringBuilder>.CreateMethod = value;
 			}
-			public static ClearDelegate<Text.StringBuilder> ClearMethod
+			public static ResetDelegate<Text.StringBuilder> ResetMethod
 			{
-				get => Object<Text.StringBuilder>.ClearMethod;
-				set => Object<Text.StringBuilder>.ClearMethod = value;
+				get => Object<Text.StringBuilder>.ResetMethod;
+				set => Object<Text.StringBuilder>.ResetMethod = value;
 			}
 
 			public static Handle<Text.StringBuilder> Lease(out Text.StringBuilder collection) => Object<Text.StringBuilder>.Lease(out collection);
 
 			static StringBuilder()
 			{
-				ClearMethod = Clear;
-				static void Clear(Text.StringBuilder collection) => collection.Clear();
+				ResetMethod = Reset;
+				static void Reset(Text.StringBuilder builder) => builder.Clear();
 			}
 		}
 	}
