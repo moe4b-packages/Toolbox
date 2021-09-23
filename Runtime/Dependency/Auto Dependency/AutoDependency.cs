@@ -28,10 +28,11 @@ namespace MB
     {
         public static void ResolveAll(UObjectSurrogate surrogate)
         {
-            var components = QueryComponents.In<MonoBehaviour>(surrogate);
-
-            for (int i = 0; i < components.Count; i++)
-                ResolveComponent(components[i]);
+            using (ComponentQuery.Collection.NonAlloc.InHierarchy<MonoBehaviour>(surrogate, out var list))
+            {
+                for (int i = 0; i < list.Count; i++)
+                    ResolveComponent(list[i]);
+            }
         }
 
         static void ResolveComponent(Component component)
@@ -46,39 +47,37 @@ namespace MB
         {
             if (element.IsList)
             {
-                var list = new List<Component>();
-
-                for (int i = 0; i < element.Scopes.Length; i++)
+                using (DisposablePool.List<Component>.Lease(out var list))
                 {
-                    var range = QueryComponents.In(component, element.DependencyType, ConvertScope(element.Scopes[i]));
+                    for (int i = 0; i < element.Scopes.Length; i++)
+                        using (ComponentQuery.Collection.NonAlloc.In(component, element.DependencyType, out var temp, ConvertScope(element.Scopes[i])))
+                            list.AddRange(temp);
 
-                    list.AddRange(range);
+                    element.SetElements(component, list);
                 }
-
-                element.SetElements(component, list);
             }
             else
             {
                 for (int i = 0; i < element.Scopes.Length; i++)
                 {
-                    var target = QueryComponent.In(component, element.DependencyType, ConvertScope(element.Scopes[i]));
+                    var target = ComponentQuery.Single.In(component, element.DependencyType, ConvertScope(element.Scopes[i]));
 
-                    if (target == null) continue;
-
-                    element.SetValue(component, target);
-
-                    if (target != null) break;
+                    if (target != null)
+                    {
+                        element.SetValue(component, target);
+                        break;
+                    }
                 }
             }
         }
 
         public enum Scope
         {
-            Self = QueryComponentScope.Self,
-            Children = QueryComponentScope.Children,
-            Parents = QueryComponentScope.Parents,
-            Scene = QueryComponentScope.Scene,
-            Global = QueryComponentScope.Global
+            Self = ComponentQueryScope.Self,
+            Children = ComponentQueryScope.Children,
+            Parents = ComponentQueryScope.Parents,
+            Scene = ComponentQueryScope.Scene,
+            Global = ComponentQueryScope.Global
         }
 
         public const Scope Self = Scope.Self;
@@ -87,8 +86,8 @@ namespace MB
         public const Scope Scene = Scope.Scene;
         public const Scope Global = Scope.Global;
 
-        public static QueryComponentScope ConvertScope(Scope scope) => (QueryComponentScope)(int)scope;
-        public static Scope ConvertScope(QueryComponentScope scope) => (Scope)(int)scope;
+        public static ComponentQueryScope ConvertScope(Scope scope) => (ComponentQueryScope)(int)scope;
+        public static Scope ConvertScope(ComponentQueryScope scope) => (Scope)(int)scope;
 
         public class Element
         {

@@ -21,16 +21,18 @@ namespace MB
 {
 	public class AutoInitializer : MonoBehaviour
 	{
-        IList<IInitialize> list;
+        IInitialize[] collection;
 
         void Awake()
         {
-            list = Initializer.Configure(this);
+            collection = Initializer.Query(this);
+
+            Initializer.Configure(collection);
         }
 
         void Start()
         {
-            Initializer.Init(list);
+            Initializer.Init(collection);
         }
     }
 }

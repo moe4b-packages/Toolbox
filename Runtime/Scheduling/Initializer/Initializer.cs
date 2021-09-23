@@ -33,40 +33,24 @@ namespace MB
 
         static void SceneLoadCallback(Scene scene, LoadSceneMode mode) => Perform(scene);
 
-        public static IList<IInitialize> Query(UObjectSurrogate surrogate)
-        {
-            var list = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
-
-            return list;
-        }
-
         #region Perform
         static void Perform(Scene scene)
         {
             if (scene.isLoaded == false)
                 throw new InvalidOperationException($"Cannot Initialize Unloaded Scene '{scene}'");
 
-            var roots = scene.GetRootGameObjects();
-
-            var targets = new List<IInitialize>();
-
-            for (int i = 0; i < roots.Length; i++)
+            using (ComponentQuery.Collection.NonAlloc.InScene<IInitialize>(scene, out var targets))
             {
-                var range = Query(roots[i]);
-
-                targets.AddRange(range);
+                Perform(targets);
             }
-
-            Perform(targets);
         }
 
-        public static IInitialize[] Perform(UObjectSurrogate surrogate)
+        public static void Perform(UObjectSurrogate surrogate)
         {
-            var targets = surrogate.GameObject.GetComponentsInChildren<IInitialize>(true);
-
-            Perform(targets);
-
-            return targets;
+            using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInitialize>(surrogate, out var targets))
+            {
+                Perform(targets);
+            }
         }
 
         public static void Perform<T>(Func<IEnumerable<T>> function)
@@ -85,13 +69,12 @@ namespace MB
         #endregion
 
         #region Configure
-        public static IList<IInitialize> Configure(UObjectSurrogate surrogate)
+        public static void Configure(UObjectSurrogate surrogate)
         {
-            var targets = Query(surrogate);
-
-            Configure(targets);
-
-            return targets;
+            using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInitialize>(surrogate, out var targets))
+            {
+                Configure(targets);
+            }
         }
 
         public static void Configure<T>(Func<IEnumerable<T>> function)
@@ -115,13 +98,12 @@ namespace MB
         #endregion
 
         #region Init
-        public static IList<IInitialize> Init(UObjectSurrogate surrogate)
+        public static void Init(UObjectSurrogate surrogate)
         {
-            var targets = Query(surrogate);
-
-            Init(targets);
-
-            return targets;
+            using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInitialize>(surrogate, out var targets))
+            {
+                Init(targets);
+            }
         }
 
         public static void Init<T>(Func<IEnumerable<T>> function)
@@ -143,6 +125,11 @@ namespace MB
             instance.Init();
         }
         #endregion
+
+        public static IInitialize[] Query(UObjectSurrogate surrogate)
+        {
+            return ComponentQuery.Collection.InHierarchy<IInitialize>(surrogate);
+        }
     }
 
     public interface IInitialize

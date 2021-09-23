@@ -464,7 +464,7 @@ namespace MB
 			{
 				if (item is GameObject gameObject && typeof(Component).IsAssignableFrom(ElementType))
 				{
-					var range = QueryComponents.InSelf(gameObject, ElementType);
+					var range = ComponentQuery.Collection.InSelf(gameObject, ElementType);
 					targets.AddRange(range);
 				}
 				else
