@@ -75,6 +75,7 @@ namespace MB
         {
             Self = ComponentQueryScope.Self,
             Children = ComponentQueryScope.Children,
+            Hierarchy = ComponentQueryScope.Hierarchy,
             Parents = ComponentQueryScope.Parents,
             Scene = ComponentQueryScope.Scene,
             Global = ComponentQueryScope.Global
@@ -82,6 +83,7 @@ namespace MB
 
         public const Scope Self = Scope.Self;
         public const Scope Children = Scope.Children;
+        public const Scope Hierarchy = Scope.Hierarchy;
         public const Scope Parents = Scope.Parents;
         public const Scope Scene = Scope.Scene;
         public const Scope Global = Scope.Global;

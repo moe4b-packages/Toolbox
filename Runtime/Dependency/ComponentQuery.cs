@@ -33,6 +33,33 @@ namespace MB
 	/// </summary>
 	public static class ComponentQuery
 	{
+		/// <summary>
+		/// Reflection accessed, delegate cached wrapper for the internal querying method used by Unity
+		/// </summary>
+		static class InternalMethod
+		{
+			public const string Name = "GetComponentsInternal";
+
+			public const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
+
+			static readonly Delegate Binding;
+			public delegate Array Delegate(GameObject gameObject, Type type, bool generic, bool recursive, bool includeInactive, bool reverse, object list);
+
+			public static void Invoke(GameObject gameObject, Type type, List<Component> list)
+			{
+				Binding(gameObject, type, false, true, true, false, list);
+			}
+
+			static InternalMethod()
+			{
+				var type = typeof(GameObject);
+
+				var method = type.GetMethod(Name, Flags);
+
+				Binding = method.CreateDelegate<Delegate>();
+			}
+		}
+
 		public static class Scope
 		{
 			public static Type Type { get; } = typeof(ComponentQueryScope);
@@ -76,35 +103,12 @@ namespace MB
 			}
 		}
 
-		static class InternalMethod
-		{
-			public const string Name = "GetComponentsInternal";
-
-			public const BindingFlags Flags = BindingFlags.NonPublic | BindingFlags.Instance;
-
-			static readonly Delegate Binding;
-			public delegate Array Delegate(GameObject gameObject, Type type, bool generic, bool recursive, bool includeInactive, bool reverse, object list);
-
-			public static void Invoke(GameObject gameObject, Type type, List<Component> list)
-			{
-				Binding(gameObject, type, false, true, true, false, list);
-			}
-
-			static InternalMethod()
-			{
-				var type = typeof(GameObject);
-
-				var method = type.GetMethod(Name, Flags);
-
-				Binding = method.CreateDelegate<Delegate>();
-			}
-		}
-
-		public static ComponentQueryScope Self => ComponentQueryScope.Self;
-		public static ComponentQueryScope Children => ComponentQueryScope.Children;
-		public static ComponentQueryScope Parents => ComponentQueryScope.Parents;
-		public static ComponentQueryScope Scene => ComponentQueryScope.Scene;
-		public static ComponentQueryScope Global => ComponentQueryScope.Global;
+		public const ComponentQueryScope Self = ComponentQueryScope.Self;
+		public const ComponentQueryScope Children = ComponentQueryScope.Children;
+		public const ComponentQueryScope Hierarchy = ComponentQueryScope.Hierarchy;
+		public const ComponentQueryScope Parents = ComponentQueryScope.Parents;
+		public const ComponentQueryScope Scene = ComponentQueryScope.Scene;
+		public const ComponentQueryScope Global = ComponentQueryScope.Global;
 
 		public static class Single
 		{
@@ -956,6 +960,9 @@ namespace MB
 
 		Self = 1 << 0,
 		Children = 1 << 1,
+
+		Hierarchy = Self | Children,
+
 		Parents = 1 << 2,
 		Scene = 1 << 3,
 		Global = 1 << 4,
