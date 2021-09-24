@@ -487,5 +487,6 @@ namespace MB
         #endregion
 
         public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());
+        public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
     }
 }
