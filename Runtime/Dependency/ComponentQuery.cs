@@ -936,6 +936,17 @@ namespace MB
 				#endregion
 			}
 		}
+
+		public static bool IsUnityObject<T>()
+		{
+			var type = typeof(T);
+
+			return IsUnityObject(type);
+		}
+		public static bool IsUnityObject(Type type)
+		{
+			return type.IsAssignableFrom(typeof(Object));
+		}
 	}
 
 	[Flags]

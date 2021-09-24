@@ -30,20 +30,14 @@ namespace MB
 		public static class Object<T>
 			where T : class, new()
 		{
-			static T root;
-			static Queue<T> queue;
+			static Stack<T> stack;
 
 			public static CreateDelegate<T> CreateMethod;
 			public static Handle<T> Lease(out T item)
 			{
-				if (root != null)
+				if (stack.Count > 0)
 				{
-					item = root;
-					root = null;
-				}
-				else if (queue.Count > 0)
-				{
-					item = queue.Dequeue();
+					item = stack.Pop();
 				}
 				else
 				{
@@ -58,15 +52,20 @@ namespace MB
 			{
 				ResetMethod(item);
 
-				if (root == null)
-					root = item;
-				else
-					queue.Enqueue(item);
+				stack.Push(item);
+			}
+
+			/// <summary>
+			/// Clears the current pool so it can be collected by the garbage collector
+			/// </summary>
+			public static void Clear()
+			{
+				stack.Clear();
 			}
 
 			static Object()
 			{
-				queue = new Queue<T>();
+				stack = new Stack<T>();
 
 				CreateMethod = Create;
 				static T Create() => new T();
@@ -76,6 +75,8 @@ namespace MB
 				{
 					Debug.LogWarning($"No Reset Method Implemented for Disposable Pool of '{typeof(T)}', You Might Want to Set That Before using the Pool");
 				}
+
+				DisposablePool.OnClear += Clear;
 			}
 		}
 
@@ -99,6 +100,7 @@ namespace MB
 			}
 		}
 
+		#region Implementations
 		public static class List<T>
 		{
 			public static CreateDelegate<Collections.List<T>> CreateMethod
@@ -113,6 +115,8 @@ namespace MB
 			}
 
 			public static Handle<Collections.List<T>> Lease(out Collections.List<T> collection) => Object<Collections.List<T>>.Lease(out collection);
+
+			public static void Clear() => Object<Collections.List<T>>.Clear();
 
 			static List()
 			{
@@ -136,6 +140,8 @@ namespace MB
 
 			public static Handle<Collections.HashSet<T>> Lease(out Collections.HashSet<T> collection) => Object<Collections.HashSet<T>>.Lease(out collection);
 
+			public static void Clear() => Object<Collections.HashSet<T>>.Clear();
+
 			static HashSet()
 			{
 				ResetMethod = Reset;
@@ -157,6 +163,8 @@ namespace MB
 			}
 
 			public static Handle<Collections.Dictionary<TKey, TValue>> Lease(out Collections.Dictionary<TKey, TValue> collection) => Object<Collections.Dictionary<TKey, TValue>>.Lease(out collection);
+
+			public static void Clear() => Object<Collections.Dictionary<TKey, TValue>>.Clear();
 
 			static Dictionary()
 			{
@@ -180,11 +188,25 @@ namespace MB
 
 			public static Handle<Text.StringBuilder> Lease(out Text.StringBuilder collection) => Object<Text.StringBuilder>.Lease(out collection);
 
+			public static void Clear() => Object<Text.StringBuilder>.Clear();
+
 			static StringBuilder()
 			{
 				ResetMethod = Reset;
 				static void Reset(Text.StringBuilder builder) => builder.Clear();
 			}
 		}
+		#endregion
+
+		#region Methods
+		internal static event Action OnClear;
+		/// <summary>
+		/// Clears all the allocated pools so they can be collected by the garbage collector
+		/// </summary>
+		public static void Clear()
+		{
+			OnClear?.Invoke();
+		}
+		#endregion
 	}
 }
