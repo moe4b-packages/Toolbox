@@ -36,13 +36,9 @@ namespace MB
 			public static Handle<T> Lease(out T item)
 			{
 				if (stack.Count > 0)
-				{
 					item = stack.Pop();
-				}
 				else
-				{
 					item = CreateMethod();
-				}
 
 				return new Handle<T>(item);
 			}
@@ -51,7 +47,6 @@ namespace MB
 			internal static void Return(T item)
 			{
 				ResetMethod(item);
-
 				stack.Push(item);
 			}
 
