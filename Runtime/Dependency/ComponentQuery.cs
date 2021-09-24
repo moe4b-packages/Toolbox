@@ -147,7 +147,7 @@ namespace MB
 						return InGlobal<T>();
 
 					default:
-						throw new ArgumentException($"Invalid Argument of {scope}, This method doesn't accept flag values or None, please use the params instead of using flags");
+						throw new ArgumentException($"Invalid Argument of ({scope}), This method doesn't accept flag values or None, please use the params overload instead of using flags");
 				}
 			}
 
