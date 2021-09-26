@@ -488,5 +488,11 @@ namespace MB
 
         public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());
         public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
+
+        public static void ForAll<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (var item in source)
+                action(item);
+        }
     }
 }
