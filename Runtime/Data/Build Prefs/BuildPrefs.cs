@@ -24,28 +24,16 @@ namespace MB
 	public class BuildPrefs : GlobalScriptableObject<BuildPrefs>
 	{
         [SerializeField]
-        [TextArea]
-        [HideInInspector]
+        [TextArea(55, 400)]
         string json = default;
         public string Json => json;
 
         public JObjectComposer Composer { get; protected set; }
 
-        void ChangeCallback()
+        protected override void Load()
         {
-            json = Composer.Context.ToString();
-        }
+            base.Load();
 
-        public void Set(string key, object value) => Composer.Set(key, value);
-
-        public T Read<T>(string key, T fallback = default) => Composer.Read<T>(key, fallback: fallback);
-
-        public bool Contains(string key) => Composer.Contains(key);
-
-        public bool Remove(string key) => Composer.Remove(key);
-
-        public BuildPrefs()
-        {
             Composer = new JObjectComposer();
 
             var settings = new JsonSerializerSettings()
@@ -56,7 +44,24 @@ namespace MB
             Composer.Configure(settings);
             Composer.Load(json);
 
-            Composer.OnChange += ChangeCallback;
+            Composer.OnChange += ComposerChangeCallback;
         }
+
+        void ComposerChangeCallback()
+        {
+            json = Composer.Context.ToString();
+
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(this);
+#endif
+        }
+
+        public void Set(string key, object value) => Composer.Set(key, value);
+
+        public T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
+
+        public bool Contains(string key) => Composer.Contains(key);
+
+        public bool Remove(string key) => Composer.Remove(key);
     }
 }

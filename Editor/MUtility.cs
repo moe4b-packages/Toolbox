@@ -90,6 +90,20 @@ namespace MB
 
             File.WriteAllText(path, contents);
         }
+
+        public static IEnumerable<SerializedProperty> IterateChildren(this SerializedObject target)
+        {
+            var iterator = target.GetIterator();
+
+            iterator.Next(true);
+
+            while (iterator.NextVisible(false))
+            {
+                if (iterator.name == "m_Script") continue;
+
+                yield return iterator;
+            }
+        }
     }
 }
 #endif

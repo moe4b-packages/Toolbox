@@ -42,18 +42,15 @@ namespace MB
         }
 
 #if UNITY_EDITOR
-        void Refresh()
+        bool Refresh()
         {
             var targets = ComponentQuery.Collection.InScene<IInitialize>(gameObject.scene);
+
             if (targets.Length == 0)
-            {
-                DestroyImmediate(gameObject);
-                return;
-            }
+                return false;
 
             collection = Array.ConvertAll(targets, x => x as Component);
-
-            gameObject.SetActive(true);
+            return true;
         }
 
         public const int PostProcessOrder = 200;
@@ -65,7 +62,11 @@ namespace MB
             gameObject.SetActive(false);
 
             var script = gameObject.AddComponent<SceneInitializer>();
-            script.Refresh();
+
+            if (script.Refresh())
+                gameObject.SetActive(true);
+            else
+                DestroyImmediate(gameObject);
         }
 
         [CustomEditor(typeof(SceneInitializer))]
