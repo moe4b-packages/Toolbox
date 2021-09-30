@@ -12,6 +12,8 @@ using UnityEngine.AI;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
+
+using UnityEditor.Callbacks;
 #endif
 
 using Object = UnityEngine.Object;
@@ -20,31 +22,12 @@ using Random = UnityEngine.Random;
 namespace MB
 {
     /// <summary>
-    /// A System for configuring (Awake) & initializing (Start) classes independently of Unity's reflection based method,
+    /// A System for configuring (Awake) & initiating (Start) classes independently of Unity's reflection based method,
     /// usefull for preparing UI because Awake & Start methods don't get called on inactive objects and UI is often inactive on play
     /// </summary>
     public static class Initializer
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        static void OnLoad()
-        {
-            SceneManager.sceneLoaded += SceneLoadCallback;
-        }
-
-        static void SceneLoadCallback(Scene scene, LoadSceneMode mode) => Perform(scene);
-
         #region Perform
-        static void Perform(Scene scene)
-        {
-            if (scene.isLoaded == false)
-                throw new InvalidOperationException($"Cannot Initialize Unloaded Scene '{scene}'");
-
-            using (ComponentQuery.Collection.NonAlloc.InScene<IInitialize>(scene, out var targets))
-            {
-                Perform(targets);
-            }
-        }
-
         public static void Perform(UObjectSurrogate surrogate)
         {
             using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInitialize>(surrogate, out var targets))
@@ -122,7 +105,7 @@ namespace MB
 
         public static void Init(IInitialize instance)
         {
-            instance.Init();
+            instance.Initialize();
         }
         #endregion
 
@@ -136,6 +119,6 @@ namespace MB
     {
         void Configure();
 
-        void Init();
+        void Initialize();
     }
 }

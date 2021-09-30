@@ -32,7 +32,7 @@ namespace MB
             Operations = GetComponentsInChildren<IOperation>(true);
         }
 
-        public virtual void Init() { }
+        public virtual void Initialize() { }
 
         public virtual void Invoke()
         {

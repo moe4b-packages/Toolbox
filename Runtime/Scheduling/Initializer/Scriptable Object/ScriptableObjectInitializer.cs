@@ -24,7 +24,7 @@ namespace MB
 {
     [CreateAssetMenu(menuName = Toolbox.Path + "Scriptable Object Initializer")]
 	public class ScriptableObjectInitializer : GlobalScriptableObject<ScriptableObjectInitializer>, IScriptableObjectBuildPreProcess
-	{
+    {
         [SerializeField]
         List<ScriptableObject> list;
         public List<ScriptableObject> List => list;
@@ -53,36 +53,25 @@ namespace MB
         }
 
 #if UNITY_EDITOR
+        public void PreProcessBuild() => Refresh();
+
         public virtual void Refresh()
         {
             if (this == null) return;
 
             var targets = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
 
-            if(MUtility.CheckElementsInclusion(list, targets) == false)
+            if (MUtility.CheckElementsInclusion(list, targets) == false)
             {
                 list = targets;
                 EditorUtility.SetDirty(this);
             }
         }
-
-        public void PreProcessBuild() => Refresh();
 #endif
 
         public ScriptableObjectInitializer()
         {
             list = new List<ScriptableObject>();
         }
-
-#if UNITY_EDITOR
-        class BuildProcessor : IPreprocessBuildWithReport
-        {
-            public ScriptableObjectInitializer Instance => ScriptableObjectInitializer.Instance;
-
-            public int callbackOrder => 0;
-
-            public void OnPreprocessBuild(BuildReport report) => Instance.Refresh();
-        }
-#endif
     }
 }

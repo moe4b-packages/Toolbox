@@ -33,7 +33,7 @@ namespace MB
             relay = GetComponent<ExecutionRelay>();
         }
 
-        public void Init() { }
+        public void Initialize() { }
 
         void Update()
         {

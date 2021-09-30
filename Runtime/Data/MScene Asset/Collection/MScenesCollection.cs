@@ -41,7 +41,7 @@ namespace MB
             Dictionary = list.ToDictionary(x => x.ID);
         }
 
-        public void Init() { }
+        public void Initialize() { }
 
 #if UNITY_EDITOR
         void Refresh()
