@@ -125,11 +125,6 @@ namespace MB
             AssetDatabase.SaveAssets();
         }
 #endif
-
-        protected class Provider
-        {
-
-        }
     }
 
     public class GlobalScriptableObject<T> : GlobalScriptableObject
@@ -142,10 +137,6 @@ namespace MB
             Instance = this as T;
 
             Load();
-        }
-
-        internal interface IProvider
-        {
         }
     }
 }
