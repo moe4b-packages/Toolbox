@@ -22,6 +22,7 @@ using System.Reflection;
 
 namespace MB
 {
+#if UNITY_EDITOR
 	public class ScriptableObjectSettingsProvider
 	{
 		public class Provider : SettingsProvider
@@ -100,8 +101,9 @@ namespace MB
 			return list.ToArray();
 		}
 	}
+#endif
 
-	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 	public sealed class ScriptableObjectSettingsProviderAttribute : Attribute
 	{
 		public string Path { get; }
