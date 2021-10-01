@@ -121,8 +121,6 @@ namespace MB
 
 		static AssetCollection()
 		{
-			Debug.Log("Starting Asset Collection");
-
 			Refresh();
 		}
 
