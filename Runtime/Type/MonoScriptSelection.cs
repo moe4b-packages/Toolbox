@@ -211,9 +211,9 @@ namespace MB
 
 				public Entry(Type argument)
 				{
-					var scripts = AssetQuery<MonoScript>.FindAll(Predicate);
+					var scripts = AssetCollection.Query<MonoScript>(Predicate);
 					bool Predicate(MonoScript script)
-                    {
+					{
 						if (IsScriptOfType(script, argument) == false)
 							return false;
 

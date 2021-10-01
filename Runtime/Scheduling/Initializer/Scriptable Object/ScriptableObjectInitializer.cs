@@ -59,7 +59,7 @@ namespace MB
         {
             if (this == null) return;
 
-            var targets = AssetQuery<ScriptableObject>.FindAll(x => x is IInitialize);
+            var targets = AssetCollection.Query<ScriptableObject>(x => x is IInitialize);
 
             if (MUtility.CheckElementsInclusion(list, targets) == false)
             {

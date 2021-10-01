@@ -12,6 +12,8 @@ using UnityEngine.AI;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditorInternal;
+
+using UnityEditor.Compilation;
 #endif
 
 using Object = UnityEngine.Object;
@@ -26,40 +28,10 @@ namespace MB
     /// </summary>
     public abstract class GlobalScriptableObject : ScriptableObject
     {
-        #region On Load Attribute
-#if UNITY_EDITOR
-        [InitializeOnLoadMethod]
-#else
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-#endif
-        #endregion
-        static void Initiate()
+        public virtual void OnEnable()
         {
-            var list = TypeQuery.FindAll(Predicate);
 
-            static bool Predicate(Type type)
-            {
-                if (type == typeof(GlobalScriptableObject))
-                    return false;
-
-                if (type.IsGenericType)
-                    return false;
-
-                if (typeof(GlobalScriptableObject).IsAssignableFrom(type) == false)
-                    return false;
-
-                return true;
-            }
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                var instance = Retrieve(list[i]);
-
-                instance.Prepare();
-            }
         }
-
-        internal abstract void Prepare();
 
         protected virtual void Load()
         {
@@ -72,9 +44,9 @@ namespace MB
         {
             var name = MUtility.PrettifyName(type.Name);
 
-            var assets = Resources.LoadAll("", type); ;
+            IList<Object> assets = Resources.LoadAll("", type); ;
 
-            if (assets.Length == 0)
+            if (assets.Count == 0)
             {
 #if UNITY_EDITOR
                 Debug.LogWarning($"No {type.Name} Instance Found, Creating Asset");
@@ -86,7 +58,7 @@ namespace MB
             else
             {
 #if UNITY_EDITOR
-                if (assets.Length > 1)
+                if (assets.Count > 1)
                 {
                     Debug.LogWarning($"Multiple Instances of {name} Found in Project, Deleting Unecessary Instances");
                     DeleteAssets(assets, assets[0]);
@@ -132,8 +104,10 @@ namespace MB
     {
         public static T Instance { get; protected set; }
 
-        internal override void Prepare()
+        public override void OnEnable()
         {
+            base.OnEnable();
+
             Instance = this as T;
 
             Load();

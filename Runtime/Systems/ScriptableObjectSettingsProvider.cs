@@ -36,7 +36,8 @@ namespace MB
 			{
 				if (Target != null) return;
 
-				Target = FindAsset(Type);
+				Target = AssetCollection.Find<ScriptableObject>(Predicate);
+				bool Predicate(ScriptableObject asset) => Type.IsAssignableFrom(asset);
 
 				if (Target == null) return;
 
@@ -97,15 +98,6 @@ namespace MB
 			}
 
 			return list.ToArray();
-		}
-
-		public static ScriptableObject FindAsset(Type target)
-		{
-			foreach (var asset in AssetQuery<ScriptableObject>.Collection)
-				if (target.IsAssignableFrom(asset))
-					return asset;
-
-			return null;
 		}
 	}
 

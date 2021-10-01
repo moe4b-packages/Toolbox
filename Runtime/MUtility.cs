@@ -494,5 +494,10 @@ namespace MB
             foreach (var item in source)
                 action(item);
         }
+
+        public static async void Forget(this Task task)
+        {
+            await task;
+        }
     }
 }
