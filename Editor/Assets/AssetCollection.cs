@@ -1,5 +1,4 @@
 #if UNITY_EDITOR
-
 using System;
 using System.IO;
 using System.Linq;
@@ -122,6 +121,8 @@ namespace MB
 
 		static AssetCollection()
 		{
+			Debug.Log("Starting Asset Collection");
+
 			Refresh();
 		}
 

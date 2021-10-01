@@ -31,7 +31,14 @@ namespace MB
     /// </summary>
     public abstract class GlobalScriptableObject : ScriptableObject
     {
-        public virtual void OnEnable()
+        protected virtual void Awake()
+        {
+#if UNITY_EDITOR
+            PreloadAssets.Add(this);
+#endif
+        }
+
+        protected virtual void OnEnable()
         {
 
         }
@@ -41,19 +48,99 @@ namespace MB
 
         }
 
-#if UNITY_EDITOR
-        class BuildProcess : IPreprocessBuildWithReport
+        protected virtual void OnDestroy()
         {
-            public int callbackOrder { get; }
+#if UNITY_EDITOR
+            PreloadAssets.Remove(this);
+#endif
+        }
 
-            public void OnPreprocessBuild(BuildReport report)
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+        static void OnEditorLoad()
+        {
+            ///Ironically, pre-loaded assets are only preloaded in the build, not in the editor
+            ///so this ensures that they are loaded on editor
+            PreloadAssets.Update();
+        }
+
+        class PreBuildProcessor : IPreprocessBuildWithReport
+        {
+            public int callbackOrder => 0;
+
+            public void OnPreprocessBuild(BuildReport report) => PreloadAssets.Update();
+        }
+
+        static class PreloadAssets
+        {
+            public static Object[] Array
             {
-                var set = new HashSet<Object>(PlayerSettings.GetPreloadedAssets());
+                get => PlayerSettings.GetPreloadedAssets();
+                set => PlayerSettings.SetPreloadedAssets(value);
+            }
 
-                var assets = AssetCollection.Query<GlobalScriptableObject>();
-                set.UnionWith(assets);
+            public static bool Add(ScriptableObject target)
+            {
+                using (DisposablePool.HashSet<Object>.Lease(out var set))
+                {
+                    set.UnionWith(Array);
 
-                PlayerSettings.SetPreloadedAssets(set.ToArray());
+                    if (set.Add(target) == false)
+                        return false;
+
+                    Clean(set);
+
+                    Array = set.ToArray();
+                    return true;
+                }
+            }
+
+            public static bool Remove(ScriptableObject target)
+            {
+                using (DisposablePool.HashSet<Object>.Lease(out var set))
+                {
+                    set.UnionWith(Array);
+
+                    if (set.Remove(target) == false)
+                        return false;
+
+                    Clean(set);
+
+                    Array = set.ToArray();
+                    return true;
+                }
+            }
+
+            public static void Update()
+            {
+                using (DisposablePool.HashSet<Object>.Lease(out var set))
+                {
+                    set.UnionWith(Array);
+
+                    var assets = AssetCollection.Query<GlobalScriptableObject>();
+                    set.UnionWith(assets);
+
+                    Clean(set);
+
+                    Array = set.ToArray();
+                }
+            }
+
+            public static void Clean()
+            {
+                using (DisposablePool.HashSet<Object>.Lease(out var set))
+                {
+                    set.UnionWith(Array);
+
+                    Clean(set);
+
+                    Array = set.ToArray();
+                }
+            }
+            internal static void Clean(HashSet<Object> set)
+            {
+                set.RemoveWhere(IsNull);
+                bool IsNull(Object target) => target == null;
             }
         }
 #endif
@@ -64,13 +151,11 @@ namespace MB
     {
         public static T Instance { get; protected set; }
 
-        public override void OnEnable()
+        protected override void OnEnable()
         {
             base.OnEnable();
 
             Instance = this as T;
-
-            Debug.LogError($"Loading {name}");
 
             Load();
         }
