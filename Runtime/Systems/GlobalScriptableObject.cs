@@ -24,45 +24,83 @@ namespace MB
     /// <summary>
     /// A base class for creating a singelton ScriptableObject that will be loaded dynamically from Resources
     /// </summary>
-    public class GlobalScriptableObject : ScriptableObject
+    public abstract class GlobalScriptableObject : ScriptableObject
     {
+        #region On Load Attribute
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
 #else
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 #endif
+        #endregion
         static void Initiate()
         {
             var list = TypeQuery.FindAll(Predicate);
 
-            var flags = BindingFlags.FlattenHierarchy | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public;
+            static bool Predicate(Type type)
+            {
+                if (type == typeof(GlobalScriptableObject))
+                    return false;
+
+                if (type.IsGenericType)
+                    return false;
+
+                if (typeof(GlobalScriptableObject).IsAssignableFrom(type) == false)
+                    return false;
+
+                return true;
+            }
 
             for (int i = 0; i < list.Count; i++)
             {
-                var method = list[i].GetMethod("OnLoad", flags);
-                method.Invoke(null, null);
+                var instance = Retrieve(list[i]);
+
+                instance.Prepare();
             }
         }
 
-        static bool Predicate(Type type)
+        internal abstract void Prepare();
+
+        protected virtual void Load()
         {
-            if (type == typeof(GlobalScriptableObject))
-                return false;
 
-            if (type.IsGenericType)
-                return false;
+        }
 
-            if (typeof(GlobalScriptableObject).IsAssignableFrom(type) == false)
-                return false;
+        //Static Utility
 
-            return true;
+        public static GlobalScriptableObject Retrieve(Type type)
+        {
+            var name = MUtility.PrettifyName(type.Name);
+
+            var assets = Resources.LoadAll("", type); ;
+
+            if (assets.Length == 0)
+            {
+#if UNITY_EDITOR
+                Debug.LogWarning($"No {type.Name} Instance Found, Creating Asset");
+                return CreateAsset(type, name);
+#endif
+
+                throw new Exception($"No {name} Instance Found, Ignoring System Load");
+            }
+            else
+            {
+#if UNITY_EDITOR
+                if (assets.Length > 1)
+                {
+                    Debug.LogWarning($"Multiple Instances of {name} Found in Project, Deleting Unecessary Instances");
+                    DeleteAssets(assets, assets[0]);
+                }
+#endif
+
+                return assets[0] as GlobalScriptableObject;
+            }
         }
 
 #if UNITY_EDITOR
-        public static T CreateAsset<T>(string name)
-            where T : GlobalScriptableObject
+        public static GlobalScriptableObject CreateAsset(Type type, string name)
         {
-            var asset = CreateInstance<T>();
+            var asset = CreateInstance(type) as GlobalScriptableObject;
 
             var directory = new DirectoryInfo($"Assets/{Toolbox.Name}/Resources");
             if (directory.Exists == false) directory.Create();
@@ -73,7 +111,7 @@ namespace MB
         }
 
         public static void DeleteAssets<T>(IList<T> list, T exception)
-            where T : GlobalScriptableObject
+            where T : Object
         {
             for (int i = 0; i < list.Count; i++)
             {
@@ -87,6 +125,11 @@ namespace MB
             AssetDatabase.SaveAssets();
         }
 #endif
+
+        protected class Provider
+        {
+
+        }
     }
 
     public class GlobalScriptableObject<T> : GlobalScriptableObject
@@ -94,43 +137,15 @@ namespace MB
     {
         public static T Instance { get; protected set; }
 
-        public static string Name { get; } = MUtility.PrettifyName(typeof(T).Name);
-
-        public static void OnLoad()
+        internal override void Prepare()
         {
-            var assets = RetrieveAll();
+            Instance = this as T;
 
-            if (assets.Count == 0)
-            {
-#if UNITY_EDITOR
-                Debug.LogWarning($"No {Name} Instance Found, Creating Asset");
-                Instance = CreateAsset<T>(Name);
-#else
-                Debug.LogWarning($"No {Name} Instance Found, Ignoring System Load");
-                return;
-#endif
-            }
-            else
-            {
-                Instance = assets[0];
-
-#if UNITY_EDITOR
-                if (assets.Count > 1)
-                {
-                    Debug.LogWarning($"Multiple Instances of {Name} Found in Project, Deleting Unecessary Instances");
-                    DeleteAssets(assets, Instance);
-                }
-#endif
-            }
-
-            Instance.Load();
+            Load();
         }
 
-        protected virtual void Load()
+        internal interface IProvider
         {
-
         }
-
-        public static IList<T> RetrieveAll() => Resources.LoadAll<T>("");
     }
 }

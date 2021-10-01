@@ -20,7 +20,7 @@ using Random = UnityEngine.Random;
 namespace MB
 {
 	[CreateAssetMenu(menuName = Toolbox.Path + "MScenes Collection")]
-	public class MScenesCollection : GlobalScriptableObject<MScenesCollection>, IInitialize, IScriptableObjectBuildPreProcess
+	public class MScenesCollection : GlobalScriptableObject<MScenesCollection>, IScriptableObjectBuildPreProcess
 	{
         [SerializeField]
         List<MSceneAsset> list = default;
@@ -30,8 +30,10 @@ namespace MB
 
         public static bool TryFind(string id, out MSceneAsset asset) => Instance.Dictionary.TryGetValue(id, out asset);
 
-        public void Configure()
+        protected override void Load()
         {
+            base.Load();
+
 #if UNITY_EDITOR
             Refresh();
 
@@ -40,8 +42,6 @@ namespace MB
 
             Dictionary = list.ToDictionary(x => x.ID);
         }
-
-        public void Initialize() { }
 
 #if UNITY_EDITOR
         void Refresh()
