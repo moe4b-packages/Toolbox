@@ -33,8 +33,19 @@ namespace MB
 		{
 			".asset",
 			".cs",
-			".asmdef"
+			".asmdef",
 		};
+
+		/// <summary>
+		/// Includes these extensions within the asset collection querying
+		/// </summary>
+		/// <param name="extensions"></param>
+		public static void Include(params string[] extensions)
+		{
+			Inclusions.UnionWith(extensions);
+
+			Refresh();
+		}
 
 		public static event Action OnRefresh;
 		public static void Refresh()
