@@ -14,6 +14,9 @@ using UnityEditor;
 using UnityEditorInternal;
 
 using UnityEditor.Compilation;
+
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
 #endif
 
 using Object = UnityEngine.Object;
@@ -38,63 +41,20 @@ namespace MB
 
         }
 
-        //Static Utility
-
-        public static GlobalScriptableObject Retrieve(Type type)
-        {
-            var name = MUtility.PrettifyName(type.Name);
-
-            IList<Object> assets = Resources.LoadAll("", type); ;
-
-            if (assets.Count == 0)
-            {
 #if UNITY_EDITOR
-                Debug.LogWarning($"No {type.Name} Instance Found, Creating Asset");
-                return CreateAsset(type, name);
-#endif
-
-                throw new Exception($"No {name} Instance Found, Ignoring System Load");
-            }
-            else
-            {
-#if UNITY_EDITOR
-                if (assets.Count > 1)
-                {
-                    Debug.LogWarning($"Multiple Instances of {name} Found in Project, Deleting Unecessary Instances");
-                    DeleteAssets(assets, assets[0]);
-                }
-#endif
-
-                return assets[0] as GlobalScriptableObject;
-            }
-        }
-
-#if UNITY_EDITOR
-        public static GlobalScriptableObject CreateAsset(Type type, string name)
+        class BuildProcess : IPreprocessBuildWithReport
         {
-            var asset = CreateInstance(type) as GlobalScriptableObject;
+            public int callbackOrder { get; }
 
-            var directory = new DirectoryInfo($"Assets/{Toolbox.Name}/Resources");
-            if (directory.Exists == false) directory.Create();
-
-            AssetDatabase.CreateAsset(asset, $"{directory}/{name}.asset");
-
-            return asset;
-        }
-
-        public static void DeleteAssets<T>(IList<T> list, T exception)
-            where T : Object
-        {
-            for (int i = 0; i < list.Count; i++)
+            public void OnPreprocessBuild(BuildReport report)
             {
-                if (list[i] == exception) continue;
+                var set = new HashSet<Object>(PlayerSettings.GetPreloadedAssets());
 
-                var path = AssetDatabase.GetAssetPath(list[i]);
+                var assets = AssetCollection.Query<GlobalScriptableObject>();
+                set.UnionWith(assets);
 
-                AssetDatabase.DeleteAsset(path);
+                PlayerSettings.SetPreloadedAssets(set.ToArray());
             }
-
-            AssetDatabase.SaveAssets();
         }
 #endif
     }
@@ -109,6 +69,8 @@ namespace MB
             base.OnEnable();
 
             Instance = this as T;
+
+            Debug.LogError($"Loading {name}");
 
             Load();
         }
