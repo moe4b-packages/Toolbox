@@ -23,7 +23,7 @@ namespace MB
 	{
 		void Configure();
 
-		void Init();
+		void Initialize();
 	}
 
 	[Serializable]
@@ -39,10 +39,10 @@ namespace MB
 				List[i].Configure();
 		}
 
-		public virtual void Init()
+		public virtual void Initialize()
 		{
 			for (int i = 0; i < List.Count; i++)
-				List[i].Init();
+				List[i].Initialize();
 		}
 
 		public Behaviours(TReference reference) : base()
@@ -64,6 +64,6 @@ namespace MB
 	{
 		void Configure();
 
-		void Init();
+		void Initialize();
 	}
 }

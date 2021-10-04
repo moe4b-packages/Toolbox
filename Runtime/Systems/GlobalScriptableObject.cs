@@ -64,6 +64,7 @@ namespace MB
             PreloadAssets.Update();
         }
 
+        [UnityEditor.Callbacks.PostProcessBuild]
         class PreBuildProcessor : IPreprocessBuildWithReport
         {
             public int callbackOrder => 0;
