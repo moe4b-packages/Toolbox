@@ -68,8 +68,16 @@ namespace MB
 			OnRefresh?.Invoke();
 		}
 
-        #region Query
-        public static List<T> Query<T>()
+		class FileImporter : AssetPostprocessor
+		{
+			public static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moveDestination, string[] moveOrigin)
+			{
+				if (Ready) Refresh();
+			}
+		}
+
+		#region Query
+		public static List<T> Query<T>()
 		{
 			var list = new List<T>();
 
@@ -133,19 +141,6 @@ namespace MB
 		static AssetCollection()
 		{
 			Refresh();
-		}
-
-		class FileImporter : AssetPostprocessor
-		{
-			public static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moveDestination, string[] moveOrigin)
-			{
-				//Debug.Log("Imported Assets: " + imported.ToCollectionString());
-				//Debug.Log("Deleted: " + deleted.ToCollectionString());
-				//Debug.Log("Moved Destination: " + moveDestination.ToCollectionString());
-				//Debug.Log("Moved Origin: " + moveOrigin.ToCollectionString());
-
-				if (Ready) Refresh();
-			}
 		}
 	}
 }
