@@ -57,12 +57,12 @@ namespace MB
 
         #if UNITY_EDITOR
         [InitializeOnLoadMethod]
-        static void OnEditorLoad()
+        private static void OnEditorLoad()
         {
             LoadAll();
         }
 
-        static void LoadAll()
+        private static void LoadAll()
         {
             //Ironically, pre-loaded assets are only preloaded in the build, not in the editor
             //so this ensures that they are loaded on editor
