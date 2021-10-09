@@ -303,17 +303,21 @@ namespace MB
 		
 		public class BuildPreProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
 		{
-			public int callbackOrder => 0;
+			public int callbackOrder => -200;
 
+			public const string DirectoryPath = "Assets/Scriptable Managers Cache/";
+			
 			private static string FormatFilePath(Type type)
 			{
 				var name = FormatID(type);
 
-				return $"Assets/{name}.asset";
+				return $"{DirectoryPath}/{name}.asset";
 			}
 			
 			public void OnPreprocessBuild(BuildReport report)
 			{
+				Directory.CreateDirectory(DirectoryPath);
+				
 				using (PreloadedAssets.Lease(out var set))
 				{
 					foreach (var type in IterateAll())
@@ -352,6 +356,11 @@ namespace MB
 						AssetDatabase.DeleteAsset(path);
 					}
 				}
+				
+				Directory.Delete(DirectoryPath);
+				File.Delete(DirectoryPath.Substring(0, DirectoryPath.Length - 1) + ".meta");
+
+				AssetDatabase.Refresh();
 			}
 		}
 
