@@ -339,17 +339,8 @@ namespace MB
 			{
 				asset = IO.Retrieve(type);
 				
-				if (asset == null)
-				{
-					
-				}
-				else
-				{
-					if (inspector == null || inspector.target != asset || inspector.target == null)
-					{
-						inspector = Editor.CreateEditor(asset);
-					}
-				}
+				if (inspector == null || inspector.target != asset)
+					inspector = Editor.CreateEditor(asset);
 			}
 
 			public override void OnGUI(string search)
