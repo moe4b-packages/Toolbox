@@ -19,8 +19,9 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-	[CreateAssetMenu(menuName = Toolbox.Path + "MScenes Collection")]
-	public class MScenesCollection : GlobalScriptableObject<MScenesCollection>, IScriptableObjectBuildPreProcess
+    [Global(ScriptableManagerScope.Project)]
+    [SettingsMenu(Toolbox.Path + "MScenes")]
+	public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
 	{
         [SerializeField]
         List<MSceneAsset> list = default;

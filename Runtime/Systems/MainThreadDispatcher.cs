@@ -30,7 +30,7 @@ namespace MB
 	{
 		[RuntimeInitializeOnLoadMethod]
 		static void OnLoad()
-        {
+		{
 			MUtility.RegisterPlayerLoop<Update>(Update);
 		}
 

@@ -22,40 +22,41 @@ using System.Reflection;
 
 namespace MB
 {
-    [CreateAssetMenu(menuName = Toolbox.Path + "Scriptable Object Initializer")]
-	public class ScriptableObjectInitializer : GlobalScriptableObject<ScriptableObjectInitializer>, IScriptableObjectBuildPreProcess
+    [Global(ScriptableManagerScope.Project)]
+    [SettingsMenu(Toolbox.Path + "Scriptable Object Initializer")]
+    public class ScriptableObjectInitializer : ScriptableManager<ScriptableObjectInitializer>
     {
         [SerializeField]
         List<ScriptableObject> list;
         public List<ScriptableObject> List => list;
 
+        protected override bool IncludeInBuild => list.Count > 0;
+
         protected override void Load()
         {
             base.Load();
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             Refresh();
 
             AssetCollection.OnRefresh += Refresh;
-#endif
+            #endif
 
             Perform();
         }
 
-        protected virtual void Perform()
+        private void Perform()
         {
             var interfaces = new IInitialize[list.Count];
 
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
                 interfaces[i] = list[i] as IInitialize;
 
             Initializer.Perform(interfaces);
         }
 
 #if UNITY_EDITOR
-        public void PreProcessBuild() => Refresh();
-
-        public virtual void Refresh()
+        public void Refresh()
         {
             if (this == null) return;
 
