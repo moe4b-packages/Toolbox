@@ -23,7 +23,7 @@ namespace MB
     {
         public ReadOnlyPlayMode Mode { get; }
 
-        public ReadOnlyAttribute() : this(ReadOnlyPlayMode.EditMode | ReadOnlyPlayMode.PlayMode) { }
+        public ReadOnlyAttribute() : this(ReadOnlyPlayMode.All) { }
         public ReadOnlyAttribute(ReadOnlyPlayMode mode)
         {
             this.Mode = mode;
@@ -31,6 +31,8 @@ namespace MB
 
         public static bool CheckPlayMode(ReadOnlyPlayMode mode)
         {
+            if (mode == ReadOnlyPlayMode.None) return false;
+            
             if (mode.HasFlag(ReadOnlyPlayMode.EditMode) && Application.isPlaying == false) return true;
             if (mode.HasFlag(ReadOnlyPlayMode.PlayMode) && Application.isPlaying == true) return true;
 
@@ -72,7 +74,11 @@ namespace MB
     [Flags]
     public enum ReadOnlyPlayMode
     {
+        None = 0,
+        
         EditMode = 1 << 0,
         PlayMode = 1 << 1,
+        
+        All = EditMode | PlayMode,
     }
 }

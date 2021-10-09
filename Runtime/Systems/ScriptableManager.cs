@@ -86,6 +86,33 @@ namespace MB
 			}
 		}
 		
+		[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+		public sealed class ReadOnlyAttribute : MB.ReadOnlyAttribute
+		{
+			public ReadOnlyAttribute() : base()
+			{
+				
+			}
+			public ReadOnlyAttribute(ReadOnlyPlayMode mode) : base(mode)
+			{
+			}
+			
+			public static ReadOnlyAttribute Retrieve(Type type)
+			{
+				return type.GetCustomAttribute<ReadOnlyAttribute>();
+			}
+			
+			public static ReadOnlyPlayMode ReadMode(Type type)
+			{
+				var attribute = Retrieve(type);
+				
+				if (attribute == null)
+					return ReadOnlyPlayMode.None;
+
+				return attribute.Mode;
+			}
+		}
+		
 		/// <summary>
 		/// Flag attribute that tells the system that this manager is to be used in editor only
 		/// </summary>
@@ -299,6 +326,8 @@ namespace MB
 		public class Provider : SettingsProvider
 		{
 			private readonly Type type;
+
+			private readonly ReadOnlyPlayMode readOnlyMode;
 			
 			private ScriptableManager asset;
 			private Editor inspector;
@@ -332,6 +361,8 @@ namespace MB
 				}
 				else
 				{
+					GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
+					
 					EditorGUI.BeginChangeCheck();
 					inspector.OnInspectorGUI();
 					if (EditorGUI.EndChangeCheck())
@@ -339,11 +370,14 @@ namespace MB
 						IO.Save(asset);
 					}
 				}
+				
+				GUI.enabled = true;
 			}
 
-			public Provider(string path, SettingsScope scope, Type type) : base(path, scope)
+			public Provider(string path, SettingsScope scope, Type type, ReadOnlyPlayMode readOnlyMode) : base(path, scope)
 			{
 				this.type = type;
+				this.readOnlyMode = readOnlyMode;
 			}
 
 			//Static Utility
@@ -372,7 +406,9 @@ namespace MB
 				var scope = ConvertScope(global.Scope);
 				var path = menu.Root ? menu.Path : PrefixPath(menu.Path, scope);
 
-				return new Provider(path, scope, type);
+				var readOnlyMode = ScriptableManager.ReadOnlyAttribute.ReadMode(type);
+
+				return new Provider(path, scope, type, readOnlyMode);
 			}
 
 			public static string PrefixPath(string path, SettingsScope scope)
