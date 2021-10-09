@@ -27,15 +27,15 @@ using System.Reflection;
 namespace MB
 {
     /// <summary>
-    /// A base class for creating a singelton ScriptableObject that will be loaded dynamically from Resources
+    /// A base class for creating a singleton ScriptableObject that will be loaded dynamically from Resources
     /// </summary>
     public abstract class GlobalScriptableObject : ScriptableObject
     {
         protected virtual void Awake()
         {
-#if UNITY_EDITOR
-            PreloadAssets.Add(this);
-#endif
+            #if UNITY_EDITOR
+            PreloadedAssets.Add(this);
+            #endif
         }
 
         protected virtual void OnEnable()
@@ -50,101 +50,36 @@ namespace MB
 
         protected virtual void OnDestroy()
         {
-#if UNITY_EDITOR
-            PreloadAssets.Remove(this);
-#endif
+            #if UNITY_EDITOR
+            PreloadedAssets.Remove(this);
+            #endif
         }
 
-#if UNITY_EDITOR
+        #if UNITY_EDITOR
         [InitializeOnLoadMethod]
         static void OnEditorLoad()
         {
-            ///Ironically, pre-loaded assets are only preloaded in the build, not in the editor
-            ///so this ensures that they are loaded on editor
-            PreloadAssets.Update();
+            LoadAll();
         }
 
-        [UnityEditor.Callbacks.PostProcessBuild]
-        class PreBuildProcessor : IPreprocessBuildWithReport
+        static void LoadAll()
+        {
+            //Ironically, pre-loaded assets are only preloaded in the build, not in the editor
+            //so this ensures that they are loaded on editor
+            using (PreloadedAssets.Lease(out var set))
+            {
+                var assets = AssetCollection.Query<GlobalScriptableObject>();
+                set.UnionWith(assets);
+            }
+        }
+
+        private class PreBuildProcessor : IPreprocessBuildWithReport
         {
             public int callbackOrder => 0;
 
-            public void OnPreprocessBuild(BuildReport report) => PreloadAssets.Update();
+            public void OnPreprocessBuild(BuildReport report) => LoadAll();
         }
-
-        static class PreloadAssets
-        {
-            public static Object[] Array
-            {
-                get => PlayerSettings.GetPreloadedAssets();
-                set => PlayerSettings.SetPreloadedAssets(value);
-            }
-
-            public static bool Add(ScriptableObject target)
-            {
-                using (DisposablePool.HashSet<Object>.Lease(out var set))
-                {
-                    set.UnionWith(Array);
-
-                    if (set.Add(target) == false)
-                        return false;
-
-                    Clean(set);
-
-                    Array = set.ToArray();
-                    return true;
-                }
-            }
-
-            public static bool Remove(ScriptableObject target)
-            {
-                using (DisposablePool.HashSet<Object>.Lease(out var set))
-                {
-                    set.UnionWith(Array);
-
-                    if (set.Remove(target) == false)
-                        return false;
-
-                    Clean(set);
-
-                    Array = set.ToArray();
-                    return true;
-                }
-            }
-
-            public static void Update()
-            {
-                using (DisposablePool.HashSet<Object>.Lease(out var set))
-                {
-                    set.UnionWith(Array);
-
-                    var assets = AssetCollection.Query<GlobalScriptableObject>();
-                    set.UnionWith(assets);
-
-                    Clean(set);
-
-                    Array = set.ToArray();
-                }
-            }
-
-            public static void Clean()
-            {
-                using (DisposablePool.HashSet<Object>.Lease(out var set))
-                {
-                    set.UnionWith(Array);
-
-                    Clean(set);
-
-                    Array = set.ToArray();
-                }
-            }
-            internal static void Clean(HashSet<Object> set)
-            {
-                set.RemoveWhere(IsNull);
-                bool IsNull(Object target) => target == null;
-            }
-        }
-#endif
+        #endif
     }
 
     public class GlobalScriptableObject<T> : GlobalScriptableObject
