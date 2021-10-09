@@ -22,6 +22,21 @@ using System.Reflection;
 
 namespace MB
 {
+	/// <summary>
+	/// Attribute that allows showing a certain type of Scriptable Obejcts in the project settings menu,
+	/// will look for the first instance of the Scriptable Object and draw an error UI if no instance is found
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+	public sealed class ScriptableObjectSettingsProviderAttribute : Attribute
+	{
+		public string Path { get; }
+
+		public ScriptableObjectSettingsProviderAttribute(string path)
+		{
+			this.Path = path;
+		}
+	}
+	
 #if UNITY_EDITOR
 	public class ScriptableObjectSettingsProvider
 	{
@@ -102,15 +117,4 @@ namespace MB
 		}
 	}
 #endif
-
-    [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-	public sealed class ScriptableObjectSettingsProviderAttribute : Attribute
-	{
-		public string Path { get; }
-
-		public ScriptableObjectSettingsProviderAttribute(string path)
-		{
-			this.Path = path;
-		}
-	}
 }

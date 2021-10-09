@@ -22,8 +22,8 @@ using Newtonsoft.Json;
 namespace MB
 {
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Path + "Prefs")]
-	public class ProjectPrefs : ScriptableManager<ProjectPrefs>
+    [SettingsMenu(Toolbox.Path + "Preferences")]
+	public class ProjectPreferences : ScriptableManager<ProjectPreferences>
 	{
         [SerializeField]
         [TextArea(55, 400)]
