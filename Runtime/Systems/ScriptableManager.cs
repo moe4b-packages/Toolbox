@@ -357,21 +357,14 @@ namespace MB
 				base.OnGUI(search);
 
 				Validate();
-
-				if (asset == null)
+				
+				GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
+				
+				EditorGUI.BeginChangeCheck();
+				inspector.OnInspectorGUI();
+				if (EditorGUI.EndChangeCheck())
 				{
-					EditorGUILayout.HelpBox("No Asset Loaded in Memory", MessageType.Error);
-				}
-				else
-				{
-					GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
-					
-					EditorGUI.BeginChangeCheck();
-					inspector.OnInspectorGUI();
-					if (EditorGUI.EndChangeCheck())
-					{
-						IO.Save(asset);
-					}
+					IO.Save(asset);
 				}
 				
 				GUI.enabled = true;
