@@ -53,9 +53,9 @@ namespace MB
         {
             json = Composer.Context.ToString();
 
-#if UNITY_EDITOR
+            #if UNITY_EDITOR
             EditorUtility.SetDirty(this);
-#endif
+            #endif
         }
 
         public void Set(string key, object value) => Composer.Set(key, value);
