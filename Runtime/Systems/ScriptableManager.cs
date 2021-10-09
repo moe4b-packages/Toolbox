@@ -305,7 +305,7 @@ namespace MB
 		{
 			public int callbackOrder => -200;
 
-			public const string DirectoryPath = "Assets/Scriptable Managers Cache/";
+			public const string DirectoryPath = "Assets/Scriptable Managers Cache";
 			
 			private static string FormatFilePath(Type type)
 			{
@@ -358,7 +358,7 @@ namespace MB
 				}
 				
 				Directory.Delete(DirectoryPath);
-				File.Delete(DirectoryPath.Substring(0, DirectoryPath.Length - 1) + ".meta");
+				File.Delete(DirectoryPath + ".meta");
 
 				AssetDatabase.Refresh();
 			}
