@@ -60,7 +60,7 @@ namespace MB
 #if UNITY_EDITOR
         public void Refresh()
         {
-            registered = TryFind(Asset, out active, out id, out index, out path);
+            registered = TryFind(asset, out active, out id, out index, out path);
         }
 #endif
 
