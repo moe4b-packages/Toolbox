@@ -19,6 +19,10 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    /// <summary>
+    /// Attribute to apply to fields to make them read only, can specify which play mode to make read only,
+    /// NOTE: overrides user defined property drawers, and as such can cause problems, please only use for default drawn types
+    /// </summary>
     public class ReadOnlyAttribute : PropertyAttribute
     {
         public ReadOnlyPlayMode Mode { get; }

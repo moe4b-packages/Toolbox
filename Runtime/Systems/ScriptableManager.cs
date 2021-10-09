@@ -86,20 +86,23 @@ namespace MB
 			}
 		}
 		
+		/// <summary>
+		/// Makes the Scriptable Manager's project settings window read only in the defined play mode
+		/// </summary>
 		[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-		public sealed class ReadOnlyAttribute : MB.ReadOnlyAttribute
+		public sealed class ReadOnlySettingsAttribute : MB.ReadOnlyAttribute
 		{
-			public ReadOnlyAttribute() : base()
+			public ReadOnlySettingsAttribute() : base()
 			{
 				
 			}
-			public ReadOnlyAttribute(ReadOnlyPlayMode mode) : base(mode)
+			public ReadOnlySettingsAttribute(ReadOnlyPlayMode mode) : base(mode)
 			{
 			}
 			
-			public static ReadOnlyAttribute Retrieve(Type type)
+			public static ReadOnlySettingsAttribute Retrieve(Type type)
 			{
-				return type.GetCustomAttribute<ReadOnlyAttribute>();
+				return type.GetCustomAttribute<ReadOnlySettingsAttribute>();
 			}
 			
 			public static ReadOnlyPlayMode ReadMode(Type type)
@@ -406,7 +409,7 @@ namespace MB
 				var scope = ConvertScope(global.Scope);
 				var path = menu.Root ? menu.Path : PrefixPath(menu.Path, scope);
 
-				var readOnlyMode = ScriptableManager.ReadOnlyAttribute.ReadMode(type);
+				var readOnlyMode = ScriptableManager.ReadOnlySettingsAttribute.ReadMode(type);
 
 				return new Provider(path, scope, type, readOnlyMode);
 			}
