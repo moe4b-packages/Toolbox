@@ -362,30 +362,20 @@ namespace MB
 			private static GUIStyle contextStyle;
 			private static GUIContent contextContent;
 
-			public override void OnActivate(string search, VisualElement root)
-			{
-				base.OnActivate(search, root);
-
-				contextStyle = "MiniPopup";
-				contextContent = EditorGUIUtility.TrIconContent("_Popup");
-			}
-
-			private void Reset()
-			{
-				IO.Reset(type);
-			}
-
-			private void Reload()
-			{
-				IO.Reload(type);
-			}
-			
 			private void Validate()
 			{
 				asset = IO.Retrieve(type);
 				
 				if (inspector == null || inspector.target != asset)
 					inspector = Editor.CreateEditor(asset);
+			}
+			
+			public override void OnActivate(string search, VisualElement root)
+			{
+				base.OnActivate(search, root);
+
+				contextStyle = "MiniPopup";
+				contextContent = EditorGUIUtility.TrIconContent("_Popup");
 			}
 			
 			public override void OnTitleBarGUI()
@@ -396,6 +386,16 @@ namespace MB
 				{
 					context.ShowAsContext();
 				}
+			}
+			
+			private void Reset()
+			{
+				IO.Reset(type);
+			}
+
+			private void Reload()
+			{
+				IO.Reload(type);
 			}
 			
 			public override void OnGUI(string search)
