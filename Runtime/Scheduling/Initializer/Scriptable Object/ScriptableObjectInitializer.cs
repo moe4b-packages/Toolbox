@@ -22,6 +22,7 @@ using System.Reflection;
 
 namespace MB
 {
+    [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Path + "Scriptable Object Initializer")]
     public class ScriptableObjectInitializer : ScriptableManager<ScriptableObjectInitializer>

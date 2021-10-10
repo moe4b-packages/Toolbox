@@ -19,13 +19,14 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Path + "MScenes")]
+    [SettingsMenu(Toolbox.Path + "Scenes")]
 	public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
 	{
         [SerializeField]
         List<MSceneAsset> list = default;
-        public List<MSceneAsset> Collection => list;
+        public List<MSceneAsset> List => list;
 
         public Dictionary<string, MSceneAsset> Dictionary { get; private set; }
 

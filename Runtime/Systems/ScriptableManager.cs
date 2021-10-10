@@ -359,9 +359,7 @@ namespace MB
 			private Editor inspector;
 
 			private readonly GenericMenu context;
-			private static GUIStyle contextStyle;
-			private static GUIContent contextContent;
-
+			
 			private void Validate()
 			{
 				asset = IO.Retrieve(type);
@@ -369,46 +367,25 @@ namespace MB
 				if (inspector == null || inspector.target != asset)
 					inspector = Editor.CreateEditor(asset);
 			}
-
-			private bool guiInitFlag;
-			private void InitGUI()
-			{
-				if(guiInitFlag) return;
-				
-				contextStyle = "MiniPopup";
-				contextContent = EditorGUIUtility.TrIconContent("_Popup");
-				
-				guiInitFlag = true;
-			}
 			
 			public override void OnTitleBarGUI()
 			{
 				base.OnTitleBarGUI();
 
-				InitGUI();
-				
-				if (GUILayout.Button(contextContent, contextStyle))
-				{
+				var style = (GUIStyle)"MiniPopup";
+				var content = EditorGUIUtility.TrIconContent("_Popup");
+
+				if (GUILayout.Button(content, style))
 					context.ShowAsContext();
-				}
 			}
 			
-			private void Reset()
-			{
-				IO.Reset(type);
-			}
-
-			private void Reload()
-			{
-				IO.Reload(type);
-			}
+			private void Reset() => IO.Reset(type);
+			private void Reload() => IO.Reload(type);
 			
 			public override void OnGUI(string search)
 			{
 				base.OnGUI(search);
 				
-				InitGUI();
-
 				Validate();
 				
 				GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
@@ -438,7 +415,6 @@ namespace MB
 			}
 			
 			//Static Utility
-			
 			[SettingsProviderGroup]
 			private static SettingsProvider[] Register()
 			{
