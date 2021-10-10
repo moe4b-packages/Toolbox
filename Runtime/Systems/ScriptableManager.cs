@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEngine.UIElements;
 
 #if UNITY_EDITOR
 using System.IO;
@@ -207,7 +208,7 @@ namespace MB
 		public static class IO
 		{
 			private static readonly Dictionary<Type, ScriptableManager> dictionary;
-
+			
 			public static string FormatPath(Type type)
 			{
 				var name = FormatID(type);
@@ -220,7 +221,7 @@ namespace MB
 				
 				return Path.Combine(directory, $"{name}.asset");
 			}
-
+			
 			public static string FormatPathDirectory(SettingsScope scope)
 			{
 				switch (scope)
@@ -272,7 +273,7 @@ namespace MB
 				
 				return asset;
 			}
-
+			
 			/// <summary>
 			/// Creates a settings object instance and saves it
 			/// </summary>
@@ -290,7 +291,7 @@ namespace MB
 
 				return asset;
 			}
-
+			
 			/// <summary>
 			/// Retrieves an instance of a settings object whether by loading it or creating
 			/// </summary>
@@ -304,7 +305,29 @@ namespace MB
 
 				return asset;
 			}
+			
+			public static ScriptableManager Reset(Type type)
+			{
+				Destroy(type);
+				return Create(type);
+			}
+			
+			public static ScriptableManager Reload(Type type)
+			{
+				Destroy(type);
+				return Retrieve(type);
+			}
+			
+			public static bool Destroy(Type type)
+			{
+				if (dictionary.TryGetValue(type, out var asset) == false)
+					return false;
 
+				Object.DestroyImmediate(asset);
+
+				return true;
+			}
+			
 			private static void Setup(ScriptableManager asset)
 			{
 				asset.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
@@ -335,6 +358,28 @@ namespace MB
 			private ScriptableManager asset;
 			private Editor inspector;
 
+			private readonly GenericMenu context;
+			private static GUIStyle contextStyle;
+			private static GUIContent contextContent;
+
+			public override void OnActivate(string search, VisualElement root)
+			{
+				base.OnActivate(search, root);
+
+				contextStyle = "MiniPopup";
+				contextContent = EditorGUIUtility.TrIconContent("_Popup");
+			}
+
+			private void Reset()
+			{
+				IO.Reset(type);
+			}
+
+			private void Reload()
+			{
+				IO.Reload(type);
+			}
+			
 			private void Validate()
 			{
 				asset = IO.Retrieve(type);
@@ -342,7 +387,17 @@ namespace MB
 				if (inspector == null || inspector.target != asset)
 					inspector = Editor.CreateEditor(asset);
 			}
-
+			
+			public override void OnTitleBarGUI()
+			{
+				base.OnTitleBarGUI();
+				
+				if (GUILayout.Button(contextContent, contextStyle))
+				{
+					context.ShowAsContext();
+				}
+			}
+			
 			public override void OnGUI(string search)
 			{
 				base.OnGUI(search);
@@ -360,13 +415,21 @@ namespace MB
 				
 				GUI.enabled = true;
 			}
-
+			
 			public Provider(string path, SettingsScope scope, Type type, ReadOnlyPlayMode readOnlyMode) : base(path, scope)
 			{
 				this.type = type;
 				this.readOnlyMode = readOnlyMode;
-			}
 
+				//Create Generic Menu
+				{
+					context = new GenericMenu();
+					
+					context.AddItem("Reset", false, Reset);
+					context.AddItem("Reload", false, Reload);
+				}
+			}
+			
 			//Static Utility
 			
 			[SettingsProviderGroup]

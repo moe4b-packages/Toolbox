@@ -104,6 +104,21 @@ namespace MB
                 yield return iterator;
             }
         }
+        
+        #region Generic Menu
+        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction function)
+        {
+            var content = new GUIContent(text);
+
+            menu.AddItem(content, on, function);
+        }
+        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction2 function, object data)
+        {
+            var content = new GUIContent(text);
+
+            menu.AddItem(content, on, function, data);
+        }
+        #endregion
     }
 }
 #endif
