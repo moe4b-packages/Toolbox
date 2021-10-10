@@ -369,18 +369,23 @@ namespace MB
 				if (inspector == null || inspector.target != asset)
 					inspector = Editor.CreateEditor(asset);
 			}
-			
-			public override void OnActivate(string search, VisualElement root)
-			{
-				base.OnActivate(search, root);
 
+			private bool guiInitFlag;
+			private void InitGUI()
+			{
+				if(guiInitFlag) return;
+				
 				contextStyle = "MiniPopup";
 				contextContent = EditorGUIUtility.TrIconContent("_Popup");
+				
+				guiInitFlag = true;
 			}
 			
 			public override void OnTitleBarGUI()
 			{
 				base.OnTitleBarGUI();
+
+				InitGUI();
 				
 				if (GUILayout.Button(contextContent, contextStyle))
 				{
@@ -401,6 +406,8 @@ namespace MB
 			public override void OnGUI(string search)
 			{
 				base.OnGUI(search);
+				
+				InitGUI();
 
 				Validate();
 				
