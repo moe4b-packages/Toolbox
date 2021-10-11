@@ -231,7 +231,7 @@ namespace MB
 
 					case SettingsScope.User:
 						var parent = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-						return Path.Combine(parent, $"Unity/Editor-5.x/Preferences/MB/{InternalEditorUtility.GetUnityDisplayVersion()}/");
+						return Path.Combine(parent, $"{InternalEditorUtility.unityPreferencesFolder}/MB/{InternalEditorUtility.GetUnityDisplayVersion()}/");
 				}
 
 				throw new NotImplementedException();
