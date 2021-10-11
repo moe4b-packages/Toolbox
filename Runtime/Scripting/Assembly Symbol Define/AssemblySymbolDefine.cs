@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.AI;
 
 #if UNITY_EDITOR
+using MB;
 using UnityEditor;
 using UnityEditorInternal;
 #endif
@@ -26,7 +27,7 @@ using System.Reflection;
 [InitializeOnLoad]
 public static class AssemblySymbolDefine
 {
-    public static List<BuildTargetGroup> Targets { get; private set; }
+    public static List<BuildTargetGroup> Targets { get; }
 
     static bool IsObsolete(BuildTargetGroup target)
     {
@@ -36,17 +37,16 @@ public static class AssemblySymbolDefine
 
         var attributes = type.GetField(name).GetCustomAttributes(typeof(ObsoleteAttribute), false);
 
-        if (attributes == null) return false;
-        if (attributes.Length == 0) return false;
-
-        return true;
+        return attributes.Length > 0;
     }
 
     static AssemblySymbolDefine()
     {
-        Targets = new List<BuildTargetGroup>();
+        var range = Enum.GetValues(typeof(BuildTargetGroup));
+        
+        Targets = new List<BuildTargetGroup>(range.Length);
 
-        foreach (BuildTargetGroup target in Enum.GetValues(typeof(BuildTargetGroup)))
+        foreach (BuildTargetGroup target in range)
         {
             if (target == BuildTargetGroup.Unknown) continue;
             if (IsObsolete(target)) continue;
@@ -55,55 +55,27 @@ public static class AssemblySymbolDefine
         }
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+        {
             foreach (var attribute in assembly.GetCustomAttributes<AssemblySymbolDefineAttribute>())
+            {
                 Apply(attribute);
+            }
+        }
     }
 
     static void Apply(AssemblySymbolDefineAttribute attribute)
     {
         foreach (var target in Targets)
         {
-            var symbols = GetSymbols(target);
-
-            if (attribute.Obsolete)
+            using (ScriptingDefineSymbols.Lease(target, out var set))
             {
-                if (symbols.Contains(attribute.ID) == false) continue;
-                symbols.Remove(attribute.ID);
+                if (attribute.Obsolete)
+                    set.Remove(attribute.ID);
+                else
+                    set.Add(attribute.ID);
             }
-            else
-            {
-                if (symbols.Contains(attribute.ID)) continue;
-                symbols.Add(attribute.ID);
-            }
-
-            SetSymbols(target, symbols);
         }
     }
-
-    #region Symbols
-    static HashSet<string> GetSymbols(BuildTargetGroup target)
-    {
-        var defines = PlayerSettings.GetScriptingDefineSymbolsForGroup(target).Trim();
-
-        var hash = new HashSet<string>();
-
-        foreach (var item in defines.Split(';', ' '))
-        {
-            if (item == null || item == string.Empty) continue;
-
-            hash.Add(item);
-        }
-
-        return hash;
-    }
-
-    static void SetSymbols(BuildTargetGroup target, HashSet<string> set)
-    {
-        var defines = set.Count == 0 ? "" : set.Aggregate((a, b) => $"{a};{b}");
-
-        PlayerSettings.SetScriptingDefineSymbolsForGroup(target, defines);
-    }
-    #endregion
 }
 #endif
 

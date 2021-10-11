@@ -8,14 +8,18 @@ using Object = UnityEngine.Object;
 
 namespace MB
 {
+	/// <summary>
+	/// Helper class for easily modifying Unity's Preloaded Assets
+	/// </summary>
 	public static class PreloadedAssets
 	{
-		private static Object[] Array
+		public static Object[] Get() => PlayerSettings.GetPreloadedAssets();
+		public static void Set(IEnumerable<Object> collection)
 		{
-			get => PlayerSettings.GetPreloadedAssets();
-			set => PlayerSettings.SetPreloadedAssets(value);
+			var array = collection.ToArray();
+			PlayerSettings.SetPreloadedAssets(array);
 		}
-
+		
 		internal static class Cache
 		{
 			private static readonly HashSet<Object> hashset;
@@ -23,7 +27,9 @@ namespace MB
 			internal static HashSet<Object> Load()
 			{
 				hashset.Clear();
-				hashset.UnionWith(Array);
+
+				var array = Get();
+				hashset.UnionWith(array);
 
 				hashset.RemoveWhere(IsNull);
 				bool IsNull(Object target) => target == null;
@@ -39,36 +45,36 @@ namespace MB
 
 		public static void Add(Object item)
 		{
-			var set = Cache.Load();
+			var collection = Cache.Load();
 			
-			set.Add(item);
-			
-			Array = set.ToArray();
+			collection.Add(item);
+
+			Set(collection);
 		}
 		public static void Add(IEnumerable<Object> range)
 		{
-			var set = Cache.Load();
+			var collection = Cache.Load();
 			
-			set.UnionWith(range);
-			
-			Array = set.ToArray();
+			collection.UnionWith(range);
+
+			Set(collection);
 		}
 
 		public static void Remove(Object item)
 		{
-			var set = Cache.Load();
+			var collection = Cache.Load();
 
-			set.Remove(item);
+			collection.Remove(item);
 
-			Array = set.ToArray();
+			Set(collection);
 		}
 		public static void Remove(IEnumerable<Object> range)
 		{
-			var set = Cache.Load();
+			var collection = Cache.Load();
 
-			set.ExceptWith(range);
+			collection.ExceptWith(range);
 
-			Array = set.ToArray();
+			Set(collection);
 		}
 
 		#region Disposable
@@ -95,8 +101,8 @@ namespace MB
 		internal static void Return(Handle handle)
 		{
 			LeaseLock = false;
-
-			Array = handle.hashset.ToArray();
+			
+			Set(handle.hashset);
 		}
 
 		public struct Handle : IDisposable
