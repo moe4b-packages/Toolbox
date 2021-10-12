@@ -24,7 +24,16 @@ namespace MB
     /// used mostly with UI in the form of a ButtonExecutionRelay that will execute operations on button click
     /// </summary>
 	public abstract class ExecutionRelay : MonoBehaviour, IInitialize
-	{
+    {
+        public static class Paths
+        {
+            public const string Root = Toolbox.Paths.Box + "Execution Relay/";
+
+            public const string Variants = Root + "Variants/";
+
+            public const string Utility = Root + "Utility/";
+        }
+        
 		public IOperation[] Operations { get; protected set; }
 
         public virtual void Configure()

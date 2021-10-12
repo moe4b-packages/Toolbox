@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Toolbox.Paths.Example + "Enum Flag Example")]
 	public class EnumFlagExample : MonoBehaviour
 	{
 		[EnumFlag]

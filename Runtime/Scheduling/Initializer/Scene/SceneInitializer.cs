@@ -21,6 +21,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu("")]
 	public class SceneInitializer : MonoBehaviour
 	{
         [SerializeField]

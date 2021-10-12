@@ -18,6 +18,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu(Toolbox.Paths.Example + "UDictionary Example")]
     public class UDictionaryExample : MonoBehaviour
     {
         public UDictionary<string, string> dictionary1;

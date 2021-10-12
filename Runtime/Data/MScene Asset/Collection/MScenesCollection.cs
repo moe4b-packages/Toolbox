@@ -21,7 +21,7 @@ namespace MB
 {
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Path + "Scenes")]
+    [SettingsMenu(Toolbox.Paths.Root + "Scenes")]
 	public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
 	{
         [SerializeField]

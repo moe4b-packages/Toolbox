@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Path + "Close Game Operation")]
     public class CloseGameOperation : Operation
     {
         public override void Execute()

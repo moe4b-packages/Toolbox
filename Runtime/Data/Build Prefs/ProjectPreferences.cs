@@ -22,7 +22,7 @@ using Newtonsoft.Json;
 namespace MB
 {
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Path + "Preferences")]
+    [SettingsMenu(Toolbox.Paths.Root + "Preferences")]
 	public class ProjectPreferences : ScriptableManager<ProjectPreferences>
 	{
         [SerializeField]

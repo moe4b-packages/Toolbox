@@ -20,10 +20,11 @@ using Random = UnityEngine.Random;
 namespace MB
 {
     [RequireComponent(typeof(ExecutionRelay))]
-	public class InvokeRelayOnInput : MonoBehaviour, IInitialize
-	{
-		[SerializeField]
-        KeyCode[] keys = new KeyCode[] { KeyCode.Escape, KeyCode.Home };
+    [AddComponentMenu(ExecutionRelay.Paths.Utility + "Invoke Relay On Key")]
+	public class InvokeRelayOnKey : MonoBehaviour, IInitialize
+    {
+        [SerializeField]
+        private KeyCode[] keys = new KeyCode[] { KeyCode.Escape };
         public KeyCode[] Keys => keys;
 
         ExecutionRelay relay;

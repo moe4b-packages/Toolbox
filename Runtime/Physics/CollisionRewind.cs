@@ -22,7 +22,7 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Path + "Collision Rewind")]
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Collision Rewind")]
 	public class CollisionRewind : MonoBehaviour
     {
         [SerializeField]

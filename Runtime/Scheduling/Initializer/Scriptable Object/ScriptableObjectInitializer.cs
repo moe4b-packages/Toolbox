@@ -24,7 +24,7 @@ namespace MB
 {
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Path + "Scriptable Object Initializer")]
+    [SettingsMenu(Toolbox.Paths.Root + "Scriptable Object Initializer")]
     public class ScriptableObjectInitializer : ScriptableManager<ScriptableObjectInitializer>
     {
         [SerializeField]

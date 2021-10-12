@@ -27,6 +27,8 @@ namespace MB
     /// </summary>
     public static class Initializer
     {
+        public const string Path = Toolbox.Paths.Box + "Initializer/";
+        
         #region Perform
         public static void Perform(UObjectSurrogate surrogate)
         {

@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu(Initializer.Path + "Auto Initializer")]
 	public class AutoInitializer : MonoBehaviour
 	{
         IInitialize[] collection;

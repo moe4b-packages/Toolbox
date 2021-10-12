@@ -21,6 +21,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Toolbox.Paths.Example + "Assembly Symbol Define Example")]
     public class AssemblySymbolDefineExample : MonoBehaviour
     {
         void Start()

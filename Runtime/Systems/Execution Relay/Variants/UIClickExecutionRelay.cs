@@ -22,6 +22,7 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
+    [AddComponentMenu(Paths.Variants + "UI Click Execution Relay")]
     public class UIClickExecutionRelay : ExecutionRelay, IPointerClickHandler
     {
         public void OnPointerClick(PointerEventData eventData) => Invoke();

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Path + "Set Layer Weight")]
+    [AddComponentMenu(Toolbox.Paths.Root + "Set Layer Weight")]
     public class SetLayerWeight : SmartStateMachineBehaviour
     {
         [Range(0f, 1f)]

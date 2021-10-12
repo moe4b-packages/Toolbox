@@ -21,6 +21,7 @@ using System.Net;
 
 namespace MB
 {
+    [AddComponentMenu(Toolbox.Paths.Example + "Auto Prefs Example")]
 	public class AutoPrefsExample : MonoBehaviour
 	{
         void Start()

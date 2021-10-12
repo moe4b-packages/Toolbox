@@ -22,7 +22,7 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Path + "Activation Rewind")]
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Activation Rewind")]
     public class ActivationRewind : MonoBehaviour
 	{
         [SerializeField]

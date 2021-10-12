@@ -18,7 +18,8 @@ using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace MB
-{
+{ 
+	[AddComponentMenu(Toolbox.Paths.Example + "Auto Dependency Sample")]
 	public class AutoDependencySample : MonoBehaviour, IDependencySample
 	{
 

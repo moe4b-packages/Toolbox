@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu(Toolbox.Paths.Example + "Execution Timer Example")]
 	public class ExecutionTimerExample : MonoBehaviour
 	{
         void Start()

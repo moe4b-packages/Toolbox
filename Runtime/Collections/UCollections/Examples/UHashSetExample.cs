@@ -18,6 +18,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu(Toolbox.Paths.Example + "UHashSet Example")]
     public class UHashSetExample : MonoBehaviour
     {
         public UHashSet<string> hash1;

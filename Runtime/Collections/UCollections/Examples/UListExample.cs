@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Toolbox.Paths.Example + "UI List Example")]
 	public class UListExample : MonoBehaviour
 	{
 		public UList<string> list1;

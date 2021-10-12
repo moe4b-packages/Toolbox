@@ -27,6 +27,15 @@ namespace MB
     {
         public const string Name = "Moe Baker";
 
-        public const string Path = Name + "/";
+        public static class Paths
+        {
+            public const string Root = Name + "/";
+
+            public const string Box = Root + "Tool Box/";
+
+            public const string Example = Box + "Example/";
+
+            public const string Rewind = Box + "Rewind/";
+        }
     }
 }

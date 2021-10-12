@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Toolbox.Paths.Example + "MScene Example")]
 	public class MSceneExample : MonoBehaviour
 	{
 		[SerializeField]

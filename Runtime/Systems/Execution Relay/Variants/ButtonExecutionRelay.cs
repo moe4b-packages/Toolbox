@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+	[AddComponentMenu(Paths.Variants + "Button Execution Relay")]
 	public class ButtonExecutionRelay : ExecutionRelay<Button>
 	{
         protected override void RegisterContext() => Context.onClick.AddListener(Invoke);

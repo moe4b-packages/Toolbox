@@ -24,6 +24,8 @@ namespace MB
 	/// </summary>
 	public abstract class Operation : MonoBehaviour, IOperation
 	{
+		public const string Path = Toolbox.Paths.Box + "Operations/";
+		
 		public abstract void Execute();
 	}
 

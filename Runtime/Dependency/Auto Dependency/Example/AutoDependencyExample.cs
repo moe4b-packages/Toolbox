@@ -19,6 +19,7 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [AddComponentMenu(Toolbox.Paths.Example + "Auto Dependency Example")]
     public class AutoDependencyExample : MonoBehaviour
     {
         [AutoDependency(AutoDependency.Parents)]

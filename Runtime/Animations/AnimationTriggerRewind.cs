@@ -21,7 +21,7 @@ using UnityEngine.Events;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Path + "Animation Trigger Rewind")]
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Animation Trigger Rewind")]
     public class AnimationTriggerRewind : MonoBehaviour
 	{
         [SerializeField]

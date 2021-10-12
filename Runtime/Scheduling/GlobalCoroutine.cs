@@ -21,6 +21,7 @@ using UnityEngine.Scripting;
 
 namespace MB
 {
+	[AddComponentMenu("")]
 	/// <summary>
 	/// A globally accessible coroutine manager, can be used to start and stop coroutines
 	/// </summary>
