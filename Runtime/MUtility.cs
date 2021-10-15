@@ -430,6 +430,34 @@ namespace MB
             foreach (var item in source)
                 action(item);
         }
+
+        public static T FirstOr<T>(this IEnumerable<T> source, T fallback)
+        {
+            if (source == null) return fallback;
+
+            foreach (var item in source)
+                return item;
+
+            return fallback;
+        }
+        public static T LastOr<T>(this IEnumerable<T> source, T fallback)
+        {
+            if (source == null) return fallback;
+
+            var queried = false;
+            T result = default;
+
+            foreach (var item in source)
+            {
+                queried = true;
+                result = item;
+            }
+
+            if (queried)
+                return result;
+
+            return fallback;
+        }
         #endregion
 
         #region String
