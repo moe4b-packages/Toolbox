@@ -36,7 +36,6 @@ namespace MB
 
                 return SplitHorizontally(rect, padding, percentages);
             }
-
             public static Rect[] SplitHorizontally(Rect rect, float padding, params float[] cuts)
             {
                 padding /= 2f;
@@ -63,34 +62,40 @@ namespace MB
             {
                 var area = new Rect(rect.x, rect.y, rect.width, height);
 
-                rect.y += area.height;
-                rect.height -= area.height;
+                rect.yMin += height;
 
                 return area;
             }
 
-            public static void ClearIndent()
+            public static Rect SliceHorizontal(ref Rect rect, float width)
             {
-                Indent = EditorGUI.indentLevel;
-                EditorGUI.indentLevel = 0;
+                var area = new Rect(rect.x, rect.y, width, rect.height);
+
+                rect.xMin += width;
+
+                return area;
             }
-            static int Indent;
-            public static void RestoreIndent()
+            public static Rect SliceHorizontalPercentage(ref Rect rect, float percentage)
             {
-                EditorGUI.indentLevel = Indent;
+                var width = rect.width * (percentage / 100);
+
+                return SliceHorizontal(ref rect, width);
             }
         }
     }
 
     public static partial class MUtilityExtensions
     {
+        #region IO
         public static void WriteText(this TextAsset asset, string contents)
         {
             var path = AssetDatabase.GetAssetPath(asset);
 
             File.WriteAllText(path, contents);
         }
+        #endregion
 
+        #region Serialization
         public static IEnumerable<SerializedProperty> IterateChildren(this SerializedObject target)
         {
             var iterator = target.GetIterator();
@@ -101,10 +106,11 @@ namespace MB
             {
                 if (iterator.name == "m_Script") continue;
 
-                yield return iterator;
+                yield return iterator.Copy();
             }
         }
-        
+        #endregion
+
         #region Generic Menu
         public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction function)
         {

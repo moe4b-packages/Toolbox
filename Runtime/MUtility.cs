@@ -388,15 +388,20 @@ namespace MB
     {
         public static string ToPrettyString<T>(this T value) => MUtility.PrettifyName(value);
 
+        #region Color
         public static Color SetAlpha(this Color color, float value)
         {
             color.a = value;
 
             return color;
         }
+        #endregion
 
+        #region Transform
         public static string GetHierarchyPath(this Transform transform) => MUtility.GetHierarchyPath(transform);
+        #endregion
 
+        #region Delegate
         public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method)
             where TDelegate : Delegate
         {
@@ -407,7 +412,9 @@ namespace MB
         {
             return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
         }
+        #endregion
 
+        #region Collections
         public static void SetOrAdd<T>(this List<T> list, int index, T item)
         {
             while (list.ValidateCollectionBounds(index) == false)
@@ -417,6 +424,13 @@ namespace MB
         }
 
         public static T GetRandomElement<T>(IList<T> list) => MUtility.GetRandomElement(list);
+
+        public static void ForAll<T>(this IEnumerable<T> source, Action<T> action)
+        {
+            foreach (var item in source)
+                action(item);
+        }
+        #endregion
 
         #region String
         public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
@@ -451,10 +465,19 @@ namespace MB
 
         public static string Between(this string text, int start, int end) => text.Substring(start, end - start);
 
-        public static string RemoveSuffix(this string text, string prefix)
+        public static string RemovePrefix(this string text, string prefix)
         {
-            if (text.EndsWith(prefix))
-                return text.Substring(0, text.Length - prefix.Length);
+            if(text.StartsWith(prefix))
+            {
+                return text.Substring(prefix.Length, text.Length - prefix.Length);
+            }
+
+            return text;
+        }
+        public static string RemoveSuffix(this string text, string suffix)
+        {
+            if (text.EndsWith(suffix))
+                return text.Substring(0, text.Length - suffix.Length);
 
             return text;
         }
@@ -486,18 +509,16 @@ namespace MB
         }
         #endregion
 
+        #region Type
         public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());
         public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
+        #endregion
 
-        public static void ForAll<T>(this IEnumerable<T> source, Action<T> action)
-        {
-            foreach (var item in source)
-                action(item);
-        }
-
+        #region Aync Tasks
         public static async void Forget(this Task task)
         {
             await task;
         }
+        #endregion
     }
 }
