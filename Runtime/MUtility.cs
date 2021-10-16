@@ -435,8 +435,16 @@ namespace MB
         {
             if (source == null) return fallback;
 
-            foreach (var item in source)
-                return item;
+            if (source is IList<T> list)
+            {
+                if (list.Count > 0)
+                    return list[0];
+            }
+            else
+            {
+                foreach (var item in source)
+                    return item;
+            }
 
             return fallback;
         }
@@ -444,19 +452,22 @@ namespace MB
         {
             if (source == null) return fallback;
 
-            var queried = false;
-            T result = default;
-
-            foreach (var item in source)
+            if (source is IList<T> list)
             {
-                queried = true;
-                result = item;
+                if (list.Count > 0)
+                    return list[list.Count - 1];
+                else
+                    return fallback;
             }
+            else
+            {
+                var result = fallback;
 
-            if (queried)
+                foreach (var item in source)
+                    result = item;
+
                 return result;
-
-            return fallback;
+            }
         }
         #endregion
 
@@ -538,7 +549,12 @@ namespace MB
         #endregion
 
         #region Type
-        public static bool IsAssignableFrom(this Type type, object target) => type.IsAssignableFrom(target?.GetType());
+        public static bool IsAssignableFrom(this Type type, object target)
+        {
+            if (target == null) return false;
+
+            return type.IsAssignableFrom(target.GetType());
+        }
         public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
         #endregion
 
