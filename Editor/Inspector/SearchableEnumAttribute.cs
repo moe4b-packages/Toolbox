@@ -7,6 +7,9 @@ using MB.ThirdParty;
 
 namespace MB
 {
+    /// <summary>
+    /// Creates a UI where you can search for enum values by their names
+    /// </summary>
     public class SearchableEnumAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR
