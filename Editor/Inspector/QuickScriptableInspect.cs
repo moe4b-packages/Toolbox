@@ -1,9 +1,11 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using UnityEditor;
-using UnityEditor.PackageManager.UI;
+
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 using Object = UnityEngine.Object;
 
 namespace MB

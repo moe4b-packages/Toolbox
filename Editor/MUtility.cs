@@ -109,6 +109,14 @@ namespace MB
                 yield return iterator.Copy();
             }
         }
+
+        public static string GetEnumValueName(this SerializedProperty property)
+        {
+            if (MUtility.ValidateCollectionBounds(property.enumDisplayNames, property.enumValueIndex))
+                return property.enumDisplayNames[property.enumValueIndex];
+
+            return $"Undefined: {property.intValue}";
+        }
         #endregion
 
         #region Generic Menu
