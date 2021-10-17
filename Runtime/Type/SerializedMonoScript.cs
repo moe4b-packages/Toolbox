@@ -24,7 +24,7 @@ using System.Reflection;
 namespace MB
 {
 	/// <summary>
-	/// Provides a Unity serializable monoscript backed type field (can whistand name changes),
+	/// Provides a Unity serializable monoscript backed type field (can whistand name changes & moving),
 	/// can be restricted to use specific derived types using the nested SelectionAttribute
 	/// </summary>
 	[Serializable]
