@@ -4,9 +4,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
+
 using UnityEngine;
 
 namespace MB.ThirdParty
@@ -16,12 +18,13 @@ namespace MB.ThirdParty
     /// </summary>
     public class SearchablePopup : PopupWindowContent
     {
-        /// <summary>
-        /// Creates searchable popup using given properties.
-        /// </summary>
-        public static void Show(Rect activatorRect, int current, string[] options, Action<int> onSelect)
+        public static void Show(Rect rect, int current, IEnumerable<string> options, Action<int> onSelect, bool includeNone = false)
         {
-            PopupWindow.Show(activatorRect, new SearchablePopup(current, options, onSelect));
+            if (includeNone) current += 1;
+
+            var window = new SearchablePopup(current, options, onSelect, includeNone);
+
+            PopupWindow.Show(rect, window);
         }
 
         private readonly Action<int> onSelect;
@@ -41,9 +44,9 @@ namespace MB.ThirdParty
         /// <summary>
         /// Constructor should be called only internally by the <see cref="Show(Rect, int, string[], Action{int})"/> method.
         /// </summary>
-        private SearchablePopup(int startIndex, string[] options, Action<int> onSelect)
+        private SearchablePopup(int startIndex, IEnumerable<string> options, Action<int> onSelect, bool includeNone)
         {
-            searchArray = new SearchArray(options);
+            searchArray = new SearchArray(options, includeNone);
             searchField = new SearchField();
             searchField.SetFocus();
 
@@ -238,12 +241,14 @@ namespace MB.ThirdParty
 
 
             private readonly List<Item> items;
-            private readonly string[] options;
+            private readonly IEnumerable<string> options;
 
+            private bool includeNone;
 
-            public SearchArray(string[] options)
+            public SearchArray(IEnumerable<string> options, bool includeNone)
             {
                 this.options = options;
+                this.includeNone = includeNone;
                 items = new List<Item>();
                 Search(string.Empty);
             }
@@ -258,21 +263,27 @@ namespace MB.ThirdParty
 
                 items.Clear();
                 var simplifiedFilter = filter.ToLower();
-                for (var i = 0; i < options.Length; i++)
+
+                if (includeNone)
                 {
-                    var option = options[i];
+                    var item = new Item(-1, "None");
+                    items.Add(item);
+                }
+
+                var index = 0;
+                foreach (var option in options)
+                {
                     if (string.IsNullOrEmpty(filter) || option.ToLower().Contains(simplifiedFilter))
                     {
-                        var item = new Item(i, option);
+                        var item = new Item(index, option);
+
                         if (string.Equals(option, filter, StringComparison.CurrentCultureIgnoreCase))
-                        {
                             items.Insert(0, item);
-                        }
                         else
-                        {
                             items.Add(item);
-                        }
                     }
+
+                    index += 1;
                 }
 
                 Filter = filter;
@@ -283,7 +294,6 @@ namespace MB.ThirdParty
             {
                 return items[index];
             }
-
 
             public int ItemsCount => items.Count;
 

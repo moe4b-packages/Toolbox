@@ -117,6 +117,18 @@ namespace MB
 
             return $"Undefined: {property.intValue}";
         }
+
+        public static GUIContent GetDisplayContent(this SerializedProperty property)
+        {
+            return new GUIContent(property.displayName, property.tooltip);
+        }
+
+        public static void LateModifyProperty(this SerializedProperty property, Action<SerializedProperty> action)
+        {
+            property.serializedObject.Update();
+            action(property);
+            property.serializedObject.ApplyModifiedProperties();
+        }
         #endregion
 
         #region Generic Menu

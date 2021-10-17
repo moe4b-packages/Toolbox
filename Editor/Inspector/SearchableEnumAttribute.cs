@@ -34,9 +34,7 @@ namespace MB
 
                     void OnSelect(int index)
                     {
-                        property.serializedObject.Update();
-                        property.enumValueIndex = index;
-                        property.serializedObject.ApplyModifiedProperties();
+                        property.LateModifyProperty(x => x.enumValueIndex = index);
                     }
                 }
             }
