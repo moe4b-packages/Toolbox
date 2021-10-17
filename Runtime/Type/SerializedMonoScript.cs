@@ -100,17 +100,19 @@ namespace MB
 		[CustomPropertyDrawer(typeof(SelectionAttribute), true)]
 		public class Drawer : PropertyDrawer
 		{
-			void GetMetadata(out Type argument)
+			void GetMetadata(out Type argument, out Includes includes)
             {
 				var attribute = base.attribute as SelectionAttribute;
 
 				if (attribute == null)
 				{
 					argument = typeof(MonoBehaviour);
+					includes = Defaults.Include;
 				}
 				else
 				{
 					argument = attribute.Argument;
+					includes = attribute.Includes;
 				}
 			}
 
@@ -121,12 +123,12 @@ namespace MB
 
 			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
 			{
-				GetMetadata(out var argument);
+				GetMetadata(out var argument, out var includes);
 
 				var asset = property.FindPropertyRelative("asset");
 				var selection = asset.objectReferenceValue as MonoScript;
 
-				if(ValidateType(argument, selection))
+				if(ValidateType(argument, selection, includes))
                 {
 					rect = EditorGUI.PrefixLabel(rect, label);
 
@@ -134,7 +136,7 @@ namespace MB
 
 					if (EditorGUI.DropdownButton(rect, content, FocusType.Keyboard))
 					{
-						var scripts = Query(argument);
+						var scripts = Query(argument, includes);
 						var names = scripts.Select(FormatDisplayName);
 
 						var index = selection == null ? -1 : scripts.IndexOf(selection);
@@ -174,22 +176,24 @@ namespace MB
 				return type.FullName;
 			}
 
-			public static bool ValidateType(Type argument, MonoScript script)
+			public static bool ValidateType(Type argument, MonoScript script, Includes includes)
             {
 				if (script == null) return true;
 
 				var type = script.GetClass();
+				if (type == null) return false;
 
-				if (argument.IsAssignableFrom(type) == false)
-					return false;
+				if (includes.HasFlag(Includes.Self) == false && type == argument) return false;
+				if (includes.HasFlag(Includes.Abstract) == false && type.IsAbstract) return false;
+				if (includes.HasFlag(Includes.Generic) == false && type.IsGenericType) return false;
 
-				if (IgnoreAttribute.IsDefined(type))
-					return false;
+				if (argument.IsAssignableFrom(type) == false) return false;
+				if (IgnoreAttribute.IsDefined(type)) return false;
 
 				return true;
 			}
 
-			public static IList<MonoScript> Query(Type argument)
+			public static IList<MonoScript> Query(Type argument, Includes includes)
 			{
 				var list = new List<MonoScript>();
 
@@ -197,7 +201,7 @@ namespace MB
 				{
 					if (AssetCollection.List[i] is MonoScript script)
 					{
-						if (ValidateType(argument, script))
+						if (ValidateType(argument, script, includes))
 							list.Add(script);
 					}
 				}
@@ -207,10 +211,28 @@ namespace MB
 		}
 #endif
 
+		[Flags]
+		public enum Includes
+		{
+			None = 0,
+
+			Self = 1 << 0,
+			Abstract = 1 << 1,
+			Generic = 1 << 2,
+
+			All = Self | Abstract | Generic,
+		}
+
+		public static class Defaults
+		{
+			public const Includes Include = Includes.None;
+		}
+
 		[AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
 		public class SelectionAttribute : PropertyAttribute
-        {
+		{
 			public Type Argument { get; }
+			public Includes Includes { get; set; } = Defaults.Include;
 
 			public SelectionAttribute(Type argument)
 			{

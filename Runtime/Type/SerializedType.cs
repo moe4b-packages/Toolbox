@@ -91,17 +91,19 @@ namespace MB
         [CustomPropertyDrawer(typeof(SelectionAttribute))]
         class Drawer : PropertyDrawer
         {
-            public void GetMetadata(out Type argument)
+            public void GetMetadata(out Type argument, out Includes includes)
             {
                 var attribute = base.attribute as SelectionAttribute;
 
                 if (attribute == null)
                 {
                     argument = typeof(MonoBehaviour);
+                    includes = Defaults.Include;
                 }
                 else
                 {
                     argument = attribute.Argument;
+                    includes = attribute.Includes;
                 }
             }
 
@@ -112,12 +114,12 @@ namespace MB
 
             public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
-                GetMetadata(out var argument);
+                GetMetadata(out var argument, out var includes);
 
                 var id = property.FindPropertyRelative("id");
                 var selection = Convert(id.stringValue);
 
-                if(ValidateType(argument, selection))
+                if(ValidateType(argument, selection, includes))
                 {
                     rect = EditorGUI.PrefixLabel(rect, label);
 
@@ -125,7 +127,7 @@ namespace MB
 
                     if (EditorGUI.DropdownButton(rect, content, FocusType.Keyboard))
                     {
-                        var types = Query(argument);
+                        var types = Query(argument, includes);
                         var names = types.Select(FormatDisplayName);
 
                         var index = selection == null ? -1 : types.IndexOf(selection);
@@ -164,26 +166,30 @@ namespace MB
                 return type.FullName;
             }
 
-            public static bool ValidateType(Type argument, Type type)
+            public static bool ValidateType(Type argument, Type type, Includes includes)
             {
                 if (type == null) return true;
 
-                if (argument.IsAssignableFrom(type) == false)
-                    return false;
+                if (includes.HasFlag(Includes.Self) == false && type == argument) return false;
+                if (includes.HasFlag(Includes.Abstract) == false && type.IsAbstract) return false;
+                if (includes.HasFlag(Includes.Generic) == false && type.IsGenericType) return false;
 
-                if (IgnoreAttribute.IsDefined(type))
-                    return false;
+                if (argument.IsAssignableFrom(type) == false) return false;
+                if (IgnoreAttribute.IsDefined(type)) return false;
 
                 return true;
             }
 
-            public static IList<Type> Query(Type argument)
+            public static IList<Type> Query(Type argument, Includes includes)
             {
                 var list = new List<Type>();
 
+                if (ValidateType(argument, argument, includes))
+                    list.Add(argument);
+
                 foreach (var type in TypeCache.GetTypesDerivedFrom(argument))
                 {
-                    if (ValidateType(argument, type))
+                    if (ValidateType(argument, type, includes))
                         list.Add(type);
                 }
 
@@ -192,10 +198,28 @@ namespace MB
         }
 #endif
 
+        [Flags]
+        public enum Includes
+        {
+            None = 0,
+
+            Self = 1 << 0,
+            Abstract = 1 << 1,
+            Generic = 1 << 2,
+
+            All = Self | Abstract | Generic,
+        }
+
+        public static class Defaults
+        {
+            public const Includes Include = Includes.None;
+        }
+
         [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
         public class SelectionAttribute : PropertyAttribute
         {
             public Type Argument { get; }
+            public Includes Includes { get; set; } = Defaults.Include;
 
             public SelectionAttribute(Type argument)
             {
