@@ -229,16 +229,28 @@ namespace MB
 
         #region Collections
         /// <summary>
-        /// Returns element at index, or returns null if index out of bounds
+        /// Returns element at index, or returns default if index out of bounds
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="collection"></param>
         /// <param name="index"></param>
         /// <returns></returns>
         public static T SafeIndexer<T>(this IList<T> collection, int index)
-            where T : class
         {
-            if (ValidateCollectionBounds(collection, index) == false) return null;
+            return SafeIndexer(collection, index, default);
+        }
+
+        /// <summary>
+        /// Returns element at index, or returns fallback if index out of bounds
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="index"></param>
+        /// <param name="fallback"></param>
+        /// <returns></returns>
+        public static T SafeIndexer<T>(this IList<T> collection, int index, T fallback)
+        {
+            if (ValidateCollectionBounds(collection, index) == false) return fallback;
 
             return collection[index];
         }
