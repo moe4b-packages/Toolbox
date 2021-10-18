@@ -78,7 +78,7 @@ namespace MB
                 DestroyImmediate(filter);
         }
 
-        public class Importer : AssetPostprocessor
+        public class PostProcessor : AssetPostprocessor
         {
             static ModelCollisionImporter Manager => ModelCollisionImporter.Instance;
 
