@@ -33,7 +33,7 @@ namespace MB
 
         void Start()
         {
-            Initializer.Init(collection);
+            Initializer.Initialize(collection);
         }
     }
 }

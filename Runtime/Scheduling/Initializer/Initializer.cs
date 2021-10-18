@@ -49,7 +49,7 @@ namespace MB
             where T : IInitialize
         {
             Configure(collection);
-            Init(collection);
+            Initialize(collection);
         }
         #endregion
 
@@ -87,25 +87,25 @@ namespace MB
         {
             using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInitialize>(surrogate, out var targets))
             {
-                Init(targets);
+                Initialize(targets);
             }
         }
 
-        public static void Init<T>(Func<IEnumerable<T>> function)
+        public static void Initialize<T>(Func<IEnumerable<T>> function)
             where T : IInitialize
         {
             var collection = function();
 
-            Init(collection);
+            Initialize(collection);
         }
-        public static void Init<T>(IEnumerable<T> collection)
+        public static void Initialize<T>(IEnumerable<T> collection)
             where T : IInitialize
         {
             foreach (var item in collection)
-                Init(item);
+                Initialize(item);
         }
 
-        public static void Init(IInitialize instance)
+        public static void Initialize(IInitialize instance)
         {
             instance.Initialize();
         }

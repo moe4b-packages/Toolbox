@@ -39,7 +39,7 @@ namespace MB
 
         void Start()
         {
-            Initializer.Init(Targets);
+            Initializer.Initialize(Targets);
         }
 
 #if UNITY_EDITOR
