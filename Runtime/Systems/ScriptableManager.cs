@@ -129,6 +129,18 @@ namespace MB
 			}
 		}
 		#endregion
+
+#if UNITY_EDITOR
+		[CustomEditor(typeof(ScriptableManager), true)]
+		protected class BaseInspector : Editor
+		{
+            public override void OnInspectorGUI()
+            {
+				DrawPropertiesExcluding(serializedObject, "m_Script");
+				serializedObject.ApplyModifiedProperties();
+			}
+        }
+#endif
 	}
 	
 	public class ScriptableManager<T> : ScriptableManager
@@ -389,6 +401,8 @@ namespace MB
 				Validate();
 				
 				GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
+
+				EditorGUILayout.Space();
 				
 				EditorGUI.BeginChangeCheck();
 				inspector.OnInspectorGUI();
