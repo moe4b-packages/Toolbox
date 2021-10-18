@@ -24,7 +24,7 @@ namespace MB
     /// just pass one of these whenever a function requires this object
     /// </summary>
     [Serializable]
-    public readonly ref struct UObjectSurrogate
+    public readonly struct UObjectSurrogate
     {
         public readonly GameObject GameObject { get; }
         public readonly Scene Scene => GameObject.scene;

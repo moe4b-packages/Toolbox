@@ -26,6 +26,12 @@ namespace MB
     {
         public abstract int Count { get; }
 
+        /// <summary>
+        /// Method that invalidates the internal cache of some of the collections (dictionary & hashset),
+        /// mostly invoked from editor UI when it changes
+        /// </summary>
+        public abstract void InvalidateCache();
+
 #if UNITY_EDITOR
         public abstract class BaseDrawer : PropertyDrawer
         {
@@ -41,6 +47,9 @@ namespace MB
             #region Height
             public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
             {
+                if (property.IsEditingMultipleObjects())
+                    return EditorGUIUtility.singleLineHeight;
+
                 var height = ListPadding * 2;
 
                 var list = FindListProperty(property);
@@ -68,6 +77,12 @@ namespace MB
             #region Draw
             public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
+                if (property.IsEditingMultipleObjects())
+                {
+                    EditorGUI.HelpBox(rect, "Cannot Multi-Edit UCollections", MessageType.Warning);
+                    return;
+                }
+
                 var list = FindListProperty(property);
 
                 var UI = ImprovedReorderableList.Collection.Retrieve(list);
@@ -81,7 +96,13 @@ namespace MB
                 rect.y += ListPadding;
                 rect.height -= ListPadding + ListPadding;
 
+                EditorGUI.BeginChangeCheck();
                 UI.Draw(rect);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    var collection = property.MakeSmart<UCollection>().ManagedObject;
+                    collection.InvalidateCache();
+                }
             }
 
             protected virtual void DrawElement(ImprovedReorderableList list, Rect rect, int index)

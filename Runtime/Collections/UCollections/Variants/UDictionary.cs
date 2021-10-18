@@ -193,6 +193,11 @@ namespace MB
             }
         }
 
+        public override void InvalidateCache()
+        {
+            cache = null;
+        }
+
         public bool TryGetValue(TKey key, out TValue value) => Dictionary.TryGetValue(key, out value);
 
         public bool ContainsKey(TKey key) => Dictionary.ContainsKey(key);
@@ -209,7 +214,7 @@ namespace MB
         }
         public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
-        public void AddAll(IDictionary<TKey, TValue> collection)
+        public void UnionWith(IDictionary<TKey, TValue> collection)
         {
             foreach (var pair in collection)
                 this[pair.Key] = pair.Value;

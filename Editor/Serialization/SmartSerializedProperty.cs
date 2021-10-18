@@ -202,6 +202,21 @@ namespace MB
 
             if (IsCollectionElement) RootManagedCollection = RootManagedObject as IList;
         }
+
+        public IEnumerable<T> IterateAllManagedObjects()
+        {
+            for (int i = 0; i < Property.serializedObject.targetObjects.Length; i++)
+            {
+                var root = Property.serializedObject.targetObjects[i] as object;
+
+                GetManagedObjectReflectorsOf(Property, ref root, out var isCollection, out var index, out var field);
+
+                if (isCollection)
+                    yield return (root as IList<T>)[index];
+                else
+                    yield return (T)field.GetValue(root);
+            }
+        }
         #endregion
 
         /// <summary>
@@ -433,6 +448,12 @@ namespace MB
         public static TTarget ChangeType<TTarget>(object value) => (TTarget)Convert.ChangeType(value, typeof(TTarget));
 
         public static void GetManagedObjectReflectors(SerializedProperty property, out object root, out bool isCollection, out int index, out FieldInfo field)
+        {
+            root = property.serializedObject.targetObject;
+
+            GetManagedObjectReflectorsOf(property, ref root, out isCollection, out index, out field);
+        }
+        public static void GetManagedObjectReflectorsOf(SerializedProperty property, ref object root, out bool isCollection, out int index, out FieldInfo field)
         {
             var flags = BindingFlags.FlattenHierarchy | BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 

@@ -68,6 +68,8 @@ namespace MB
             set => ICollection[index] = value;
         }
 
+        public override void InvalidateCache() { }
+
         public IEnumerator<T> GetEnumerator() => Collection.GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => Collection.GetEnumerator();
 

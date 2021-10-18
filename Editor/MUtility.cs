@@ -129,6 +129,11 @@ namespace MB
             action(property);
             property.serializedObject.ApplyModifiedProperties();
         }
+
+        public static bool IsEditingMultipleObjects(this SerializedProperty property)
+        {
+            return property.serializedObject.targetObjects.Length > 1;
+        }
         #endregion
 
         #region Generic Menu

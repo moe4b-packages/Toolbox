@@ -334,6 +334,26 @@ namespace MB
             return builder.ToString();
         }
 
+        public static IEnumerable<Transform> IterateTransformHierarchy(UObjectSurrogate surrogate)
+        {
+            var transform = surrogate.Transform;
+
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var context = transform.GetChild(i);
+
+                yield return context;
+
+                if (context.childCount > 0)
+                {
+                    foreach (var child in IterateTransformHierarchy(context))
+                    {
+                        yield return child;
+                    }
+                }
+            }
+        }
+
         #region Types
         public static IEnumerable<Type> IterateHierarchy(Type type)
         {

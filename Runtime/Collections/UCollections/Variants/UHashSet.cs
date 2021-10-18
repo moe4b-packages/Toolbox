@@ -75,6 +75,11 @@ namespace MB
             }
         }
 
+        public override void InvalidateCache()
+        {
+            cache = null;
+        }
+
         public bool Contains(T item) => HashSet.Contains(item);
 
         public bool Add(T item)
