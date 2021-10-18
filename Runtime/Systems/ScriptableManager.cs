@@ -173,9 +173,11 @@ namespace MB
 		}
 	}
 
+#if UNITY_EDITOR
 	/// <summary>
 	/// Class Responsible for all Scriptable Manager operations,
-	/// seperated into it's own class instead of begin nested in Scriptable Manager to reduce inheritance conflicts
+	/// seperated into it's own class instead of begin nested in Scriptable Manager to reduce inheritance conflicts,
+	/// ironically despite its name, it's an editor only class
 	/// </summary>
 	public static class ScriptableManagerRuntime
 	{
@@ -184,7 +186,6 @@ namespace MB
 			return type.Name;
 		}
 		
-		#if UNITY_EDITOR
 		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 		private static void OnLoad()
 		{
@@ -523,7 +524,7 @@ namespace MB
 						
 						var path = FormatFilePath(type);
 						var asset = AssetDatabase.LoadAssetAtPath<ScriptableManager>(path);
-					
+						
 						set.Remove(asset);
 						AssetDatabase.DeleteAsset(path);
 					}
@@ -533,6 +534,7 @@ namespace MB
 				File.Delete(DirectoryPath + ".meta");
 
 				AssetDatabase.Refresh();
+				AssetDatabase.SaveAssets();
 			}
 		}
 
@@ -562,9 +564,9 @@ namespace MB
 
 			throw new NotImplementedException();
 		}
-		#endif
 	}
-	
+#endif
+
 	public enum ScriptableManagerScope
 	{
 		/// <summary>
