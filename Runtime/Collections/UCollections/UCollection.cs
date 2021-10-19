@@ -41,7 +41,7 @@ namespace MB
 
             public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
 
-            public const float ElementHeightPadding = 6f;
+            public const float ElementHeightPadding = 2f;
             public const float ElementFoldoutPadding = 15f;
 
             #region Height
