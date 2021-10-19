@@ -139,6 +139,8 @@ namespace MB
 
 				if(ValidateType(argument, selection, includes))
                 {
+					EditorGUI.BeginProperty(rect, label, property);
+
 					rect = EditorGUI.PrefixLabel(rect, label);
 
 					if (EditorGUI.DropdownButton(rect, FormatDisplayContent(selection), FocusType.Keyboard, Styles.DropdownButton))
@@ -152,6 +154,8 @@ namespace MB
 							asset.LateModifyProperty(x => x.objectReferenceValue = script);
 						}
 					}
+
+					EditorGUI.EndProperty();
 				}
 				else
                 {

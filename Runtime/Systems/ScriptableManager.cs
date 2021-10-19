@@ -401,12 +401,11 @@ namespace MB
 
 				EditorGUILayout.Space();
 
-				inspector.serializedObject.Update();
-
 				EditorGUI.BeginChangeCheck();
 				inspector.OnInspectorGUI();
 				if (EditorGUI.EndChangeCheck() || EditorUtility.IsDirty(manager))
 				{
+					inspector.serializedObject.Update();
 					Save(manager);
 				}
 

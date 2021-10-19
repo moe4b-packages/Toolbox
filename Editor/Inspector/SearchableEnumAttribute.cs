@@ -23,6 +23,8 @@ namespace MB
 
             public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
+                EditorGUI.BeginProperty(rect, label, property);
+
                 rect = EditorGUI.PrefixLabel(rect, label);
 
                 var name = property.GetEnumValueName();
@@ -36,6 +38,8 @@ namespace MB
                         property.LateModifyProperty(x => x.enumValueIndex = index);
                     }
                 }
+
+                EditorGUI.EndProperty();
             }
         }
 #endif
