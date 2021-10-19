@@ -22,8 +22,8 @@ namespace MB
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes")]
-	public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
-	{
+    public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
+    {
         [SerializeField]
         List<MSceneAsset> list = default;
         public List<MSceneAsset> List => list;
@@ -32,9 +32,9 @@ namespace MB
 
         public static bool TryFind(string id, out MSceneAsset asset) => Instance.Dictionary.TryGetValue(id, out asset);
 
-        protected override void Load()
+        protected override void OnLoad()
         {
-            base.Load();
+            base.OnLoad();
 
 #if UNITY_EDITOR
             Refresh();

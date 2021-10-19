@@ -32,9 +32,9 @@ namespace MB
 
         public JObjectComposer Composer { get; protected set; }
 
-        protected override void Load()
+        protected override void OnLoad()
         {
-            base.Load();
+            base.OnLoad();
 
             Composer = new JObjectComposer();
 

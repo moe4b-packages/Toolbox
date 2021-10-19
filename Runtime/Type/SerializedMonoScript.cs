@@ -30,6 +30,15 @@ namespace MB
 	[Serializable]
 	public class SerializedMonoScript : ISerializationCallbackReceiver
 	{
+		/// <summary>
+		/// The reason for the inclusion of this accurately named unused variable is -as the name might suggest- the fact that
+		/// Unity is indeed dumb, when using a custom data structure Unity by default takes the first fetched string
+		/// Serialized property and uses it as a label for that array element, this behaviour is undersirable by me in this case,
+		/// hence the unused empty variable
+		/// </summary>
+		[SerializeField]
+		string UnityIsDumbVariable = string.Empty;
+
 		[SerializeField]
 		Object asset = default;
 		public Object Asset => asset;
@@ -132,33 +141,22 @@ namespace MB
                 {
 					rect = EditorGUI.PrefixLabel(rect, label);
 
-					var content = new GUIContent(FormatDisplayName(selection));
-
-					if (EditorGUI.DropdownButton(rect, content, FocusType.Keyboard))
+					if (EditorGUI.DropdownButton(rect, FormatDisplayContent(selection), FocusType.Keyboard, Styles.DropdownButton))
 					{
 						var scripts = Query(argument, includes);
-						var names = scripts.Select(FormatDisplayName);
+						var names = scripts.Select(FormatDisplayContent);
 
-						var index = selection == null ? -1 : scripts.IndexOf(selection);
-
-						SearchablePopup.Show(rect, index, names, OnSelect, includeNone: true);
-						void OnSelect(int index)
+						SearchablePopup<MonoScript>.Show(rect, scripts, selection, FormatDisplayContent, OnSelect, includeNone: true);
+						void OnSelect(MonoScript script)
 						{
-							asset.LateModifyProperty(Process);
-							void Process(SerializedProperty property)
-							{
-								if (index == -1)
-									property.objectReferenceValue = null;
-								else
-									property.objectReferenceValue = scripts[index];
-							}
+							asset.LateModifyProperty(x => x.objectReferenceValue = script);
 						}
 					}
 				}
 				else
                 {
 					var area = MUtility.GUICoordinates.SliceHorizontalPercentage(ref rect, 80f);
-					EditorGUI.HelpBox(area, $" Invalid Selection of {FormatDisplayName(selection)}", MessageType.Error);
+					EditorGUI.HelpBox(area, $" Invalid Selection of {FormatDisplayContent(selection)}", MessageType.Error);
 
 					rect.xMin += 2;
 
@@ -167,13 +165,17 @@ namespace MB
 				}
 			}
 
-			public static string FormatDisplayName(MonoScript script)
+			public static GUIContent FormatDisplayContent(MonoScript script)
 			{
 				if (script == null)
-					return "None";
+					return new GUIContent("None");
 
 				var type = script.GetClass();
-				return type.FullName;
+
+				var text = $"{type.Name} <color=#A4A4A4>({type.Namespace})</color>";
+				var tooltip = $"{type.Name} ({type.Namespace})";
+
+				return new GUIContent(text, tooltip);
 			}
 
 			public static bool ValidateType(Type argument, MonoScript script, Includes includes)
@@ -207,6 +209,17 @@ namespace MB
 				}
 
 				return list;
+			}
+
+			public static class Styles
+			{
+				public static GUIStyle DropdownButton;
+
+				static Styles()
+				{
+					DropdownButton = EditorStyles.miniPullDown;
+					DropdownButton.richText = true;
+				}
 			}
 		}
 #endif

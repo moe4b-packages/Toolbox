@@ -501,6 +501,20 @@ namespace MB
                 return result;
             }
         }
+
+        public static int IndexOf<T>(this IEnumerable<T> source, T target)
+        {
+            int index = 0;
+            foreach (var item in source)
+            {
+                if (Equals(item, target))
+                    return index;
+
+                index += 1;
+            }
+
+            return -1;
+        }
         #endregion
 
         #region String

@@ -21,6 +21,15 @@ namespace MB
     [Serializable]
     public class SerializedType : ISerializationCallbackReceiver
     {
+        /// <summary>
+        /// The reason for the inclusion of this accurately named unused variable is -as the name might suggest- the fact that
+        /// Unity is indeed dumb, when using a custom data structure Unity by default takes the first fetched string
+        /// Serialized property and uses it as a label for that array element, this behaviour is undersirable by me in this case,
+        /// hence the unused empty variable
+        /// </summary>
+        [SerializeField]
+        string UnityIsDumbVariable = string.Empty;
+
         [SerializeField]
         string id = default;
         public string ID => id;
@@ -123,33 +132,21 @@ namespace MB
                 {
                     rect = EditorGUI.PrefixLabel(rect, label);
 
-                    var content = new GUIContent(FormatDisplayName(selection));
-
-                    if (EditorGUI.DropdownButton(rect, content, FocusType.Keyboard))
+                    if (EditorGUI.DropdownButton(rect, FormatDisplayContent(selection), FocusType.Keyboard, Styles.DropdownButton))
                     {
                         var types = Query(argument, includes);
-                        var names = types.Select(FormatDisplayName);
 
-                        var index = selection == null ? -1 : types.IndexOf(selection);
-
-                        SearchablePopup.Show(rect, index, names, OnSelect, includeNone: true);
-                        void OnSelect(int index)
+                        SearchablePopup<Type>.Show(rect, types, selection, FormatDisplayContent, OnSelect, includeNone: true);
+                        void OnSelect(Type type)
                         {
-                            id.LateModifyProperty(Process);
-                            void Process(SerializedProperty property)
-                            {
-                                if (index == -1)
-                                    property.stringValue = string.Empty;
-                                else
-                                    property.stringValue = Convert(types[index]);
-                            }
+                            id.LateModifyProperty(x => x.stringValue = Convert(type));
                         }
                     }
                 }
                 else
                 {
                     var area = MUtility.GUICoordinates.SliceHorizontalPercentage(ref rect, 80f);
-                    EditorGUI.HelpBox(area, $" Invalid Selection of {FormatDisplayName(selection)}", MessageType.Error);
+                    EditorGUI.HelpBox(area, $" Invalid Selection of {selection.Name}", MessageType.Error);
 
                     rect.xMin += 2;
 
@@ -158,12 +155,15 @@ namespace MB
                 }
             }
 
-            public static string FormatDisplayName(Type type)
+            public static GUIContent FormatDisplayContent(Type type)
             {
                 if (type == null)
-                    return "None";
+                    return new GUIContent("None");
 
-                return type.FullName;
+                var text = $"{type.Name} <color=#A4A4A4>({type.Namespace})</color>";
+                var tooltip = $"{type.Name} ({type.Namespace})";
+
+                return new GUIContent(text, tooltip);
             }
 
             public static bool ValidateType(Type argument, Type type, Includes includes)
@@ -194,6 +194,17 @@ namespace MB
                 }
 
                 return list;
+            }
+
+            public static class Styles
+            {
+                public static GUIStyle DropdownButton;
+
+                static Styles()
+                {
+                    DropdownButton = EditorStyles.miniPullDown;
+                    DropdownButton.richText = true;
+                }
             }
         }
 #endif

@@ -30,8 +30,7 @@ namespace MB
 
                 if (EditorGUI.DropdownButton(rect, content, FocusType.Keyboard))
                 {
-                    SearchablePopup.Show(rect, property.enumValueIndex, property.enumDisplayNames, OnSelect);
-
+                    SearchablePopup.Show(rect, property.enumDisplayNames, property.enumValueIndex, OnSelect);
                     void OnSelect(int index)
                     {
                         property.LateModifyProperty(x => x.enumValueIndex = index);

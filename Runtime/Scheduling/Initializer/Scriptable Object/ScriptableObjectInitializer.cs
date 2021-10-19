@@ -31,17 +31,15 @@ namespace MB
         List<ScriptableObject> list;
         public List<ScriptableObject> List => list;
 
-        protected internal override bool IncludeInBuild => list.Count > 0;
-
-        protected override void Load()
+        protected override void OnLoad()
         {
-            base.Load();
+            base.OnLoad();
 
-            #if UNITY_EDITOR
+#if UNITY_EDITOR
             Refresh();
 
             AssetCollection.OnRefresh += Refresh;
-            #endif
+#endif
 
             Perform();
         }
@@ -67,6 +65,7 @@ namespace MB
             {
                 list = targets;
                 EditorUtility.SetDirty(this);
+                ScriptableManagerRuntime.Save(this);
             }
         }
 #endif

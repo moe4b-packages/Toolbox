@@ -23,27 +23,26 @@ namespace MB
 	/// A Singleton ScriptableObject backed settings entry that can be edited in the Projects Settings window
 	/// and accessed during run-time
 	/// </summary>
-	public class ScriptableManager : ScriptableObject
+	public abstract class ScriptableManager : ScriptableObject
 	{
-		/// <summary>
-		/// Dynamically evaluated property to determine whether to include this manager in build or not
-		/// </summary>
-		protected internal virtual bool IncludeInBuild => true;
-		
 		protected virtual void OnEnable()
 		{
-			
+#if UNITY_EDITOR == false
+			Load();
+#endif
 		}
+
+		internal abstract void Load();
 
 		/// <summary>
 		/// Load method invoked when the Scriptable Manager is loaded in memory
 		/// </summary>
-		protected virtual void Load()
+		protected virtual void OnLoad()
 		{
 			
 		}
 		
-		#region Attributes
+#region Attributes
 		/// <summary>
 		/// Attribute that needs to be applied to all Scriptable Manager instances for them to register in the system
 		/// </summary>
@@ -128,7 +127,7 @@ namespace MB
 				return type.GetCustomAttribute<EditorOnlyAttribute>() != null;
 			}
 		}
-		#endregion
+#endregion
 
 #if UNITY_EDITOR
 		[CustomEditor(typeof(ScriptableManager), true)]
@@ -151,27 +150,25 @@ namespace MB
 		{
 			get
 			{
-				#if UNITY_EDITOR
+#if UNITY_EDITOR
 				if (instance == null)
 				{
 					var type = typeof(T);
-					instance = ScriptableManagerRuntime.IO.Retrieve(type) as T;
+					instance = ScriptableManagerRuntime.Retrieve(type) as T;
 				}
-				#endif
+#endif
 
 				return instance;
 			}
 		}
 
-		protected override void OnEnable()
-		{
-			base.OnEnable();
-			
+        internal override void Load()
+        {
 			instance = this as T;
-			
-			Load();
+
+			OnLoad();
 		}
-	}
+    }
 
 #if UNITY_EDITOR
 	/// <summary>
@@ -181,204 +178,203 @@ namespace MB
 	/// </summary>
 	public static class ScriptableManagerRuntime
 	{
-		public static string FormatID(Type type)
-		{
-			return type.Name;
-		}
-		
-		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-		private static void OnLoad()
-		{
-			//Manually Load all Scriptable Settings on Runtime
-			LoadAll();
-		}
+		internal static readonly Dictionary<Type, ScriptableManager> dictionary;
 
 		/// <summary>
 		/// Manually Loads all managers
 		/// </summary>
+		[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
 		public static void LoadAll()
 		{
 			foreach (var type in IterateAll())
-				IO.Retrieve(type);
+				Retrieve(type);
 		}
-		
-		public static IEnumerable<Type> IterateAll()
-		{
-			var types = TypeCache.GetTypesWithAttribute<ScriptableManager.GlobalAttribute>();
 
-			for (var i = 0; i < types.Count; i++)
+		static void Validate(ScriptableManager manager)
+		{
+			if (manager == null) throw new ArgumentNullException(nameof(manager));
+
+			var type = manager.GetType();
+
+			if (dictionary.ContainsKey(type) == false)
+				throw new InvalidOperationException($"Invalid Manager Argument for {type} Passed");
+
+			if (dictionary[type] != manager)
+				throw new InvalidOperationException($"Invalid Manager Argument for {type} Passed");
+		}
+		static void Assign(ScriptableManager manager)
+		{
+			if (manager == null) throw new ArgumentNullException(nameof(manager));
+
+			var type = manager.GetType();
+			dictionary.Add(type, manager);
+
+			manager.Load();
+		}
+
+		public static ScriptableManager Retrieve(Type type)
+		{
+			if (dictionary.TryGetValue(type, out var manager) && manager != null)
+				return manager;
+
+			manager = IO.Load(type);
+
+			if (manager == null)
+				manager = IO.Create(type);
+
+			Assign(manager);
+
+			return manager;
+		}
+		public static ScriptableManager Reset(Type type)
+		{
+			Destroy(type);
+
+			var manager = IO.Create(type);
+			Assign(manager);
+
+			return manager;
+		}
+		public static ScriptableManager Reload(Type type)
+		{
+			Destroy(type);
+			return Retrieve(type);
+		}
+
+		public static void Save(ScriptableManager manager)
+		{
+			if (manager == null) throw new ArgumentNullException(nameof(manager));
+			Validate(manager);
+
+			IO.Save(manager);
+		}
+
+		internal static bool Destroy(Type type)
+		{
+			if (dictionary.TryGetValue(type, out var manager) == false)
+				return false;
+
+			return Destroy(manager);
+		}
+		internal static bool Destroy(ScriptableManager manager)
+		{
+			if (manager == null) throw new ArgumentNullException(nameof(manager));
+			Validate(manager);
+
+			var type = manager.GetType();
+
+			if (AssetDatabase.Contains(manager))
 			{
-				if (typeof(ScriptableManager).IsAssignableFrom(types[i]) == false)
-				{
-					Debug.LogWarning($"Type {types[i]} Needs to Inherit from {typeof(ScriptableManager)} to Accept the Attribute");
-					continue;
-				}
-				
-				yield return types[i];
+				var path = AssetDatabase.GetAssetPath(manager);
+				dictionary.Remove(type);
+				return AssetDatabase.DeleteAsset(path);
+			}
+			else
+			{
+				dictionary.Remove(type);
+
+				Object.DestroyImmediate(manager);
+				return true;
 			}
 		}
-		
-		public static class IO
+		public static void DestroyAll()
 		{
-			private static readonly Dictionary<Type, ScriptableManager> dictionary;
-			
-			public static string FormatPath(Type type)
+			var collection = dictionary.Values.ToArray();
+
+			foreach (var manager in collection)
+				Destroy(manager);
+
+			dictionary.Clear();
+		}
+
+		internal static class IO
+		{
+			internal static string FormatPath(Type type)
 			{
 				var name = FormatID(type);
-				
+
 				var attribute = ScriptableManager.GlobalAttribute.Retrieve(type);
 				var scope = ConvertScope(attribute.Scope);
-				
-				var directory = FormatPathDirectory(scope);
+
+				var directory = FormatDirectory(scope);
 				Directory.CreateDirectory(directory);
-				
+
 				return Path.Combine(directory, $"{name}.asset");
-			}
-			
-			public static string FormatPathDirectory(SettingsScope scope)
-			{
-				switch (scope)
+
+				static string FormatDirectory(SettingsScope scope)
 				{
-					case SettingsScope.Project:
-						return "ProjectSettings/MB/";
+					switch (scope)
+					{
+						case SettingsScope.Project:
+							return "ProjectSettings/MB/";
 
-					case SettingsScope.User:
-						var parent = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-						return Path.Combine(parent, $"{InternalEditorUtility.unityPreferencesFolder}/MB/{InternalEditorUtility.GetUnityDisplayVersion()}/");
+						case SettingsScope.User:
+							var parent = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+							return Path.Combine(parent, $"{InternalEditorUtility.unityPreferencesFolder}/MB/{InternalEditorUtility.GetUnityDisplayVersion()}/");
+					}
+
+					throw new NotImplementedException();
 				}
-
-				throw new NotImplementedException();
 			}
-			
-			/// <summary>
-			/// Saves a settings object to disk
-			/// </summary>
-			/// <param name="asset"></param>
-			public static void Save(ScriptableManager asset)
+
+			internal static void Save(ScriptableManager manager)
 			{
-				var type = asset.GetType();
+				if (manager == null) throw new ArgumentNullException(nameof(manager));
+
+				var type = manager.GetType();
 				var path = FormatPath(type);
 
-				dictionary[type] = asset;
-				
-				var array = new Object[] { asset };
+				var array = new Object[] { manager };
 				InternalEditorUtility.SaveToSerializedFileAndForget(array, path, true);
 			}
-			
-			/// <summary>
-			/// Loads a settings object from disk or from memory if already loaded,
-			/// guaranteed to return the same instance within the same assembly reload
-			/// </summary>
-			/// <param name="type"></param>
-			/// <returns></returns>
-			public static ScriptableManager Load(Type type)
-			{
-				if (dictionary.TryGetValue(type, out var asset) && asset != null)
-					return asset;
 
+			internal static ScriptableManager Load(Type type)
+			{
 				var path = FormatPath(type);
-				
-				asset = InternalEditorUtility.LoadSerializedFileAndForget(path).FirstOrDefault() as ScriptableManager;
+
+				var asset = InternalEditorUtility.LoadSerializedFileAndForget(path).FirstOrDefault() as ScriptableManager;
 				if (asset == null) return null;
 
-				dictionary[type] = asset;
 				Setup(asset);
-				
+
 				return asset;
 			}
-			
-			/// <summary>
-			/// Creates a settings object instance and saves it
-			/// </summary>
-			/// <param name="type"></param>
-			/// <returns></returns>
-			public static ScriptableManager Create(Type type)
+
+			internal static ScriptableManager Create(Type type)
 			{
 				var asset = ScriptableObject.CreateInstance(type) as ScriptableManager;
 
 				asset.name = FormatID(type);
-				
-				dictionary[type] = asset;
+
 				Setup(asset);
 				Save(asset);
 
 				return asset;
 			}
-			
-			/// <summary>
-			/// Retrieves an instance of a settings object whether by loading it or creating
-			/// </summary>
-			/// <param name="type"></param>
-			/// <returns></returns>
-			public static ScriptableManager Retrieve(Type type)
-			{
-				var asset = Load(type);
 
-				if (asset == null) asset = Create(type);
-
-				return asset;
-			}
-			
-			public static ScriptableManager Reset(Type type)
-			{
-				Destroy(type);
-				return Create(type);
-			}
-			
-			public static ScriptableManager Reload(Type type)
-			{
-				Destroy(type);
-				return Retrieve(type);
-			}
-			
-			public static bool Destroy(Type type)
-			{
-				if (dictionary.TryGetValue(type, out var asset) == false)
-					return false;
-
-				Object.DestroyImmediate(asset);
-
-				return true;
-			}
-			
-			private static void Setup(ScriptableManager asset)
+			internal static void Setup(ScriptableManager asset)
 			{
 				asset.hideFlags = HideFlags.DontSaveInEditor | HideFlags.DontUnloadUnusedAsset;
 			}
-			
-			private static void PreAssemblyReloadCallback()
-			{
-				//Destroy assets before we lose reference to it
-				foreach (var asset in dictionary.Values)
-					Object.DestroyImmediate(asset);
-
-				dictionary.Clear();
-			}
-			
-			static IO()
-			{
-				dictionary = new Dictionary<Type, ScriptableManager>();
-				AssemblyReloadEvents.beforeAssemblyReload += PreAssemblyReloadCallback;
-			}
 		}
-		
+
 		public class Provider : SettingsProvider
 		{
 			private readonly Type type;
 
 			private readonly ReadOnlyPlayMode readOnlyMode;
 			
-			private ScriptableManager asset;
+			private ScriptableManager manager;
 			private Editor inspector;
 
 			private readonly GenericMenu context;
 			
 			private void Validate()
 			{
-				asset = IO.Retrieve(type);
+				manager = Retrieve(type);
 				
-				if (inspector == null || inspector.target != asset)
-					inspector = Editor.CreateEditor(asset);
+				if (inspector == null || inspector.target != manager)
+					inspector = Editor.CreateEditor(manager);
 			}
 			
 			public override void OnTitleBarGUI()
@@ -392,8 +388,8 @@ namespace MB
 					context.ShowAsContext();
 			}
 			
-			private void Reset() => IO.Reset(type);
-			private void Reload() => IO.Reload(type);
+			private void Reset() => ScriptableManagerRuntime.Reset(type);
+			private void Reload() => ScriptableManagerRuntime.Reload(type);
 			
 			public override void OnGUI(string search)
 			{
@@ -404,14 +400,16 @@ namespace MB
 				GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
 
 				EditorGUILayout.Space();
-				
+
+				inspector.serializedObject.Update();
+
 				EditorGUI.BeginChangeCheck();
 				inspector.OnInspectorGUI();
-				if (EditorGUI.EndChangeCheck())
+				if (EditorGUI.EndChangeCheck() || EditorUtility.IsDirty(manager))
 				{
-					IO.Save(asset);
+					Save(manager);
 				}
-				
+
 				GUI.enabled = true;
 			}
 			
@@ -489,52 +487,78 @@ namespace MB
 			
 			public void OnPreprocessBuild(BuildReport report)
 			{
+				DestroyAll();
+
 				Directory.CreateDirectory(DirectoryPath);
 				
-				using (PreloadedAssets.Lease(out var set))
+				using (PreloadedAssets.Lease(out var preloaded))
 				{
 					foreach (var type in IterateAll())
 					{
-						if(ScriptableManager.EditorOnlyAttribute.IsDefined(type))
+						if (ScriptableManager.EditorOnlyAttribute.IsDefined(type))
 							continue;
-						
+
 						var path = FormatFilePath(type);
-					
+
+						//Just to be sure no old asset exists
 						AssetDatabase.DeleteAsset(path);
-					
-						var asset = IO.Retrieve(type);
-						if(asset.IncludeInBuild == false) continue;
-						
+
+						var asset = Retrieve(type);
+
 						asset.hideFlags = HideFlags.None;
 						AssetDatabase.CreateAsset(asset, path);
 
-						set.Add(asset);
+						preloaded.Add(asset);
 					}
 				}
 			}
 			
 			public void OnPostprocessBuild(BuildReport report)
 			{
-				using (PreloadedAssets.Lease(out var set))
+				using (PreloadedAssets.Lease(out var preloaded))
 				{
 					foreach (var type in IterateAll())
 					{
-						if(ScriptableManager.EditorOnlyAttribute.IsDefined(type))
+						if (ScriptableManager.EditorOnlyAttribute.IsDefined(type))
 							continue;
-						
+
 						var path = FormatFilePath(type);
 						var asset = AssetDatabase.LoadAssetAtPath<ScriptableManager>(path);
-						
-						set.Remove(asset);
-						AssetDatabase.DeleteAsset(path);
+
+						if (asset == null) continue;
+
+						preloaded.Remove(asset);
+						Destroy(asset);
 					}
 				}
-				
+
 				Directory.Delete(DirectoryPath);
 				File.Delete(DirectoryPath + ".meta");
 
 				AssetDatabase.Refresh();
 				AssetDatabase.SaveAssets();
+			}
+		}
+
+        #region Utility
+        public static string FormatID(Type type)
+		{
+			return type.Name;
+		}
+
+		public static IEnumerable<Type> IterateAll()
+		{
+			var types = TypeCache.GetTypesWithAttribute<ScriptableManager.GlobalAttribute>();
+
+			for (var i = 0; i < types.Count; i++)
+			{
+				if (typeof(ScriptableManager).IsAssignableFrom(types[i]) == false)
+				{
+					Debug.LogWarning($"Type {types[i]} Needs to Inherit from {typeof(ScriptableManager)} to Accept the Attribute");
+					continue;
+				}
+
+				yield return types[i];
 			}
 		}
 
@@ -563,6 +587,15 @@ namespace MB
 			}
 
 			throw new NotImplementedException();
+		}
+        #endregion
+
+        static ScriptableManagerRuntime()
+		{
+			dictionary = new Dictionary<Type, ScriptableManager>();
+
+			//Destroy assets before we lose reference to it
+			AssemblyReloadEvents.beforeAssemblyReload += DestroyAll;
 		}
 	}
 #endif
