@@ -1,6 +1,8 @@
 #if UNITY_EDITOR
-//Proudly stolen from https://github.com/arimger/Unity-Editor-Toolbox
-//Custom reimplementation of an idea originally provided here - https://github.com/roboryantron/UnityEditorJunkie/blob/master/Assets/SearchableEnum/Code/Editor/SearchablePopup.cs, 2019
+///Custom reimplementation of and idea provided here:
+///https://github.com/arimger/Unity-Editor-Toolbox
+///Which in it's own self is a custom reimplementation of an idea originally provided here:
+///https://github.com/roboryantron/UnityEditorJunkie/blob/master/Assets/SearchableEnum/Code/Editor/SearchablePopup.cs
 
 using System;
 using System.Collections.Generic;
