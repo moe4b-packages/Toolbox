@@ -64,7 +64,6 @@ namespace MB
             if (MUtility.CheckElementsInclusion(list, targets) == false)
             {
                 list = targets;
-                EditorUtility.SetDirty(this);
                 ScriptableManagerRuntime.Save(this);
             }
         }

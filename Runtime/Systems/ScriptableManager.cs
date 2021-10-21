@@ -25,7 +25,7 @@ namespace MB
 	/// </summary>
 	public abstract class ScriptableManager : ScriptableObject
 	{
-		protected virtual void OnEnable()
+		protected virtual void Awake()
 		{
 #if UNITY_EDITOR == false
 			Load();
@@ -523,8 +523,6 @@ namespace MB
 
 						var path = FormatFilePath(type);
 						var asset = AssetDatabase.LoadAssetAtPath<ScriptableManager>(path);
-
-						if (asset == null) continue;
 
 						preloaded.Remove(asset);
 						Destroy(asset);
