@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Reflection;
 
-using MB.ThirdParty;
-
-using UnityEditor;
-
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+using MB.ThirdParty;
+#endif
 
 namespace MB
 {

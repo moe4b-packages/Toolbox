@@ -24,8 +24,7 @@ namespace MB
 {
     /// <summary>
     /// More competant version of PlayerPrefs, uses JsonDotNet, can serialize anything,
-    /// requires .Net 4.X compatibility on Windows (and possibly other platforms too)
-    /// instead of .Net 2.0 Standard because of a bug? with JsonDotNet I think
+    /// needs to be configured and loaded before use
     /// </summary>
     public static class AutoPrefs
     {
@@ -34,6 +33,8 @@ namespace MB
         public static JObjectComposer Composer { get; private set; }
 
         public static bool IsDirty { get; private set; }
+
+        public static StringObfuscator Obfuscator { get; }
 
         public static class IO
         {
@@ -54,7 +55,7 @@ namespace MB
 
                 public void Save(string text)
                 {
-                    if (Obfuscate) text = Obfuscation.Encrypt(text);
+                    if (Obfuscate) text = Obfuscator.Encrypt(text);
 
                     File.WriteAllText(Path, text);
                 }
@@ -72,7 +73,7 @@ namespace MB
 
                     var text = File.ReadAllText(Path);
 
-                    if (Obfuscate) text = Obfuscation.Decrypt(text);
+                    if (Obfuscate) text = Obfuscator.Decrypt(text);
 
                     return text;
                 }
@@ -127,23 +128,15 @@ namespace MB
             }
         }
 
-        public static class Obfuscation
+        public static void Configure()
         {
-            public static void SetMethods(EncryptDelegate encrypt, DecryptDelegate decrypt)
+            var settings = new JsonSerializerSettings()
             {
-                Encrypt = encrypt;
-                Decrypt = decrypt;
-            }
+                Formatting = Formatting.Indented,
+            };
 
-            public static EncryptDelegate Encrypt { get; set; } = DefaultEncryptMethod;
-            public delegate string EncryptDelegate(string text);
-            public static string DefaultEncryptMethod(string text) => text;
-
-            public static DecryptDelegate Decrypt { get; set; } = DefaultDecryptMethod;
-            public delegate string DecryptDelegate(string text);
-            public static string DefaultDecryptMethod(string text) => text;
+            Configure(settings);
         }
-
         public static void Configure(params JsonConverter[] converters)
         {
             var settings = new JsonSerializerSettings()
@@ -156,12 +149,13 @@ namespace MB
         }
         public static void Configure(JsonSerializerSettings settings)
         {
-            if (Composer.IsConfigured)
+            if (Composer != null)
             {
                 Debug.LogWarning($"{ID} is Already Configured");
                 return;
             }
 
+            Composer = new JObjectComposer();
             Composer.Configure(settings);
             Composer.OnChange += InvokeChange;
 
@@ -227,7 +221,7 @@ namespace MB
 
         static AutoPrefs()
         {
-            Composer = new JObjectComposer();
+            Obfuscator = new StringObfuscator();
         }
     }
 }
