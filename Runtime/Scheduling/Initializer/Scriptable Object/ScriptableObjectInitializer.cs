@@ -59,7 +59,17 @@ namespace MB
         {
             if (this == null) return;
 
-            var targets = AssetCollection.Query<ScriptableObject>(x => x is IInitialize);
+            var targets = AssetCollection.Query<ScriptableObject>(IsValid);
+            static bool IsValid(ScriptableObject target)
+            {
+                if (target is IInitialize == false)
+                    return false;
+
+                if (target is IConditional conditional && conditional.Include == false)
+                    return false;
+
+                return true;
+            }
 
             if (MUtility.CheckElementsInclusion(list, targets) == false)
             {
@@ -68,6 +78,14 @@ namespace MB
             }
         }
 #endif
+
+        /// <summary>
+        /// Implement on ScriptableObject to determine if it's included in initialization process
+        /// </summary>
+        public interface IConditional
+        {
+            public bool Include { get; }
+        }
 
         public ScriptableObjectInitializer()
         {
