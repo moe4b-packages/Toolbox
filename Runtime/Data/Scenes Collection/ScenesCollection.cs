@@ -25,10 +25,10 @@ namespace MB
     public class ScenesCollection : ScriptableManager<ScenesCollection>
     {
         [SerializeField]
-        List<MSceneAsset> list = default;
+        List<MSceneAsset> list = new List<MSceneAsset>();
         public static List<MSceneAsset> List => Instance.list;
 
-        public static Dictionary<string, MSceneAsset> Dictionary { get; }
+        public static Dictionary<string, MSceneAsset> Dictionary { get; } = new Dictionary<string, MSceneAsset>();
         static void UpdateDictionary()
         {
             Dictionary.Clear();
@@ -82,10 +82,5 @@ namespace MB
             return targets;
         }
 #endif
-
-        public ScenesCollection()
-        {
-            list = new List<MSceneAsset>();
-        }
     }
 }
