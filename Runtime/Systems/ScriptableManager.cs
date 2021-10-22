@@ -27,22 +27,29 @@ namespace MB
 	{
 		protected virtual void Awake()
 		{
+			if (Application.isPlaying) Debug.LogError($"Loaded {this}");
+
 #if UNITY_EDITOR == false
-			Load();
+			OnLoad();
 #endif
 		}
 
-		internal abstract void Load();
+#if UNITY_EDITOR
+		internal void InternalInvoke_OnLoad() => OnLoad();
+
+		internal void InternalInvoke_PreProcessBuild() => PreProcessBuild();
+		protected virtual void PreProcessBuild() { }
+#endif
 
 		/// <summary>
 		/// Load method invoked when the Scriptable Manager is loaded in memory
 		/// </summary>
 		protected virtual void OnLoad()
 		{
-			
+
 		}
-		
-#region Attributes
+
+		#region Attributes
 		/// <summary>
 		/// Attribute that needs to be applied to all Scriptable Manager instances for them to register in the system
 		/// </summary>
@@ -50,7 +57,7 @@ namespace MB
 		public sealed class GlobalAttribute : Attribute
 		{
 			public ScriptableManagerScope Scope { get; }
-		
+
 			public GlobalAttribute(ScriptableManagerScope scope)
 			{
 				this.Scope = scope;
@@ -60,8 +67,15 @@ namespace MB
 			{
 				return type.GetCustomAttribute<GlobalAttribute>();
 			}
+
+#if UNITY_EDITOR
+			public static bool IsDefined(Type type)
+            {
+				return type.GetCustomAttribute<GlobalAttribute>() != null;
+			}
+#endif
 		}
-		
+
 		/// <summary>
 		/// Shows the Scriptable Manager in the appropriate Unity settings menu,
 		/// Projects Settings Menu for Project scoped Managers,
@@ -73,7 +87,7 @@ namespace MB
 			public string Path { get; }
 			public bool Root { get; }
 
-			public SettingsMenuAttribute(string path) : this(path, false) {}
+			public SettingsMenuAttribute(string path) : this(path, false) { }
 			public SettingsMenuAttribute(string path, bool root)
 			{
 				this.Path = path;
@@ -85,7 +99,7 @@ namespace MB
 				return type.GetCustomAttribute<SettingsMenuAttribute>();
 			}
 		}
-		
+
 		/// <summary>
 		/// Makes the Scriptable Manager's project settings window read only in the defined play mode
 		/// </summary>
@@ -94,28 +108,28 @@ namespace MB
 		{
 			public ReadOnlySettingsAttribute() : base()
 			{
-				
+
 			}
 			public ReadOnlySettingsAttribute(ReadOnlyPlayMode mode) : base(mode)
 			{
 			}
-			
+
 			public static ReadOnlySettingsAttribute Retrieve(Type type)
 			{
 				return type.GetCustomAttribute<ReadOnlySettingsAttribute>();
 			}
-			
+
 			public static ReadOnlyPlayMode ReadMode(Type type)
 			{
 				var attribute = Retrieve(type);
-				
+
 				if (attribute == null)
 					return ReadOnlyPlayMode.None;
 
 				return attribute.Mode;
 			}
 		}
-		
+
 		/// <summary>
 		/// Flag attribute that tells the system that this manager is to be used in editor only
 		/// </summary>
@@ -127,7 +141,33 @@ namespace MB
 				return type.GetCustomAttribute<EditorOnlyAttribute>() != null;
 			}
 		}
-#endregion
+
+		/// <summary>
+		/// Attribute that specifies the load order of managers
+		/// </summary>
+		[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+		public sealed class LoadOrderAttribute : Attribute
+		{
+			public int Order { get; }
+
+			public LoadOrderAttribute(int order)
+			{
+				this.Order = order;
+			}
+
+#if UNITY_EDITOR
+			public static int GetOrder(Type type)
+			{
+				var attribute = type.GetCustomAttribute<LoadOrderAttribute>();
+
+				if (attribute == null)
+					return 0;
+
+				return attribute.Order;
+			}
+#endif
+		}
+		#endregion
 
 #if UNITY_EDITOR
 		[CustomEditor(typeof(ScriptableManager), true)]
@@ -162,11 +202,11 @@ namespace MB
 			}
 		}
 
-        internal override void Load()
-        {
+		protected override void Awake()
+		{
 			instance = this as T;
 
-			OnLoad();
+			base.Awake();
 		}
     }
 
@@ -209,7 +249,7 @@ namespace MB
 			var type = manager.GetType();
 			dictionary.Add(type, manager);
 
-			manager.Load();
+			manager.InternalInvoke_OnLoad();
 		}
 
 		public static ScriptableManager Retrieve(Type type)
@@ -486,8 +526,6 @@ namespace MB
 			
 			public void OnPreprocessBuild(BuildReport report)
 			{
-				DestroyAll();
-
 				Directory.CreateDirectory(DirectoryPath);
 				
 				using (PreloadedAssets.Lease(out var preloaded))
@@ -503,12 +541,19 @@ namespace MB
 						AssetDatabase.DeleteAsset(path);
 
 						var asset = Retrieve(type);
+						asset.InternalInvoke_PreProcessBuild();
 
 						asset.hideFlags = HideFlags.None;
 						AssetDatabase.CreateAsset(asset, path);
 
 						preloaded.Add(asset);
 					}
+				}
+
+				using (PreloadedAssets.Lease(out var preloaded))
+				{
+					for (int i = 0; i < preloaded.Count; i++)
+						Debug.Log(preloaded[i]);
 				}
 			}
 			
@@ -537,26 +582,17 @@ namespace MB
 			}
 		}
 
-        #region Utility
-        public static string FormatID(Type type)
+		#region Utility
+		public static string FormatID(Type type)
 		{
 			return type.Name;
 		}
 
 		public static IEnumerable<Type> IterateAll()
 		{
-			var types = TypeCache.GetTypesWithAttribute<ScriptableManager.GlobalAttribute>();
-
-			for (var i = 0; i < types.Count; i++)
-			{
-				if (typeof(ScriptableManager).IsAssignableFrom(types[i]) == false)
-				{
-					Debug.LogWarning($"Type {types[i]} Needs to Inherit from {typeof(ScriptableManager)} to Accept the Attribute");
-					continue;
-				}
-
-				yield return types[i];
-			}
+			return TypeCache.GetTypesDerivedFrom<ScriptableManager>()
+				.Where(ScriptableManager.GlobalAttribute.IsDefined)
+				.OrderBy(ScriptableManager.LoadOrderAttribute.GetOrder);
 		}
 
 		public static SettingsScope ConvertScope(ScriptableManagerScope scope)
@@ -565,7 +601,7 @@ namespace MB
 			{
 				case ScriptableManagerScope.Project:
 					return SettingsScope.Project;
-				
+
 				case ScriptableManagerScope.User:
 					return SettingsScope.User;
 			}
@@ -578,16 +614,16 @@ namespace MB
 			{
 				case SettingsScope.Project:
 					return ScriptableManagerScope.Project;
-				
+
 				case SettingsScope.User:
 					return ScriptableManagerScope.User;
 			}
 
 			throw new NotImplementedException();
 		}
-        #endregion
+		#endregion
 
-        static ScriptableManagerRuntime()
+		static ScriptableManagerRuntime()
 		{
 			dictionary = new Dictionary<Type, ScriptableManager>();
 

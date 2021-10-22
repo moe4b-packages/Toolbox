@@ -22,24 +22,24 @@ namespace MB
 		
 		internal static class Cache
 		{
-			private static readonly HashSet<Object> hashset;
+			private static readonly List<Object> list;
 
-			internal static HashSet<Object> Load()
+			internal static List<Object> Load()
 			{
-				hashset.Clear();
+				list.Clear();
 
 				var array = Get();
-				hashset.UnionWith(array);
+				list.AddRange(array);
 
-				hashset.RemoveWhere(IsNull);
+				list.RemoveAll(IsNull);
 				bool IsNull(Object target) => target == null;
 
-				return hashset;
+				return list;
 			}
 
 			static Cache()
 			{
-				hashset = new HashSet<Object>();
+				list = new List<Object>();
 			}
 		}
 
@@ -54,8 +54,8 @@ namespace MB
 		public static void Add(IEnumerable<Object> range)
 		{
 			var collection = Cache.Load();
-			
-			collection.UnionWith(range);
+
+			collection.AddRange(range);
 
 			Set(collection);
 		}
@@ -72,7 +72,8 @@ namespace MB
 		{
 			var collection = Cache.Load();
 
-			collection.ExceptWith(range);
+			collection.RemoveAll(Contained);
+			bool Contained(Object target) => range.Contains(target);
 
 			Set(collection);
 		}
@@ -83,37 +84,37 @@ namespace MB
 		/// <summary>
 		/// Retrieve a Disposable handle and hashset object that will operate on the PreloadedAssets when disposed
 		/// </summary>
-		/// <param name="hashSet"></param>
+		/// <param name="list"></param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public static Handle Lease(out HashSet<Object> hashSet)
+		public static Handle Lease(out List<Object> list)
 		{
 			if (LeaseLock)
 				throw new InvalidOperationException("Cannot Lease Multiple PreloadedAssets Handles");
 			
 			LeaseLock = true;
 			
-			hashSet = Cache.Load();
+			list = Cache.Load();
 
-			return new Handle(hashSet);
+			return new Handle(list);
 		}
 		
 		internal static void Return(Handle handle)
 		{
 			LeaseLock = false;
 			
-			Set(handle.hashset);
+			Set(handle.list);
 		}
 
 		public struct Handle : IDisposable
 		{
-			internal HashSet<Object> hashset;
+			internal List<Object> list;
 
 			public void Dispose() => Return(this);
 
-			public Handle(HashSet<Object> hashset)
+			public Handle(List<Object> hashset)
 			{
-				this.hashset = hashset;
+				this.list = hashset;
 			}
 		}
 		#endregion

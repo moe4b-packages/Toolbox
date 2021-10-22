@@ -22,19 +22,16 @@ namespace MB
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes Collection")]
+    [LoadOrder(LoadOrder)]
     public class ScenesCollection : ScriptableManager<ScenesCollection>
     {
+        public const int LoadOrder = -1001;
+
         [SerializeField]
         List<MSceneAsset> list = new List<MSceneAsset>();
         public static List<MSceneAsset> List => Instance.list;
 
         public static Dictionary<string, MSceneAsset> Dictionary { get; } = new Dictionary<string, MSceneAsset>();
-        static void UpdateDictionary()
-        {
-            Dictionary.Clear();
-
-            Dictionary.AddAll(List, x => x.ID);
-        }
 
         public static bool TryFind(string id, out MSceneAsset asset) => Dictionary.TryGetValue(id, out asset);
 
@@ -43,25 +40,34 @@ namespace MB
             base.OnLoad();
 
 #if UNITY_EDITOR
-            Refresh();
-
             EditorBuildSettings.sceneListChanged += Refresh;
 #endif
 
-            if (Application.isEditor == false) UpdateDictionary();
+            Refresh();
         }
 
-#if UNITY_EDITOR
         void Refresh()
         {
+#if UNITY_EDITOR
             var targets = Extract();
 
             if (MUtility.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
             {
                 list = targets;
-                UpdateDictionary();
                 ScriptableManagerRuntime.Save(this);
             }
+#endif
+
+            Dictionary.Clear();
+            Dictionary.AddAll(List, x => x.ID);
+        }
+
+#if UNITY_EDITOR
+        protected override void PreProcessBuild()
+        {
+            base.PreProcessBuild();
+
+            Refresh();
         }
 
         static List<MSceneAsset> Extract()

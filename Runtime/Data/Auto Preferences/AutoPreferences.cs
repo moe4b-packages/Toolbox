@@ -28,13 +28,12 @@ namespace MB
     /// </summary>
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Auto Preferences")]
+    [LoadOrder(LoadOrder)]
     public class AutoPreferences : ScriptableManager<AutoPreferences>
     {
-        public const string ID = "Auto Preferences";
+        public const int LoadOrder = -1000;
 
-        [SerializeField]
-        bool autoInitialize = true;
-        public static bool AutoInitialize => Instance.autoInitialize;
+        public const string ID = "Auto Preferences";
 
         [SerializeField]
         bool autoReset = false;
@@ -120,13 +119,7 @@ namespace MB
         {
             base.OnLoad();
 
-            if (AutoInitialize)
-            {
-                if (IsInitialized)
-                    Context.Load();
-                else
-                    Initialize();
-            }
+            if (IsInitialized == false) Initialize();
         }
 
         public static void Initialize()

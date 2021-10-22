@@ -23,8 +23,11 @@ namespace MB
 {
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Preferences")]
-	public class ProjectPreferences : ScriptableManager<ProjectPreferences>
+    [LoadOrder(LoadOrder)]
+    public class ProjectPreferences : ScriptableManager<ProjectPreferences>
 	{
+        public const int LoadOrder = -999;
+
         [SerializeField]
         [TextArea(55, 400)]
         string json = default;

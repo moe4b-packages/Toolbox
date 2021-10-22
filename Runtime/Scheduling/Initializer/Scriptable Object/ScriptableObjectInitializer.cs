@@ -25,8 +25,11 @@ namespace MB
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scriptable Object Initializer")]
+    [LoadOrder(LoadOrder)]
     public class ScriptableObjectInitializer : ScriptableManager<ScriptableObjectInitializer>
     {
+        public const int LoadOrder = 1000;
+
         [SerializeField]
         List<ScriptableObject> list;
         public List<ScriptableObject> List => list;
