@@ -123,7 +123,7 @@ namespace MB
             if (AutoInitialize)
             {
                 if (IsInitialized)
-                    Load();
+                    Context.Load();
                 else
                     Initialize();
             }
