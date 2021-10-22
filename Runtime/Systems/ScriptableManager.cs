@@ -143,7 +143,8 @@ namespace MB
 		}
 
 		/// <summary>
-		/// Attribute that specifies the load order of managers
+		/// Attribute that specifies the load order of managers,
+		/// by default every manager has an order of 0
 		/// </summary>
 		[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
 		public sealed class LoadOrderAttribute : Attribute
