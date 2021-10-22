@@ -62,6 +62,8 @@ namespace MB
 
         public static bool IsDirty { get; private set; }
 
+        public static bool IsInitialized { get; private set; }
+
         public static class IO
         {
             public const string FileName = ID + ".json";
@@ -118,7 +120,13 @@ namespace MB
         {
             base.OnLoad();
 
-            if (AutoInitialize) Initialize();
+            if (AutoInitialize)
+            {
+                if (IsInitialized)
+                    Load();
+                else
+                    Initialize();
+            }
         }
 
         public static void Initialize()
@@ -133,9 +141,9 @@ namespace MB
         }
         public static void Initialize(JsonSerializerSettings settings)
         {
-            if (Composer != null)
+            if (IsInitialized)
             {
-                Debug.LogWarning($"{ID} is Already Configured");
+                Debug.LogWarning($"{ID} is Already Initialized");
                 return;
             }
 
@@ -147,6 +155,8 @@ namespace MB
             Context.Load();
 
             Application.quitting += QuitCallback;
+
+            IsInitialized = true;
         }
 
         public static class Context
