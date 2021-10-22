@@ -56,6 +56,7 @@ namespace MB
             if (string.IsNullOrEmpty(json))
             {
                 Context = new JObject();
+                IsLoaded = true;
                 return;
             }
 
