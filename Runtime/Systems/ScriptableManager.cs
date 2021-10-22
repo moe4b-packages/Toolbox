@@ -27,8 +27,6 @@ namespace MB
 	{
 		protected virtual void Awake()
 		{
-			if (Application.isPlaying) Debug.LogError($"Loaded {this}");
-
 #if UNITY_EDITOR == false
 			OnLoad();
 #endif
