@@ -56,19 +56,19 @@ namespace MB
             if (string.IsNullOrEmpty(json))
             {
                 Context = new JObject();
-                IsLoaded = true;
-                return;
             }
-
-            try
+            else
             {
-                Context = JObject.Parse(json);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Cannot Parse {nameof(JObjectComposer)} from provided JSON" +
-                    $"{Environment.NewLine}" +
-                    $"Exception: {ex}", ex);
+                try
+                {
+                    Context = JObject.Parse(json);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception($"Cannot Parse {nameof(JObjectComposer)} from provided JSON" +
+                        $"{Environment.NewLine}" +
+                        $"Exception: {ex}", ex);
+                }
             }
 
             IsLoaded = true;
