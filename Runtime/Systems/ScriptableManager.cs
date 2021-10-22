@@ -70,7 +70,7 @@ namespace MB
 
 #if UNITY_EDITOR
 			public static bool IsDefined(Type type)
-            {
+			{
 				return type.GetCustomAttribute<GlobalAttribute>() != null;
 			}
 #endif
@@ -173,15 +173,15 @@ namespace MB
 		[CustomEditor(typeof(ScriptableManager), true)]
 		protected class BaseInspector : Editor
 		{
-            public override void OnInspectorGUI()
-            {
+			public override void OnInspectorGUI()
+			{
 				DrawPropertiesExcluding(serializedObject, "m_Script");
 				serializedObject.ApplyModifiedProperties();
 			}
-        }
+		}
 #endif
 	}
-	
+
 	public class ScriptableManager<T> : ScriptableManager
 		where T : ScriptableManager<T>
 	{
@@ -208,7 +208,7 @@ namespace MB
 
 			base.Awake();
 		}
-    }
+	}
 
 #if UNITY_EDITOR
 	/// <summary>
@@ -403,20 +403,20 @@ namespace MB
 			private readonly Type type;
 
 			private readonly ReadOnlyPlayMode readOnlyMode;
-			
+
 			private ScriptableManager manager;
 			private Editor inspector;
 
 			private readonly GenericMenu context;
-			
+
 			private void Validate()
 			{
 				manager = Retrieve(type);
-				
+
 				if (inspector == null || inspector.target != manager)
 					inspector = Editor.CreateEditor(manager);
 			}
-			
+
 			public override void OnTitleBarGUI()
 			{
 				base.OnTitleBarGUI();
@@ -427,16 +427,16 @@ namespace MB
 				if (GUILayout.Button(content, style))
 					context.ShowAsContext();
 			}
-			
+
 			private void Reset() => ScriptableManagerRuntime.Reset(type);
 			private void Reload() => ScriptableManagerRuntime.Reload(type);
-			
+
 			public override void OnGUI(string search)
 			{
 				base.OnGUI(search);
-				
+
 				Validate();
-				
+
 				GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
 
 				EditorGUILayout.Space();
@@ -451,7 +451,7 @@ namespace MB
 
 				GUI.enabled = true;
 			}
-			
+
 			public Provider(string path, SettingsScope scope, Type type, ReadOnlyPlayMode readOnlyMode) : base(path, scope)
 			{
 				this.type = type;
@@ -460,12 +460,12 @@ namespace MB
 				//Create Generic Menu
 				{
 					context = new GenericMenu();
-					
+
 					context.AddItem("Reset", false, Reset);
 					context.AddItem("Reload", false, Reload);
 				}
 			}
-			
+
 			//Static Utility
 			[SettingsProviderGroup]
 			private static SettingsProvider[] Register()
@@ -475,9 +475,9 @@ namespace MB
 				foreach (var type in IterateAll())
 				{
 					var global = ScriptableManager.GlobalAttribute.Retrieve(type);
-					
+
 					var menu = ScriptableManager.SettingsMenuAttribute.Retrieve(type);
-					if(menu == null) continue;
+					if (menu == null) continue;
 
 					var provider = Create(type, global, menu);
 					list.Add(provider);
@@ -485,7 +485,7 @@ namespace MB
 
 				return list.ToArray();
 			}
-			
+
 			public static Provider Create(Type type, ScriptableManager.GlobalAttribute global, ScriptableManager.SettingsMenuAttribute menu)
 			{
 				var scope = ConvertScope(global.Scope);
@@ -502,7 +502,7 @@ namespace MB
 				{
 					case SettingsScope.Project:
 						return $"Project/{path}";
-					
+
 					case SettingsScope.User:
 						return $"Preferences/{path}";
 				}
@@ -510,24 +510,24 @@ namespace MB
 				throw new NotImplementedException();
 			}
 		}
-		
+
 		public class BuildPreProcessor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
 		{
 			public int callbackOrder => -200;
 
 			public const string DirectoryPath = "Assets/Scriptable Managers Cache";
-			
+
 			private static string FormatFilePath(Type type)
 			{
 				var name = FormatID(type);
 
 				return $"{DirectoryPath}/{name}.asset";
 			}
-			
+
 			public void OnPreprocessBuild(BuildReport report)
 			{
 				Directory.CreateDirectory(DirectoryPath);
-				
+
 				using (PreloadedAssets.Lease(out var preloaded))
 				{
 					foreach (var type in IterateAll())
@@ -549,14 +549,8 @@ namespace MB
 						preloaded.Add(asset);
 					}
 				}
-
-				using (PreloadedAssets.Lease(out var preloaded))
-				{
-					for (int i = 0; i < preloaded.Count; i++)
-						Debug.Log(preloaded[i]);
-				}
 			}
-			
+
 			public void OnPostprocessBuild(BuildReport report)
 			{
 				using (PreloadedAssets.Lease(out var preloaded))
@@ -639,7 +633,7 @@ namespace MB
 		/// Saved for User and Applicable to all Projects
 		/// </summary>
 		User,
-		
+
 		/// <summary>
 		/// Saved for Current Project
 		/// </summary>
