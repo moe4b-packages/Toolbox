@@ -233,7 +233,13 @@ namespace MB
             public const SerializedTypeInclude Include = SerializedTypeInclude.None;
         }
 
-        public static implicit operator Type(XSerializedType target) => target.Type;
+        public static implicit operator Type(XSerializedType target)
+        {
+            if (target == null)
+                return null;
+
+            return target.Type;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]

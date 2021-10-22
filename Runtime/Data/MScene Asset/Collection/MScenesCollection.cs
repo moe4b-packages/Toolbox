@@ -22,7 +22,7 @@ namespace MB
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes")]
-    public class MScenesCollection : ScriptableManager<MScenesCollection>, IScriptableObjectBuildPreProcess
+    public class MScenesCollection : ScriptableManager<MScenesCollection>
     {
         [SerializeField]
         List<MSceneAsset> list = default;
@@ -54,11 +54,9 @@ namespace MB
             {
                 list = targets;
                 Dictionary = list.ToDictionary(x => x.ID);
-                EditorUtility.SetDirty(this);
+                ScriptableManagerRuntime.Save(this);
             }
         }
-
-        public void PreProcessBuild() => Refresh();
 
         static List<MSceneAsset> Extract()
         {

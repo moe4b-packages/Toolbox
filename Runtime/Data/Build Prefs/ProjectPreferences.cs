@@ -36,14 +36,12 @@ namespace MB
         {
             base.OnLoad();
 
-            Composer = new JObjectComposer();
-
             var settings = new JsonSerializerSettings()
             {
                 Formatting = Formatting.Indented,
             };
 
-            Composer.Configure(settings);
+            Composer = new JObjectComposer(settings);
             Composer.Load(json);
 
             Composer.OnChange += ComposerChangeCallback;

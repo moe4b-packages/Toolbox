@@ -26,54 +26,39 @@ namespace MB
 	{
         void Start()
         {
-            AutoPrefs.Configure(CustomJsonConveters.Collection);
+            AutoPreferences.AutoSave.All = false;
 
-            try
+            if (AutoPreferences.Contains("First Launch") == false)
             {
-                AutoPrefs.Load();
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Exception when Loading AutoPrefs, Will Reset Prefs" +
-                    $"{Environment.NewLine}" +
-                    $"Exception: {ex}");
+                AutoPreferences.Set("First Launch", true);
 
-                AutoPrefs.Reset();
-            }
-
-            AutoPrefs.AutoSave.All = false;
-
-            if (AutoPrefs.Contains("First Launch") == false)
-            {
-                AutoPrefs.Set("First Launch", true);
-
-                AutoPrefs.Set("sample1", 42);
-                AutoPrefs.Set("sample2", "Hello World");
-                AutoPrefs.Set("sample3", DateTime.Now);
-                AutoPrefs.Set("sample4", IPAddress.Loopback);
-                AutoPrefs.Set("sample5", new SampleData() { number = 68, text = "Late Gator", date = DateTime.Now });
-                AutoPrefs.Set("sample6", Color.yellow);
+                AutoPreferences.Set("sample1", 42);
+                AutoPreferences.Set("sample2", "Hello World");
+                AutoPreferences.Set("sample3", DateTime.Now);
+                AutoPreferences.Set("sample4", IPAddress.Loopback);
+                AutoPreferences.Set("sample5", new SampleData() { number = 68, text = "Late Gator", date = DateTime.Now });
+                AutoPreferences.Set("sample6", Color.yellow);
             }
 
-            var sample1 = AutoPrefs.Read<int>("sample1");
+            var sample1 = AutoPreferences.Read<int>("sample1");
             Debug.Log(sample1);
 
-            var sample2 = AutoPrefs.Read<string>("sample2");
+            var sample2 = AutoPreferences.Read<string>("sample2");
             Debug.Log(sample2);
 
-            var sample3 = AutoPrefs.Read<DateTime>("sample3");
+            var sample3 = AutoPreferences.Read<DateTime>("sample3");
             Debug.Log(sample3);
 
-            var sample4 = AutoPrefs.Read<IPAddress>("sample4");
+            var sample4 = AutoPreferences.Read<IPAddress>("sample4");
             Debug.Log(sample4);
 
-            var sample5 = AutoPrefs.Read<SampleData>("sample5");
+            var sample5 = AutoPreferences.Read<SampleData>("sample5");
             Debug.Log(sample5);
 
-            var sample6 = AutoPrefs.Read<Color>("sample6");
+            var sample6 = AutoPreferences.Read<Color>("sample6");
             Debug.Log(sample6);
 
-            AutoPrefs.Save();
+            AutoPreferences.Context.Save();
         }
 
         [JsonObject]

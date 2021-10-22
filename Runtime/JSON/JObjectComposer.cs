@@ -48,28 +48,12 @@ namespace MB
             public static string Compose(params string[] list) => list.Join(Seperator);
         }
 
-        #region Configure
-        public bool IsConfigured { get; protected set; }
-
-        public void Configure(JsonSerializerSettings settings)
-        {
-            if (IsConfigured)
-                throw new NotImplementedException();
-
-            IsConfigured = true;
-
-            Serializer = JsonSerializer.Create(settings);
-        }
-        #endregion
-
         #region Load
         public bool IsLoaded { get; protected set; }
 
         public void Load(string json)
         {
-            IsLoaded = true;
-
-            if (json == null || json == string.Empty)
+            if (string.IsNullOrEmpty(json))
             {
                 Context = new JObject();
                 return;
@@ -85,8 +69,12 @@ namespace MB
                     $"{Environment.NewLine}" +
                     $"Exception: {ex}", ex);
             }
+
+            IsLoaded = true;
         }
         #endregion
+
+        public void Clear() => Load("");
 
         #region Utility
         public bool Retrieve(string path, out JToken token, out string id, bool create = false)
@@ -122,9 +110,6 @@ namespace MB
         void ValidateState()
         {
 #if UNITY_EDITOR || DEBUG
-            if (IsConfigured == false)
-                throw FormatException("Not Configured");
-
             if (IsLoaded == false)
                 throw FormatException("Not Loaded");
 
@@ -132,13 +117,6 @@ namespace MB
 #endif
         }
         #endregion
-
-        public void Clear()
-        {
-            ValidateState();
-
-            Context = new JObject();
-        }
 
         #region Controls
 
@@ -264,9 +242,9 @@ namespace MB
             return Context.ToString(Formatting.Indented);
         }
 
-        public JObjectComposer()
+        public JObjectComposer(JsonSerializerSettings settings)
         {
-
+            Serializer = JsonSerializer.Create(settings);
         }
     }
 }
