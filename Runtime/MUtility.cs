@@ -515,6 +515,16 @@ namespace MB
 
             return -1;
         }
+
+        public static void AddAll<Tkey, TValue>(this IDictionary<Tkey, TValue> dictionary, IList<TValue> list, Func<TValue, Tkey> keyer)
+        {
+            for (int i = 0; i < list.Count; i++)
+            {
+                var key = keyer(list[i]);
+
+                dictionary.Add(key, list[i]);
+            }
+        }
         #endregion
 
         #region String
