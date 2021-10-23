@@ -1,14 +1,17 @@
 {
-  "name": "com.moe-baker.toolbox",
-  "version": "1.0.0",
-  "displayName": "Toolbox",
-  "description": "A Collection of usefull packages",
-  "unity": "2017.1",
-  "unityRelease": "0a0",
-  "keywords": [],
-  "author": {
-    "name": "Moe baker",
-    "email": "moe4baker@gmail.com",
-    "url": "https://moe-baker.github.io"
-  }
+   "name": "com.moe-baker.toolbox",
+   "version": "1.0.0",
+   "displayName": "Toolbox",
+   "description": "A Collection of usefull packages",
+   "unity": "2017.1",
+   "unityRelease": "0a0",
+   "keywords":
+   [
+   ],
+   "author":
+   {
+      "name": "Moe baker",
+      "email": "moe4baker@gmail.com",
+      "url": "https://moe-baker.github.io"
+   }
 }
