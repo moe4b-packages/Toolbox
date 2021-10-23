@@ -525,6 +525,12 @@ namespace MB
                 dictionary.Add(key, list[i]);
             }
         }
+
+        public static void EnsureCapacity<T>(this List<T> list, int capacity)
+        {
+            if (list.Capacity < capacity)
+                list.Capacity = capacity;
+        }
         #endregion
 
         #region String
