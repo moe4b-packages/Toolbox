@@ -27,12 +27,12 @@ namespace MB
     {
         public static class GUICoordinates
         {
-            public static Rect[] SplitHorizontally(Rect rect, float padding, int cuts)
+            public static Rect[] SplitHorizontally(Rect rect, float padding, int segments)
             {
-                var percentages = new float[cuts];
+                var percentages = new float[segments];
 
                 for (int i = 0; i < percentages.Length; i++)
-                    percentages[i] = 100 / cuts;
+                    percentages[i] = 100 / segments;
 
                 return SplitHorizontally(rect, padding, percentages);
             }
@@ -112,7 +112,7 @@ namespace MB
 
         public static string GetEnumValueName(this SerializedProperty property)
         {
-            if (MUtility.ValidateCollectionBounds(property.enumDisplayNames, property.enumValueIndex))
+            if (property.enumDisplayNames.ValidateCollectionBounds(property.enumValueIndex))
                 return property.enumDisplayNames[property.enumValueIndex];
 
             return $"Undefined: {property.intValue}";

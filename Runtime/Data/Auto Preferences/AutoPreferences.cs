@@ -27,13 +27,18 @@ namespace MB
     /// needs to be configured and loaded before use
     /// </summary>
     [Global(ScriptableManagerScope.Project)]
-    [SettingsMenu(Toolbox.Paths.Root + "Auto Preferences")]
+    [SettingsMenu(Toolbox.Paths.Root + ID)]
     [LoadOrder(LoadOrder)]
     public class AutoPreferences : ScriptableManager<AutoPreferences>
     {
         public const int LoadOrder = -1000;
 
         public const string ID = "Auto Preferences";
+
+        public static class Paths
+        {
+            public const string Root = Toolbox.Paths.Box + ID + "/";
+        }
 
         [SerializeField]
         bool autoReset = false;
@@ -202,7 +207,7 @@ namespace MB
         #region Controls
         public static bool Contains(string key) => Composer.Contains(key);
 
-        public static void Set<T>(string key, T value) => Composer.Set(key, value);
+        public static void Set(string key, object value) => Composer.Set(key, value);
 
         public static T Read<T>(string key, T fallback = default)
         {

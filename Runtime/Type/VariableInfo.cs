@@ -112,22 +112,44 @@ namespace MB
                     throw new NotImplementedException();
             }
         }
+
+        public static VariableInfo Find(Type target, string id, BindingFlags flags)
+        {
+            //Field
+            {
+                var field = target.GetField(id, flags);
+
+                if (field != null)
+                    return new VariableInfo(field);
+            }
+
+            //Prooperty
+            {
+                var property = target.GetProperty(id, flags);
+
+                if (property != null)
+                    return new VariableInfo(property);
+            }
+
+            return null;
+        }
     }
 
     public static class VariableInfoExtensions
     {
         public static List<VariableInfo> GetVariables(this Type type, BindingFlags flags)
         {
-            var list = new List<VariableInfo>();
-
             var fields = type.GetFields(flags);
+            var properties = type.GetProperties(flags);
+
+            var list = new List<VariableInfo>(fields.Length + properties.Length);
+
             for (int i = 0; i < fields.Length; i++)
             {
                 var variable = new VariableInfo(fields[i]);
                 list.Add(variable);
             }
 
-            var properties = type.GetProperties(flags);
             for (int i = 0; i < properties.Length; i++)
             {
                 var variable = new VariableInfo(properties[i]);

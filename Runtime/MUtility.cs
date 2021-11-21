@@ -33,6 +33,41 @@ namespace MB
     /// </summary>
     public static partial class MUtility
     {
+        public static string PrettifyName<T>(T value)
+        {
+            var text = value.ToString();
+
+            var builder = new StringBuilder();
+
+            for (int i = 0; i < text.Length; i++)
+            {
+                var current = text[i];
+
+                var next = ValidateIndexBounds(text.Length, i + 1) ? text[i + 1] : default;
+                var previous = ValidateIndexBounds(text.Length, i - 1) ? text[i - 1] : default;
+
+                if (char.IsUpper(current))
+                {
+                    if (char.IsLower(previous))
+                        builder.Append(' ');
+                    else if (char.IsUpper(previous) && char.IsLower(next))
+                        builder.Append(' ');
+                }
+
+                if (char.IsNumber(current) && !char.IsNumber(previous))
+                    builder.Append(' ');
+
+                if (!char.IsNumber(current) && char.IsNumber(previous))
+                    builder.Append(' ');
+
+                if (text[i] == '_') current = ' ';
+
+                builder.Append(current);
+            }
+
+            return builder.ToString();
+        }
+
         public static RuntimePlatform CheckPlatform()
         {
 #if UNITY_EDITOR
@@ -126,41 +161,6 @@ namespace MB
         }
         #endregion
 
-        public static string PrettifyName<T>(T value)
-        {
-            var text = value.ToString();
-
-            var builder = new StringBuilder();
-
-            for (int i = 0; i < text.Length; i++)
-            {
-                var current = text[i];
-
-                var next = ValidateIndexBounds(text.Length, i + 1) ? text[i + 1] : default;
-                var previous = ValidateIndexBounds(text.Length, i - 1) ? text[i - 1] : default;
-
-                if (char.IsUpper(current))
-                {
-                    if (char.IsLower(previous))
-                        builder.Append(' ');
-                    else if (char.IsUpper(previous) && char.IsLower(next))
-                        builder.Append(' ');
-                }
-
-                if (char.IsNumber(current) && !char.IsNumber(previous))
-                    builder.Append(' ');
-
-                if (!char.IsNumber(current) && char.IsNumber(previous))
-                    builder.Append(' ');
-
-                if (text[i] == '_') current = ' ';
-
-                builder.Append(current);
-            }
-
-            return builder.ToString();
-        }
-
         #region Calculate Bounds
         public static Bounds CalculateRendererBounds(UObjectSurrogate surrogate) => CalculateRendererBounds(surrogate, true);
         public static Bounds CalculateRendererBounds(UObjectSurrogate surrogate, bool includeInactive)
@@ -228,46 +228,6 @@ namespace MB
         #endregion
 
         #region Collections
-        /// <summary>
-        /// Returns element at index, or returns default if index out of bounds
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="collection"></param>
-        /// <param name="index"></param>
-        /// <returns></returns>
-        public static T SafeIndexer<T>(this IList<T> collection, int index)
-        {
-            return SafeIndexer(collection, index, default);
-        }
-
-        /// <summary>
-        /// Returns element at index, or returns fallback if index out of bounds
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="collection"></param>
-        /// <param name="index"></param>
-        /// <param name="fallback"></param>
-        /// <returns></returns>
-        public static T SafeIndexer<T>(this IList<T> collection, int index, T fallback)
-        {
-            if (ValidateCollectionBounds(collection, index) == false) return fallback;
-
-            return collection[index];
-        }
-
-        public static bool TryGet<T>(this IList<T> collection, int index, out T value)
-        {
-            if (collection.ValidateCollectionBounds(index) == false)
-            {
-                value = default;
-                return false;
-            }
-
-            value = collection[index];
-            return true;
-        }
-
-        public static bool ValidateCollectionBounds<T>(this ICollection<T> collection, int index) => ValidateIndexBounds(collection.Count, index);
         public static bool ValidateIndexBounds(int length, int index)
         {
             if (index < 0 || index + 1 > length) return false;
@@ -301,13 +261,6 @@ namespace MB
 
             return true;
         }
-
-        public static T GetRandomElement<T>(IList<T> list)
-        {
-            var index = Random.Range(0, list.Count);
-
-            return list[index];
-        }
         #endregion
 
         #region Audio
@@ -325,6 +278,7 @@ namespace MB
         }
         #endregion
 
+        #region Unity Object
         public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
         {
             var transform = surrogate.Transform;
@@ -365,9 +319,10 @@ namespace MB
                 }
             }
         }
+        #endregion
 
         #region Types
-        public static IEnumerable<Type> IterateHierarchy(Type type)
+        public static IEnumerable<Type> IterateTypeHierarchy(Type type)
         {
             while (true)
             {
@@ -379,16 +334,15 @@ namespace MB
             }
         }
 
-        public static IEnumerable<T> IterateNest<T>(T target, Func<T, T> extract)
-            where T : class
+        public static IEnumerable<Type> IterateTypeNesting(Type type)
         {
             while (true)
             {
-                yield return target;
+                yield return type;
 
-                target = extract(target);
+                type = type.DeclaringType;
 
-                if (target == null) break;
+                if (type == null) break;
             }
         }
 
@@ -397,23 +351,30 @@ namespace MB
             if (type.IsArray)
                 return type.GetElementType();
 
-            return type.GetGenericArguments()[0];
+            if (type.IsGenericType)
+                return type.GetGenericArguments()[0];
+
+            throw new ArgumentException();
         }
         #endregion
 
+        #region Threading
         public static Thread ASyncThread(Func<Task> function)
         {
             void Run() => function().Wait();
 
             return new Thread(Run);
         }
+        #endregion
 
+        #region Exception
         public static Exception FormatDependencyException<TDependency>(object dependent)
         {
             var text = $"Invalid Dependency of {typeof(TDependency)} by {dependent}";
 
             return new Exception(text);
         }
+        #endregion
     }
 
     public static partial class MUtilityExtensions
@@ -447,6 +408,56 @@ namespace MB
         #endregion
 
         #region Collections
+        /// <summary>
+        /// Returns element at index, or returns default if index out of bounds
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        public static T SafeIndexer<T>(this IList<T> collection, int index)
+        {
+            return SafeIndexer(collection, index, default);
+        }
+        /// <summary>
+        /// Returns element at index, or returns fallback if index out of bounds
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collection"></param>
+        /// <param name="index"></param>
+        /// <param name="fallback"></param>
+        /// <returns></returns>
+        public static T SafeIndexer<T>(this IList<T> collection, int index, T fallback)
+        {
+            if (ValidateCollectionBounds(collection, index) == false) return fallback;
+
+            return collection[index];
+        }
+
+        public static bool TryGet<T>(this IList<T> collection, int index, out T value)
+        {
+            if (collection.ValidateCollectionBounds(index) == false)
+            {
+                value = default;
+                return false;
+            }
+
+            value = collection[index];
+            return true;
+        }
+
+        public static bool ValidateCollectionBounds<T>(this ICollection<T> collection, int index)
+        {
+            return MUtility.ValidateIndexBounds(collection.Count, index);
+        }
+
+        public static T GetRandomElement<T>(this IList<T> list)
+        {
+            var index = Random.Range(0, list.Count);
+
+            return list[index];
+        }
+
         public static void SetOrAdd<T>(this List<T> list, int index, T item)
         {
             while (list.ValidateCollectionBounds(index) == false)
@@ -454,8 +465,6 @@ namespace MB
 
             list[index] = item;
         }
-
-        public static T GetRandomElement<T>(IList<T> list) => MUtility.GetRandomElement(list);
 
         public static void ForAll<T>(this IEnumerable<T> source, Action<T> action)
         {
