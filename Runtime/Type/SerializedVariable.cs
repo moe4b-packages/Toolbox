@@ -240,11 +240,14 @@ namespace MB
 
             static ImplementationType GetImplementationType(VariableInfo variable)
             {
-                if (variable.IsField)
-                    return ImplementationType.Field;
+                switch (variable.Implementation)
+                {
+                    case VariableInfo.ImplementationType.Field:
+                        return ImplementationType.Field;
 
-                if (variable.IsProperty)
-                    return ImplementationType.Property;
+                    case VariableInfo.ImplementationType.Property:
+                        return ImplementationType.Property;
+                }
 
                 throw new ArgumentException();
             }

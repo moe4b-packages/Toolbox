@@ -23,82 +23,77 @@ namespace MB
 {
     public class VariableInfo
     {
-        public PropertyInfo Property { get; protected set; }
-        public bool IsProperty => Property != null;
+        public PropertyInfo Property { get; }
+        public FieldInfo Field { get; }
 
-        public FieldInfo Field { get; protected set; }
-        public bool IsField => Field != null;
-
-        public MemberInfo Member
+        public ImplementationType Implementation { get; }
+        public enum ImplementationType
         {
-            get
-            {
-                if (IsField)
-                    return Field;
-
-                if (IsProperty)
-                    return Property;
-
-                throw new NotImplementedException();
-            }
+            None, Field, Property
         }
 
+        public MemberInfo Member { get; }
         public string Name => Member.Name;
-
         public Type DeclaringType => Member.DeclaringType;
 
-        public Type ValueType
-        {
-            get
-            {
-                if (IsField)
-                    return Field.FieldType;
-
-                if (IsProperty)
-                    return Property.PropertyType;
-
-                throw new NotImplementedException();
-            }
-        }
+        public Type ValueType { get; }
 
         public object Read(object target)
         {
-            if (IsProperty)
-                return Property.GetValue(target);
+            switch (Implementation)
+            {
+                case ImplementationType.Field:
+                    return Field.GetValue(target);
 
-            if (IsField)
-                return Field.GetValue(target);
+                case ImplementationType.Property:
+                    return Property.GetValue(target);
 
-            throw new NotImplementedException();
+                default:
+                    throw new InvalidOperationException();
+            }
         }
-
         public void Set(object target, object value)
         {
-            if (IsProperty)
+            switch (Implementation)
             {
-                Property.SetValue(target, value);
-                return;
-            }
+                case ImplementationType.Field:
+                    Field.SetValue(target, value);
+                    break;
 
-            if (IsField)
-            {
-                Field.SetValue(target, value);
-                return;
-            }
+                case ImplementationType.Property:
+                    Property.SetValue(target, value);
+                    break;
 
-            throw new NotImplementedException();
+                default:
+                    throw new InvalidOperationException();
+            }
         }
 
         public override string ToString() => Member.ToString();
 
-        public VariableInfo(PropertyInfo property)
+        protected VariableInfo(FieldInfo field, PropertyInfo property)
         {
-            this.Property = property;
+            if (field != null)
+            {
+                this.Field = field;
+                Member = field;
+                Implementation = ImplementationType.Field;
+                ValueType = field.FieldType;
+            }
+            else if (property != null)
+            {
+                this.Property = property;
+                Member = property;
+                Implementation = ImplementationType.Property;
+                ValueType = property.PropertyType;
+            }
+            else
+            {
+                Implementation = ImplementationType.None;
+            }
         }
-        public VariableInfo(FieldInfo field)
-        {
-            this.Field = field;
-        }
+        public VariableInfo(PropertyInfo property) : this(default, property) { }
+        public VariableInfo(FieldInfo field) : this(field, default) { }
 
         public static VariableInfo From(MemberInfo member)
         {
@@ -115,25 +110,20 @@ namespace MB
             }
         }
 
-        public static VariableInfo Find(Type target, string id, BindingFlags flags)
+        public static VariableInfo Find(Type target, string id, ImplementationType implementation, BindingFlags flags)
         {
-            //Field
+            switch (implementation)
             {
-                var field = target.GetField(id, flags);
-
-                if (field != null)
+                case ImplementationType.Field:
+                    var field = target.GetField(id, flags);
                     return new VariableInfo(field);
-            }
 
-            //Prooperty
-            {
-                var property = target.GetProperty(id, flags);
-
-                if (property != null)
+                case ImplementationType.Property:
+                    var property = target.GetProperty(id, flags);
                     return new VariableInfo(property);
             }
 
-            return null;
+            throw new ArgumentOutOfRangeException(nameof(implementation));
         }
     }
 
