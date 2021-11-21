@@ -43,6 +43,8 @@ namespace MB
             }
         }
 
+        public string Name => Member.Name;
+
         public Type DeclaringType => Member.DeclaringType;
 
         public Type ValueType

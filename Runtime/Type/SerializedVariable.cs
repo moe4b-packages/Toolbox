@@ -202,6 +202,8 @@ namespace MB
                 for (int i = 0; i < components.Length; i++)
                     Register(menu, components[i], selection, Callback);
 
+                menu.AddSeparator("");
+
                 menu.AddItem("None", selection == default, Callback, default(Entry));
 
                 menu.DropDown(rect);
@@ -221,22 +223,18 @@ namespace MB
                 if (TypeAnalyzer.TryIterate(type, out var variables) == false)
                     return;
 
-                foreach (var item in variables)
+                foreach (var variable in variables)
                 {
-                    var path = $"{type.Name}/{item.Key.Name}/";
+                    var implementation = GetImplementationType(variable);
 
-                    var values = item.OrderBy(x => x.Member.Name);
-                    foreach (var variable in values)
-                    {
-                        var implementation = GetImplementationType(variable);
+                    var entry = new Entry(target, variable.Member.Name, implementation);
 
-                        var entry = new Entry(target, variable.Member.Name, implementation);
+                    var text = $"{type.Name}/{variable.Name} ({FormatTypeName(variable.ValueType)})";
+                    var content = new GUIContent(text);
 
-                        var content = new GUIContent(path + variable.Member.Name);
-                        var isOn = entry == selection;
+                    var isOn = entry == selection;
 
-                        menu.AddItem(content, isOn, callback, entry);
-                    }
+                    menu.AddItem(content, isOn, callback, entry);
                 }
             }
 
@@ -252,11 +250,34 @@ namespace MB
             }
         }
 
+        public static string FormatTypeName(Type type)
+        {
+            if (type == typeof(float))
+                return "Float";
+
+            if (type == typeof(double))
+                return "Double";
+
+            if (type == typeof(int))
+                return "Int";
+
+            if (type == typeof(short))
+                return "Short";
+
+            if (type == typeof(long))
+                return "Long";
+
+            if (type == typeof(bool))
+                return "Bool";
+
+            return type.Name;
+        }
+
         public static class TypeAnalyzer
         {
-            public static Dictionary<Type, IOrderedEnumerable<IGrouping<Type, VariableInfo>>> Cache;
+            public static Dictionary<Type, List<VariableInfo>> Cache;
 
-            public static bool TryIterate(Type type, out IOrderedEnumerable<IGrouping<Type, VariableInfo>> collection)
+            public static bool TryIterate(Type type, out List<VariableInfo> collection)
             {
                 if (type.GetCustomAttribute<IgnoreAttribute>() != null)
                 {
@@ -270,7 +291,7 @@ namespace MB
                 var fields = type.GetFields(Flags);
                 var properties = type.GetProperties(Flags);
 
-                var list = new List<VariableInfo>(fields.Length + properties.Length);
+                collection = new List<VariableInfo>(fields.Length + properties.Length);
 
                 for (int i = 0; i < fields.Length; i++)
                 {
@@ -278,7 +299,7 @@ namespace MB
                         continue;
 
                     var variable = new VariableInfo(fields[i]);
-                    list.Add(variable);
+                    collection.Add(variable);
                 }
 
                 for (int i = 0; i < properties.Length; i++)
@@ -287,10 +308,10 @@ namespace MB
                         continue;
 
                     var variable = new VariableInfo(properties[i]);
-                    list.Add(variable);
+                    collection.Add(variable);
                 }
 
-                collection = list.OrderBy(x => x.Member.Name).ToLookup(x => x.ValueType).OrderBy(x => x.Key.Name);
+                collection.Sort((x, y) => x.Name.CompareTo(y.Name));
 
                 Cache.Add(type, collection);
 
@@ -318,7 +339,7 @@ namespace MB
 
             static TypeAnalyzer()
             {
-                Cache = new Dictionary<Type, IOrderedEnumerable<IGrouping<Type, VariableInfo>>>();
+                Cache = new Dictionary<Type, List<VariableInfo>>();
             }
         }
 
