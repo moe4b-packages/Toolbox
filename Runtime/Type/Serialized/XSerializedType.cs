@@ -51,6 +51,9 @@ namespace MB
             }
         }
 
+        public bool IsAssigned => string.IsNullOrEmpty(id) == false;
+        public bool IsValid => Type != null;
+
         public static Type IDToType(string id)
         {
             if (string.IsNullOrEmpty(id))
