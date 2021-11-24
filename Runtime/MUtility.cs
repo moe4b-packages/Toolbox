@@ -375,6 +375,25 @@ namespace MB
             return new Exception(text);
         }
         #endregion
+
+        #region Process
+        public static string FormatProcessArguments(params string[] arguments)
+        {
+            using (DisposablePool.StringBuilder.Lease(out var builder))
+            {
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    builder.Append(FormatProcessArgument(arguments[i]));
+
+                    if (i < arguments.Length - 1) builder.Append(' ');
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        public static string FormatProcessArgument(string argument) => $"\"{argument}\"";
+        #endregion
     }
 
     public static partial class MUtilityExtensions
