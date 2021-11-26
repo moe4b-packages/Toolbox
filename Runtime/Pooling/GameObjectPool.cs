@@ -16,7 +16,9 @@ namespace MB
 		[SerializeField]
 		protected GameObject prefab;
 		public GameObject Prefab => prefab;
-		
+
+		public abstract void Prewarm(int count);
+
 		/// <summary>
 		/// Implement on Pool Object to Receive Lease & Return Callbacks
 		/// </summary>
@@ -45,37 +47,65 @@ namespace MB
 
 		public T Lease()
 		{
-			var instance = Stack.Count == 0 ? Spawn() : Stack.Pop();
+			T instance;
 
-			instance.gameObject.SetActive(true);
-	        
-			if(instance is ICallback pool) pool.OnLease();
+			if (Stack.Count > 0)
+			{
+				instance = Stack.Pop();
+				Enable(instance);
+			}
+			else
+			{
+				instance = Spawn();
+			}
+
+			if (instance is ICallback pool) pool.OnLease();
 	        
 			return instance;
 		}
 
-		private int iterations;
-		private T Spawn()
+		void Enable(T instance)
+        {
+			instance.gameObject.SetActive(true);
+		}
+
+		int iterations;
+		T Spawn()
 		{
-			var instance = Object.Instantiate(prefab);
-			instance.name = $"{prefab.name} ({iterations})";
-
-			var script = instance.GetComponent<T>();
-
-			if (script is IInitialize<T> target) target.Initialize(this);
-
 			iterations += 1;
 
-			return script;
+			var gameObject = Object.Instantiate(prefab);
+			gameObject.name = $"{prefab.name} ({iterations})";
+
+			var instance = gameObject.GetComponent<T>();
+
+			if (instance is IInitialize<T> target) target.Initialize(this);
+
+			return instance;
+		}
+
+		public override void Prewarm(int count)
+		{
+			for (int i = 0; i < count; i++)
+			{
+				var item = Spawn();
+				Disable(item);
+				Stack.Push(item);
+			}
 		}
 
 		public void Return(T instance)
 		{
 			if(instance is ICallback pool) pool.OnReturn();
-	        
-			instance.gameObject.SetActive(false);
-	        
+
+			Disable(instance);
+
 			Stack.Push(instance);
+		}
+
+		void Disable(T instance)
+		{
+			instance.gameObject.SetActive(false);
 		}
 
 		public GameObjectPool()

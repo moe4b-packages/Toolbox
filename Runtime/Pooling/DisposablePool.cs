@@ -44,7 +44,7 @@ namespace MB
 			}
 
 			public static ResetDelegate<T> ResetMethod;
-			internal static void Return(T item)
+			public static void Return(T item)
 			{
 				ResetMethod(item);
 				stack.Push(item);
