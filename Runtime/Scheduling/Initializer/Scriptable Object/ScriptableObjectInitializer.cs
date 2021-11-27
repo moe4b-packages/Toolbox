@@ -62,7 +62,7 @@ namespace MB
         {
             if (this == null) return;
 
-            var targets = AssetCollection.Query<ScriptableObject>(IsValid);
+            var targets = AssetCollection.FindAll<ScriptableObject>(IsValid);
             static bool IsValid(ScriptableObject target)
             {
                 if (target is IInitialize == false)

@@ -32,7 +32,7 @@ namespace MB
 
 		public void OnPreprocessBuild(BuildReport report)
 		{
-			var list = AssetCollection.Query<IScriptableObjectBuildPreProcess>();
+			var list = AssetCollection.FindAll<IScriptableObjectBuildPreProcess>();
 
 			for (int i = 0; i < list.Count; i++)
 				list[i].PreProcessBuild();

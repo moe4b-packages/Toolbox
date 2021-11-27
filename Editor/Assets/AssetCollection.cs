@@ -31,9 +31,10 @@ namespace MB
 
 		static readonly HashSet<string> Inclusions = new HashSet<string>()
 		{
-			".asset",
-			".cs",
-			".asmdef",
+			"asset",
+			"cs",
+			"asmdef",
+			"prefab"
 		};
 
 		/// <summary>
@@ -42,6 +43,9 @@ namespace MB
 		/// <param name="extensions"></param>
 		public static void Include(params string[] extensions)
 		{
+			for (int i = 0; i < extensions.Length; i++)
+				extensions[i] = extensions[i].Trim('.').ToLower();
+
 			Inclusions.UnionWith(extensions);
 
 			Refresh();
@@ -56,7 +60,7 @@ namespace MB
 
 			for (int i = 0; i < paths.Length; i++)
 			{
-				var extension = Path.GetExtension(paths[i]).ToLower();
+				var extension = Path.GetExtension(paths[i]).Trim('.').ToLower();
 
 				if (Inclusions.Contains(extension) == false) continue;
 
@@ -76,8 +80,8 @@ namespace MB
 			}
 		}
 
-		#region Query
-		public static List<T> Query<T>()
+		#region Find All
+		public static List<T> FindAll<T>()
 		{
 			var list = new List<T>();
 
@@ -87,7 +91,7 @@ namespace MB
 
 			return list;
 		}
-		public static List<T> Query<T>(Predicate<T> predicate)
+		public static List<T> FindAll<T>(Predicate<T> predicate)
 		{
 			var list = new List<T>();
 
@@ -98,7 +102,7 @@ namespace MB
 			return list;
 		}
 
-		public static List<Object> Query(Predicate<Object> predicate)
+		public static List<Object> FindAll(Predicate<Object> predicate)
         {
 			var list = new List<Object>();
 
