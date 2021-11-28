@@ -25,6 +25,7 @@ using System.Collections.Concurrent;
 
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace MB
 {
@@ -379,11 +380,16 @@ namespace MB
         #region Process
         public static string FormatProcessArguments(params string[] arguments)
         {
+            const char Marker = '"';
+
+            if (arguments.Length == 0) return "";
+
             using (DisposablePool.StringBuilder.Lease(out var builder))
             {
                 for (int i = 0; i < arguments.Length; i++)
                 {
-                    builder.Append(FormatProcessArgument(arguments[i]));
+                    var argument = $"{Marker}{arguments[i]}{Marker}";
+                    builder.Append(argument);
 
                     if (i < arguments.Length - 1) builder.Append(' ');
                 }
@@ -392,7 +398,51 @@ namespace MB
             }
         }
 
-        public static string FormatProcessArgument(string argument) => $"\"{argument}\"";
+        public static ProcessStartInfo FormatSystemCommand(string command)
+        {
+            var info = new ProcessStartInfo();
+
+            switch (Application.platform)
+            {
+                //Windows
+                case RuntimePlatform.WindowsEditor:
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.WindowsServer:
+                    {
+                        info.FileName = "cmd.exe";
+
+                        command = FormatProcessArguments(command);
+                        info.Arguments = $"/C {command}";
+
+                        return info;
+                    }
+
+                //Linux
+                case RuntimePlatform.LinuxEditor:
+                case RuntimePlatform.LinuxPlayer:
+                case RuntimePlatform.LinuxServer:
+                    {
+                        info.FileName = "/bin/bash";
+
+                        command = command.Replace(@"\", @"/");
+                        command = FormatProcessArguments(command);
+                        info.Arguments = $"-c {command}";
+
+                        return info;
+                    }
+
+                //OSX
+                case RuntimePlatform.OSXEditor:
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXServer:
+                    {
+
+                        return info;
+                    }
+            }
+
+            throw new Exception($"Unsupported Platform: {Application.platform}");
+        }
         #endregion
     }
 
