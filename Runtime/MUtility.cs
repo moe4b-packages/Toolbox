@@ -436,8 +436,7 @@ namespace MB
                 case RuntimePlatform.OSXPlayer:
                 case RuntimePlatform.OSXServer:
                     {
-
-                        return info;
+                        break;
                     }
             }
 
