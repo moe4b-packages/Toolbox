@@ -28,11 +28,9 @@ namespace MB
     /// </summary>
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + ID)]
-    [LoadOrder(LoadOrder)]
+    [LoadOrder(Runtime.Defaults.LoadOrder.AutoPreferences)]
     public class AutoPreferences : ScriptableManager<AutoPreferences>
     {
-        public const int LoadOrder = -1000;
-
         public const string ID = "Auto Preferences";
 
         public static class Paths

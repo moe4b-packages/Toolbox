@@ -22,11 +22,9 @@ namespace MB
     [ReadOnlySettings]
     [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes Collection")]
-    [LoadOrder(LoadOrder)]
+    [LoadOrder(Runtime.Defaults.LoadOrder.ScenesCollection)]
     public class ScenesCollection : ScriptableManager<ScenesCollection>
     {
-        public const int LoadOrder = -1001;
-
         [SerializeField]
         List<MSceneAsset> list = new List<MSceneAsset>();
         public static List<MSceneAsset> List => Instance.list;
@@ -54,7 +52,7 @@ namespace MB
             if (MUtility.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
             {
                 list = targets;
-                ScriptableManagerRuntime.Save(this);
+                Runtime.Save(this);
             }
 #endif
 
