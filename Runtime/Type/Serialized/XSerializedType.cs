@@ -30,7 +30,9 @@ namespace MB
         public string ID => id;
 
         protected Type cache;
-        protected bool cached;
+
+        [NonSerialized]
+        bool cached;
 
         public virtual Type Type
         {
@@ -47,7 +49,6 @@ namespace MB
             set
             {
                 id = TypeToID(value);
-                cached = false;
             }
         }
 

@@ -22,8 +22,8 @@ using System.Reflection;
 
 namespace MB
 {
+    [Manager]
     [ReadOnlySettings]
-    [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scriptable Object Initializer")]
     [LoadOrder(Runtime.Defaults.LoadOrder.ScriptableObjectInitializer)]
     public class ScriptableObjectInitializer : ScriptableManager<ScriptableObjectInitializer>

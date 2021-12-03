@@ -131,7 +131,23 @@ namespace MB
 
 			return default;
 		}
+		public static T Find<T>(Type type)
+		{
+			for (int i = 0; i < List.Count; i++)
+				if (type.IsAssignableFrom(List[i]) && List[i] is T target)
+					return target;
 
+			return default;
+		}
+
+		public static Object Find(Type type)
+        {
+			for (int i = 0; i < List.Count; i++)
+				if (type.IsAssignableFrom(List[i]))
+					return List[i];
+
+			return default;
+		}
 		public static Object Find(Predicate<Object> predicate)
 		{
 			for (int i = 0; i < List.Count; i++)

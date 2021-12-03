@@ -14,7 +14,7 @@ namespace MB
     /// will apply colliders to imported meshes with the appropriate prefix,
     /// exposes a project settings entry under "Moe Baker/Model Collision Importer"
     /// </summary>
-    [Global(ScriptableManagerScope.Project)]
+    [Manager]
     [EditorOnly]
     [SettingsMenu(Toolbox.Paths.Root + "Model Collision Importer")]
     public class ModelCollisionImporter : ScriptableManager<ModelCollisionImporter>

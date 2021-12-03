@@ -21,17 +21,17 @@ using Newtonsoft.Json;
 
 namespace MB
 {
-    [Global(ScriptableManagerScope.Project)]
+    [Manager]
     [SettingsMenu(Toolbox.Paths.Root + "Preferences")]
     [LoadOrder(Runtime.Defaults.LoadOrder.ProjectPreferences)]
     public class ProjectPreferences : ScriptableManager<ProjectPreferences>
-	{
+    {
         [SerializeField]
         [TextArea(55, 400)]
         string json = default;
-        public string Json => json;
+        public static string Json => Instance.json;
 
-        public JObjectComposer Composer { get; protected set; }
+        public static JObjectComposer Composer { get; protected set; }
 
         protected override void OnLoad()
         {
@@ -52,17 +52,19 @@ namespace MB
         {
             json = Composer.Context.ToString();
 
-            #if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
-            #endif
+#if UNITY_EDITOR
+            Runtime.Save(this);
+#endif
         }
 
-        public void Set(string key, object value) => Composer.Set(key, value);
+        #region Controls
+        public static void Set(string key, object value) => Composer.Set(key, value);
 
-        public T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
+        public static T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
 
-        public bool Contains(string key) => Composer.Contains(key);
+        public static bool Contains(string key) => Composer.Contains(key);
 
-        public bool Remove(string key) => Composer.Remove(key);
+        public static bool Remove(string key) => Composer.Remove(key);
+        #endregion
     }
 }

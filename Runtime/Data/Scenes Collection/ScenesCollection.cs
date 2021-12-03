@@ -19,8 +19,8 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
+    [Manager]
     [ReadOnlySettings]
-    [Global(ScriptableManagerScope.Project)]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes Collection")]
     [LoadOrder(Runtime.Defaults.LoadOrder.ScenesCollection)]
     public class ScenesCollection : ScriptableManager<ScenesCollection>

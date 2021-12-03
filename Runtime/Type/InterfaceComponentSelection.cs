@@ -141,6 +141,8 @@ namespace MB
 		Component component;
 
 		T cache;
+
+		[NonSerialized]
 		bool cached;
 
 		public T Interface

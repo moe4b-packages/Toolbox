@@ -26,7 +26,7 @@ namespace MB
     /// More competant version of PlayerPrefs, uses JsonDotNet, can serialize anything,
     /// needs to be configured and loaded before use
     /// </summary>
-    [Global(ScriptableManagerScope.Project)]
+    [Manager]
     [SettingsMenu(Toolbox.Paths.Root + ID)]
     [LoadOrder(Runtime.Defaults.LoadOrder.AutoPreferences)]
     public class AutoPreferences : ScriptableManager<AutoPreferences>
@@ -39,7 +39,7 @@ namespace MB
         }
 
         [SerializeField]
-        bool autoReset = false;
+        bool autoReset = true;
         public static bool AutoReset => Instance.autoReset;
 
         [SerializeField]
@@ -102,59 +102,6 @@ namespace MB
             }
         }
 
-        public static class AutoSave
-        {
-            public static bool OnChange { get; set; } = true;
-
-            public static bool OnExit { get; set; } = true;
-
-            public static bool All
-            {
-                set
-                {
-                    OnChange = value;
-                    OnExit = value;
-                }
-            }
-        }
-
-        protected override void OnLoad()
-        {
-            base.OnLoad();
-
-            if (IsInitialized == false) Initialize();
-        }
-
-        public static void Initialize()
-        {
-            var settings = new JsonSerializerSettings()
-            {
-                Formatting = Formatting.Indented,
-                Converters = CreateConverters()
-            };
-
-            Initialize(settings);
-        }
-        public static void Initialize(JsonSerializerSettings settings)
-        {
-            if (IsInitialized)
-            {
-                Debug.LogWarning($"{ID} is Already Initialized");
-                return;
-            }
-
-            IO.Prepare();
-
-            Composer = new JObjectComposer(settings);
-            Composer.OnChange += InvokeChange;
-
-            Context.Load();
-
-            Application.quitting += QuitCallback;
-
-            IsInitialized = true;
-        }
-
         public static class Context
         {
             internal static void Load()
@@ -194,6 +141,54 @@ namespace MB
             }
         }
 
+        public static class AutoSave
+        {
+            public static bool OnChange { get; set; } = true;
+            public static bool OnExit { get; set; } = true;
+
+            public static bool All
+            {
+                set
+                {
+                    OnChange = value;
+                    OnExit = value;
+                }
+            }
+        }
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+
+            if (IsInitialized == false) Initialize();
+        }
+
+        static void Initialize()
+        {
+            if (IsInitialized)
+            {
+                Debug.LogWarning($"{ID} is Already Initialized");
+                return;
+            }
+
+            IO.Prepare();
+
+            var settings = new JsonSerializerSettings()
+            {
+                Formatting = Formatting.Indented,
+                Converters = CreateConverters()
+            };
+
+            Composer = new JObjectComposer(settings);
+            Composer.OnChange += InvokeChange;
+
+            Context.Load();
+
+            Application.quitting += ApplicationQuitCallback;
+
+            IsInitialized = true;
+        }
+
         static void InvokeChange()
         {
             if (AutoSave.OnChange)
@@ -219,7 +214,7 @@ namespace MB
         public static bool Remove(string key) => Composer.Remove(key);
         #endregion
 
-        static void QuitCallback()
+        static void ApplicationQuitCallback()
         {
             if (AutoSave.OnExit && IsDirty)
                 Context.Save();
