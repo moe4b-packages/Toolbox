@@ -243,7 +243,7 @@ namespace MB
 
 				private void Reset() => Runtime.Reset(type);
 
-				public override void OnGUI(string search)
+                public override void OnGUI(string search)
 				{
 					base.OnGUI(search);
 
@@ -251,15 +251,11 @@ namespace MB
 
 					GUI.enabled = !ReadOnlyAttribute.CheckPlayMode(readOnlyMode);
 
-					EditorGUILayout.Space();
+					inspector.serializedObject.Update();
 
+					EditorGUILayout.Space();
 					EditorGUI.BeginChangeCheck();
 					inspector.OnInspectorGUI();
-					if (EditorGUI.EndChangeCheck() || EditorUtility.IsDirty(manager))
-					{
-						inspector.serializedObject.Update();
-						Save(manager);
-					}
 
 					GUI.enabled = true;
 				}
