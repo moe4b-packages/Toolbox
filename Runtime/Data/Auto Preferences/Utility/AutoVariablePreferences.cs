@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace MB
 {
     [SerializedVariable.Ignore]
-    [AddComponentMenu(AutoPreferences.Paths.Root + "Auto Variable Preferences")]
+    [AddComponentMenu(AutoPreferences.Path + "Auto Variable Preferences")]
     public class AutoVariablePreferences : MonoBehaviour
     {
         [SerializeField]

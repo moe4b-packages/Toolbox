@@ -32,6 +32,8 @@ namespace MB
         List<ScriptableObject> list;
         public List<ScriptableObject> List => list;
 
+        protected override bool IncludeInBuild => list.Count > 0;
+
         protected override void OnLoad()
         {
             base.OnLoad();

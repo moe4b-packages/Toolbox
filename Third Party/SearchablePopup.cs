@@ -64,6 +64,8 @@ namespace MB.ThirdParty
     /// </summary>
     public class SearchablePopup<T> : SearchablePopup
     {
+        readonly Rect rect;
+
         readonly SearchField SearchBar;
 
         readonly IList<T> Source;
@@ -291,8 +293,9 @@ namespace MB.ThirdParty
             EditorApplication.update -= editorWindow.Repaint;
         }
 
-        internal SearchablePopup(IList<T> source, T current, ParserDelegate parser, Action<T> callback, bool includeNone)
+        internal SearchablePopup(Rect rect, IList<T> source, T current, ParserDelegate parser, Action<T> callback, bool includeNone)
         {
+            this.rect = rect;
             this.Source = source;
             this.Parser = parser;
             this.IncludeNone = includeNone;
@@ -315,11 +318,13 @@ namespace MB.ThirdParty
             this.Callback += x => editorWindow.Close();
         }
 
+        public override Vector2 GetWindowSize() => new Vector2(rect.width, 400f);
+
         //Static Utlity
 
         public static void Show(Rect rect, IList<T> source, T current, ParserDelegate parser, Action<T> callback, bool includeNone = false)
         {
-            var window = new SearchablePopup<T>(source, current, parser, callback, includeNone);
+            var window = new SearchablePopup<T>(rect, source, current, parser, callback, includeNone);
 
             PopupWindow.Show(rect, window);
         }

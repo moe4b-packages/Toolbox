@@ -1,3 +1,7 @@
+#if UNITY_EDITOR
+#define DEBUG
+#endif
+
 using System;
 using System.IO;
 using System.Linq;
@@ -26,7 +30,10 @@ namespace MB
 {
     public class JObjectComposer
     {
+        public Type Owner { get; }
+
         public JObject Context { get; protected set; }
+        public bool IsLoaded => Context != null;
 
         public JsonSerializer Serializer { get; protected set; }
 
@@ -48,8 +55,10 @@ namespace MB
             public static string Compose(params string[] list) => list.Join(Seperator);
         }
 
-        #region Load
-        public bool IsLoaded { get; protected set; }
+        public void Configure(JsonSerializerSettings settings)
+        {
+            Serializer = JsonSerializer.Create(settings);
+        }
 
         public void Load(string json)
         {
@@ -70,12 +79,9 @@ namespace MB
                         $"Exception: {ex}", ex);
                 }
             }
-
-            IsLoaded = true;
         }
-        #endregion
 
-        public void Clear() => Load("");
+        public void Clear() => Load(string.Empty);
 
         #region Utility
         public bool Retrieve(string path, out JToken token, out string id, bool create = false)
@@ -108,15 +114,16 @@ namespace MB
             return true;
         }
 
+#if DEBUG
         void ValidateState()
         {
-#if UNITY_EDITOR || DEBUG
-            if (IsLoaded == false)
-                throw FormatException("Not Loaded");
 
-            Exception FormatException(string text) => new Exception($"{nameof(JObjectComposer)}: {text}");
-#endif
+            if (IsLoaded == false)
+                throw FormatException("Accessed When not Loaded");
+
+            Exception FormatException(string text) => new Exception($"JObject Composer Used in '{Owner.FullName}' {text}");
         }
+#endif
         #endregion
 
         #region Controls
@@ -124,9 +131,11 @@ namespace MB
         #region Read
         public virtual T Read<T>(string path, T fallback = default)
         {
-            Retrieve(path, out var token, out var id);
-
+#if DEBUG
             ValidateState();
+#endif
+
+            Retrieve(path, out var token, out var id);
 
             var target = token?[id];
 
@@ -148,8 +157,6 @@ namespace MB
         {
             Retrieve(path, out var token, out var id);
 
-            ValidateState();
-
             var target = token?[id];
 
             if (target == null) return fallback;
@@ -170,6 +177,10 @@ namespace MB
         #region Contains
         public virtual bool Contains(string path)
         {
+#if DEBUG
+            ValidateState();
+#endif
+
             Retrieve(path, out var token, out var id);
 
             return Contains(token, id);
@@ -177,8 +188,6 @@ namespace MB
 
         protected virtual bool Contains(JToken token, string id)
         {
-            ValidateState();
-
             var target = token?[id];
 
             if (target == null)
@@ -191,6 +200,10 @@ namespace MB
         #region Set
         public virtual void Set(string path, object value)
         {
+#if DEBUG
+            ValidateState();
+#endif
+
             Retrieve(path, out var token, out var id, create: true);
 
             Set(token, id, value);
@@ -198,8 +211,6 @@ namespace MB
 
         protected virtual void Set(JToken token, string id, object value)
         {
-            ValidateState();
-
             token[id] = JToken.FromObject(value, Serializer);
 
             InvokeChange();
@@ -209,6 +220,10 @@ namespace MB
         #region Remove
         public virtual bool Remove(string path)
         {
+#if DEBUG
+            ValidateState();
+#endif
+
             Retrieve(path, out var token, out var id);
 
             return Remove(token, id);
@@ -216,8 +231,6 @@ namespace MB
 
         protected virtual bool Remove(JToken token, string id)
         {
-            ValidateState();
-
             var target = token as JObject;
 
             if (target.Remove(id) == false)
@@ -238,14 +251,22 @@ namespace MB
 
         public string Read()
         {
+#if DEBUG
             ValidateState();
+#endif
 
             return Context.ToString(Formatting.Indented);
         }
 
-        public JObjectComposer(JsonSerializerSettings settings)
+        public JObjectComposer(Type owner)
         {
-            Serializer = JsonSerializer.Create(settings);
+            this.Owner = owner;
+        }
+
+        public static JObjectComposer Create<TOwner>()
+        {
+            var owner = typeof(TOwner);
+            return new JObjectComposer(owner);
         }
     }
 }

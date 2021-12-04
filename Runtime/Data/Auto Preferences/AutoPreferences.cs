@@ -31,17 +31,8 @@ namespace MB
     [LoadOrder(Runtime.Defaults.LoadOrder.AutoPreferences)]
     public class AutoPreferences : ScriptableManager<AutoPreferences>
     {
-        public const string ID = "Auto Preferences";
-
-        public static class Paths
-        {
-            public const string Root = Toolbox.Paths.Box + ID + "/";
-        }
-
-        [SerializeField]
-        bool autoReset = true;
-        public static bool AutoReset => Instance.autoReset;
-
+        //Instance
+        #region
         [SerializeField]
         [SerializedType.Selection(typeof(JsonConverter))]
         SerializedType[] converters = new SerializedType[]
@@ -49,6 +40,20 @@ namespace MB
             typeof(CustomJsonConveters.IPAddressConverter),
             typeof(CustomJsonConveters.ColorConverter),
         };
+
+        protected override void OnLoad()
+        {
+            base.OnLoad();
+
+            if (IsInitialized == false) Initialize();
+        }
+        #endregion
+
+        //Static
+        #region
+        public const string ID = "Auto Preferences";
+        public const string Path = Toolbox.Paths.Box + ID + "/";
+
         public static SerializedType[] Converters => Instance.converters;
         static JsonConverter[] CreateConverters()
         {
@@ -62,9 +67,9 @@ namespace MB
 
         public static JObjectComposer Composer { get; private set; }
 
-        public static bool IsDirty { get; private set; }
-
         public static bool IsInitialized { get; private set; }
+
+        public static bool IsDirty { get; private set; }
 
         public static class IO
         {
@@ -114,14 +119,8 @@ namespace MB
                 }
                 catch (Exception)
                 {
-                    if (AutoReset)
-                    {
-                        Debug.LogWarning($"Auto Prefs Couldn't be Loaded Succesfully, Auto Resetting");
-                        Reset();
-                        return;
-                    }
-
-                    throw;
+                    Debug.LogWarning($"{ID} Couldn't be Loaded Succesfully, Resetting");
+                    Reset();
                 }
             }
 
@@ -156,21 +155,8 @@ namespace MB
             }
         }
 
-        protected override void OnLoad()
-        {
-            base.OnLoad();
-
-            if (IsInitialized == false) Initialize();
-        }
-
         static void Initialize()
         {
-            if (IsInitialized)
-            {
-                Debug.LogWarning($"{ID} is Already Initialized");
-                return;
-            }
-
             IO.Prepare();
 
             var settings = new JsonSerializerSettings()
@@ -178,18 +164,18 @@ namespace MB
                 Formatting = Formatting.Indented,
                 Converters = CreateConverters()
             };
-
-            Composer = new JObjectComposer(settings);
-            Composer.OnChange += InvokeChange;
+            Composer.Configure(settings);
 
             Context.Load();
+
+            Composer.OnChange += ComposerChangeCallback;
 
             Application.quitting += ApplicationQuitCallback;
 
             IsInitialized = true;
         }
 
-        static void InvokeChange()
+        static void ComposerChangeCallback()
         {
             if (AutoSave.OnChange)
                 Context.Save();
@@ -197,27 +183,22 @@ namespace MB
                 IsDirty = true;
         }
 
-        #region Controls
         public static bool Contains(string key) => Composer.Contains(key);
-
         public static void Set(string key, object value) => Composer.Set(key, value);
-
-        public static T Read<T>(string key, T fallback = default)
-        {
-            return Composer.Read(key, fallback: fallback);
-        }
-        public static object Read(Type data, string key, object fallback = default)
-        {
-            return Composer.Read(key, data, fallback);
-        }
-
+        public static T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
+        public static object Read(Type data, string key, object fallback = default) => Composer.Read(key, data, fallback);
         public static bool Remove(string key) => Composer.Remove(key);
-        #endregion
 
         static void ApplicationQuitCallback()
         {
             if (AutoSave.OnExit && IsDirty)
                 Context.Save();
         }
+
+        static AutoPreferences()
+        {
+            Composer = JObjectComposer.Create<AutoPreferences>();
+        }
+        #endregion
     }
 }

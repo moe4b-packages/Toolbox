@@ -25,6 +25,11 @@ namespace MB
 	/// </summary>
 	public abstract class ScriptableManager : ScriptableObject
 	{
+		/// <summary>
+		/// Determines whether this Scriptable Manager is included in build, override to change
+		/// </summary>
+		protected virtual bool IncludeInBuild => true;
+
 		public static bool IsPlaying
 		{
 			get
@@ -196,7 +201,7 @@ namespace MB
 				}
 				internal static ScriptableManager Create(Type type, string path)
 				{
-					Debug.LogWarning($"Creating {type.Name} Manager");
+					Debug.LogWarning($"Creating {MUtility.PrettifyName(type.Name)} Manager");
 
 					var asset = CreateInstance(type) as ScriptableManager;
 					AssetDatabase.CreateAsset(asset, path);
@@ -326,6 +331,9 @@ namespace MB
 								continue;
 
 							var asset = Retrieve(type);
+							if (asset.IncludeInBuild == false)
+								continue;
+
 							asset.PreProcessBuild();
 
 							preloaded.Add(asset);
@@ -339,14 +347,12 @@ namespace MB
 					{
 						foreach (var type in IterateAll())
 						{
-							if (EditorOnlyAttribute.IsDefined(type))
-								continue;
-
 							var asset = Retrieve(type);
-
 							preloaded.Remove(asset);
 						}
 					}
+
+					AssetDatabase.SaveAssets();
 				}
 			}
 
@@ -370,14 +376,14 @@ namespace MB
 				public static class LoadOrder
 				{
 					public const int AutoPreferences = -1000;
-					public const int ProjectPreferences = -1000;
+					public const int ProjectStorage = -1000;
 					public const int ScenesCollection = -1000;
 
-					public const int LocalizationSystem = -998;
+					public const int LocalizationSystem = -950;
 
 					public const int NarrativeSystem = 0;
 
-					public const int ScriptableObjectInitializer = 10;
+					public const int ScriptableObjectInitializer = 50;
 				}
 			}
 		}
