@@ -608,6 +608,27 @@ namespace MB
             if (list.Capacity < capacity)
                 list.Capacity = capacity;
         }
+
+        public static IEnumerable<(T item, int index)> IterateWithIndex<T>(this IEnumerable<T> source)
+        {
+            if (source is IList<T> list)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    yield return (list[i], i);
+                }
+            }
+            else
+            {
+                int index = 0;
+
+                foreach (var item in source)
+                {
+                    yield return (item, index);
+                    index += 1;
+                }
+            }
+        }
         #endregion
 
         #region String
