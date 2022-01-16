@@ -26,17 +26,19 @@ using System.Collections.Concurrent;
 
 namespace MB
 {
+	/// <summary>
+	/// Thread dispatcher to be used to execute actions on the main thread
+	/// </summary>
 	public static class MainThreadDispatcher
 	{
-		[RuntimeInitializeOnLoadMethod]
-		static void OnLoad()
-		{
-			MUtility.RegisterPlayerLoop<Update>(Update);
-		}
-
 		public static ConcurrentQueue<Action> Queue { get; private set; }
 
 		public static int ASyncPollRate { get; set; } = 1;
+
+		public static void Initialize()
+		{
+			MUtility.RegisterPlayerLoop<Update>(Update);
+		}
 
 		static void Update()
 		{
