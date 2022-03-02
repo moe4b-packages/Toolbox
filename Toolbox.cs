@@ -18,6 +18,7 @@ using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 using System.Reflection;
+using Newtonsoft.Json.Utilities;
 
 [assembly: AssemblySymbolDefine("MOE_TOOLBOX")]
 
@@ -36,6 +37,12 @@ namespace MB
             public const string Example = Box + "Example/";
 
             public const string Rewind = Box + "Rewind/";
+        }
+
+        [RuntimeInitializeOnLoadMethod]
+        static void OnLoad()
+        {
+            AotHelper.EnsureList<KeyValuePair<string, string>>();
         }
     }
 }
