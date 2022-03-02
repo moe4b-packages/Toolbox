@@ -20,20 +20,29 @@ using Random = UnityEngine.Random;
 namespace MB
 {
     [AddComponentMenu(Initializer.Path + "Auto Initializer")]
-	public class AutoInitializer : MonoBehaviour
+	public class AutoInitializer : MonoBehaviour, PreAwake.IInterface
 	{
-        IInitialize[] collection;
+        [ReadOnly]
+        [SerializeField]
+        Component[] collection;
+
+        public IInitialize[] Targets { get; private set; }
+
+        public void PreAwake()
+        {
+            var targets = Initializer.Query(this);
+            collection = Array.ConvertAll(targets, x => x as Component);
+        }
 
         void Awake()
         {
-            collection = Initializer.Query(this);
+            Targets = Array.ConvertAll(collection, x => x as IInitialize);
 
-            Initializer.Configure(collection);
+            Initializer.Configure(Targets);
         }
-
         void Start()
         {
-            Initializer.Initialize(collection);
+            Initializer.Initialize(Targets);
         }
     }
 }
