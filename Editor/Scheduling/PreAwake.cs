@@ -13,6 +13,10 @@ using UnityEngine.SceneManagement;
 
 namespace MB
 {
+    /// <summary>
+    /// An editor only system that implements a PreAwake callback that can be used to cache some Awake operations
+    /// (retrieving components, setting up childern, ... etc)
+    /// </summary>
     public static class PreAwake
     {
 #if UNITY_EDITOR
