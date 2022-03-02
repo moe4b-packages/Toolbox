@@ -20,15 +20,17 @@ using Random = UnityEngine.Random;
 namespace MB
 {
 	[AddComponentMenu(Path + "Close Game Operation")]
-    public class CloseGameOperation : Operation
+    public class CloseGameOperation : Operation.Process
     {
-        public override void Execute()
+        public override object Execute()
         {
 #if UNITY_EDITOR
             EditorApplication.isPlaying = false;
 #else
             Application.Quit();
 #endif
+
+            return null;
         }
     }
 }

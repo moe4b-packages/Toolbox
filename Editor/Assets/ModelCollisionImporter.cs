@@ -7,36 +7,27 @@ using UnityEditor;
 
 using UnityEngine;
 
+using Object = UnityEngine.Object;
+
 namespace MB
 {
     /// <summary>
     /// UE4 style model collision importer,
     /// will apply colliders to imported meshes with the appropriate prefix,
-    /// exposes a project settings entry under "Moe Baker/Model Collision Importer"
     /// </summary>
-    [Manager]
-    [EditorOnly]
-    [SettingsMenu(Toolbox.Paths.Root + "Model Collision Importer")]
-    public class ModelCollisionImporter : ScriptableManager<ModelCollisionImporter>
+    public static class ModelCollisionImporter
     {
-        [SerializeField]
-        bool enabled = true;
-        public bool Enabled => enabled;
+        public static bool Enabled => true;
 
-        [SerializeField]
-        UDictionary<string, ColliderType> mapping = default;
-        public UDictionary<string, ColliderType> Mapping => mapping;
-
-        void Reset()
+        public static Dictionary<string, ColliderType> Mapping = new Dictionary<string, ColliderType>()
         {
-            mapping = new UDictionary<string, ColliderType>();
-            mapping.Add("UBX", ColliderType.Box);
-            mapping.Add("USP", ColliderType.Sphere);
-            mapping.Add("UCP", ColliderType.Capsule);
-            mapping.Add("UCX", ColliderType.Convex);
-        }
+            { "UBX", ColliderType.Box },
+            { "USP", ColliderType.Sphere },
+            { "UCP", ColliderType.Capsule },
+            { "UCX", ColliderType.Convex },
+        };
 
-        public bool CheckCollider(Transform transform, out ColliderType type)
+        public static bool CheckCollider(Transform transform, out ColliderType type)
         {
             var name = transform.name.ToLower();
 
@@ -54,10 +45,28 @@ namespace MB
             type = default;
             return false;
         }
-
-        public Collider AddCollider(Transform transform, ColliderType type)
+        public static Collider AddCollider(Transform transform, ColliderType type)
         {
             var component = ColliderToType(type);
+            static Type ColliderToType(ColliderType type)
+            {
+                switch (type)
+                {
+                    case ColliderType.Box:
+                        return typeof(BoxCollider);
+
+                    case ColliderType.Sphere:
+                        return typeof(SphereCollider);
+
+                    case ColliderType.Capsule:
+                        return typeof(CapsuleCollider);
+
+                    case ColliderType.Convex:
+                        return typeof(MeshCollider);
+                }
+
+                throw new NotImplementedException();
+            }
 
             var collider = transform.gameObject.AddComponent(component) as Collider;
 
@@ -65,32 +74,29 @@ namespace MB
                 mesh.convex = true;
 
             RemoveRenderers(transform.gameObject);
+            static void RemoveRenderers(GameObject gameObject)
+            {
+                foreach (var renderer in gameObject.GetComponents<Renderer>())
+                    Object.DestroyImmediate(renderer);
+
+                foreach (var filter in gameObject.GetComponents<MeshFilter>())
+                    Object.DestroyImmediate(filter);
+            }
 
             return collider;
         }
 
-        public void RemoveRenderers(GameObject gameObject)
-        {
-            foreach (var renderer in gameObject.GetComponents<Renderer>())
-                DestroyImmediate(renderer);
-
-            foreach (var filter in gameObject.GetComponents<MeshFilter>())
-                DestroyImmediate(filter);
-        }
-
         public class PostProcessor : AssetPostprocessor
         {
-            static ModelCollisionImporter Manager => ModelCollisionImporter.Instance;
-
             void OnPostprocessModel(GameObject gameObject)
             {
-                if (Manager.Enabled == false) return;
+                if (Enabled == false) return;
 
                 foreach (var child in MUtility.IterateTransformHierarchy(gameObject))
                 {
-                    if (Manager.CheckCollider(child, out var type) == false) continue;
+                    if (CheckCollider(child, out var type) == false) continue;
 
-                    Manager.AddCollider(child, type);
+                    AddCollider(child, type);
                 }
             }
         }
@@ -101,26 +107,6 @@ namespace MB
             Sphere,
             Capsule,
             Convex
-        }
-
-        public static Type ColliderToType(ColliderType type)
-        {
-            switch (type)
-            {
-                case ColliderType.Box:
-                    return typeof(BoxCollider);
-
-                case ColliderType.Sphere:
-                    return typeof(SphereCollider);
-
-                case ColliderType.Capsule:
-                    return typeof(CapsuleCollider);
-
-                case ColliderType.Convex:
-                    return typeof(MeshCollider);
-            }
-
-            throw new NotImplementedException();
         }
     }
 }

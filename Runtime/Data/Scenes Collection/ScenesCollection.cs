@@ -23,7 +23,7 @@ namespace MB
     [ReadOnlySettings]
     [SettingsMenu(Toolbox.Paths.Root + "Scenes Collection")]
     [LoadOrder(Runtime.Defaults.LoadOrder.ScenesCollection)]
-    public class ScenesCollection : ScriptableManager<ScenesCollection>
+    public class ScenesCollection : ScriptableManager<ScenesCollection>, IScriptableObjectBuildPreProcess
     {
         //Instance
         #region
@@ -58,10 +58,8 @@ namespace MB
         }
 
 #if UNITY_EDITOR
-        protected override void PreProcessBuild()
+        public void PreProcessBuild()
         {
-            base.PreProcessBuild();
-
             Refresh();
         }
 #endif

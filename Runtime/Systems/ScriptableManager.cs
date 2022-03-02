@@ -62,35 +62,6 @@ namespace MB
 
 		}
 
-#if UNITY_EDITOR
-		protected virtual void PreProcessBuild() { }
-
-		[InitializeOnLoadMethod]
-		static void OnEditorLoad()
-		{
-			AssemblyReloadEvents.afterAssemblyReload += AfterReload;
-			static void AfterReload()
-			{
-				const string InitialReloadFlagID = "MB Scriptable Manager Initial Reload";
-
-				if (SessionState.GetBool(InitialReloadFlagID, false))
-				{
-					Runtime.LoadAll();
-				}
-				else
-				{
-					///Delay the LoadAll command when we open the project for the first time,
-					///this is to circumvent a bug where AssetDatabase operations return invalid results
-					///when invoked as soon as the project starts after needing to "rebuild the asset database library"
-					///such as when the Library folder is deleted
-					EditorApplication.delayCall += Runtime.LoadAll;
-
-					SessionState.SetBool(InitialReloadFlagID, true);
-				}
-			}
-		}
-#endif
-
 		/// <summary>
 		/// Class Responsible for all Scriptable Manager operations,
 		/// seperated into it's own class instead of begin nested in Scriptable Manager to reduce inheritance conflicts,
@@ -334,8 +305,6 @@ namespace MB
 							if (asset.IncludeInBuild == false)
 								continue;
 
-							asset.PreProcessBuild();
-
 							preloaded.Add(asset);
 						}
 					}
@@ -387,6 +356,20 @@ namespace MB
 				}
 			}
 		}
+
+#if UNITY_EDITOR
+		class Importer : AssetPostprocessor
+		{
+			public override int GetPostprocessOrder() => -200;
+
+			static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] destination, string[] source, bool reload)
+			{
+				if (reload == false) return;
+
+				Runtime.LoadAll();
+			}
+		}
+#endif
 
 		#region Attributes
 		/// <summary>

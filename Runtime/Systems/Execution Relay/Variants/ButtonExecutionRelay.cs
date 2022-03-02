@@ -22,6 +22,7 @@ namespace MB
 	[AddComponentMenu(Paths.Variants + "Button Execution Relay")]
 	public class ButtonExecutionRelay : ExecutionRelay<Button>
 	{
-        protected override void RegisterContext() => Context.onClick.AddListener(Invoke);
-    }
+		protected override void RegisterContext() => Context.onClick.AddListener(Call);
+		void Call() => Invoke();
+	}
 }

@@ -24,54 +24,50 @@ namespace MB
     [AddComponentMenu(Toolbox.Paths.Rewind + "Animation Trigger Rewind")]
     public class AnimationTriggerRewind : MonoBehaviour
 	{
-        [SerializeField]
-        List<Entry> entries = default;
-        public List<Entry> Entries => entries;
-        [Serializable]
-        public class Entry
-        {
-            [SerializeField]
-            string _ID = default;
-            public string ID
-            {
-                get => _ID;
-                set => _ID = value;
-            }
+        public Dictionary<string, HashSet<Action>> Dictionary { get; private set; }
 
-            [SerializeField]
-            UnityEvent onInvoke = default;
-            public UnityEvent OnInvoke => onInvoke;
-
-            internal void Trigger()
-            {
-                onInvoke?.Invoke();
-            }
-
-            public Entry()
-            {
-                ID = string.Empty;
-            }
-        }
-
-        public Dictionary<string, Entry> Dictionary { get; protected set; }
-        public Entry this[string id] => Dictionary[id];
+        List<Action> CallbackPool;
 
         public delegate void TriggerDelegate(string id);
 		public event TriggerDelegate OnTrigger;
 		public void Trigger(string id)
         {
-			OnTrigger?.Invoke(id);
+            OnTrigger?.Invoke(id);
 
-            if (Dictionary.TryGetValue(id, out var entry))
-                entry.Trigger();
+            if (Dictionary.TryGetValue(id, out var set))
+            {
+                foreach (var callback in set)
+                    CallbackPool.Add(callback);
+
+                for (int i = 0; i < CallbackPool.Count; i++)
+                    CallbackPool[i].Invoke();
+
+                CallbackPool.Clear();
+            }
         }
 
         void Awake()
         {
-            Dictionary = new Dictionary<string, Entry>(StringComparer.OrdinalIgnoreCase);
+            CallbackPool = new List<Action>();
+            Dictionary = new Dictionary<string, HashSet<Action>>();
+        }
 
-            foreach (var entry in entries)
-                Dictionary[entry.ID] = entry;
+        public bool Register(string id, Action callback)
+        {
+            if (Dictionary.TryGetValue(id, out var set) == false)
+            {
+                set = new HashSet<Action>();
+                Dictionary[id] = set;
+            }
+
+            return set.Add(callback);
+        }
+        public bool Unregister(string id, Action callback)
+        {
+            if (Dictionary.TryGetValue(id, out var set) == false)
+                return false;
+
+            return set.Remove(callback);
         }
     }
 }

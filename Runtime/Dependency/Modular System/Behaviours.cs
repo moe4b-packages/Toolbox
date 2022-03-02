@@ -22,7 +22,6 @@ namespace MB
 	public interface IBehaviours : IGenericModularCollection
 	{
 		void Configure();
-
 		void Initialize();
 	}
 
@@ -47,6 +46,8 @@ namespace MB
 
 		public Behaviours(TReference reference) : base()
 		{
+			this.Reference = reference;
+
 			var selection = reference.GetComponentsInChildren<TBehaviour>(true);
 
 			AddAll(selection);

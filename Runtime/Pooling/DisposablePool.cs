@@ -134,6 +134,7 @@ namespace MB
 			}
 
 			public static Handle<Collections.HashSet<T>> Lease(out Collections.HashSet<T> collection) => Object<Collections.HashSet<T>>.Lease(out collection);
+			public static void Return(Collections.HashSet<T> collection) => Object<Collections.HashSet<T>>.Return(collection);
 
 			public static void Clear() => Object<Collections.HashSet<T>>.Clear();
 

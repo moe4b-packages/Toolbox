@@ -22,15 +22,62 @@ namespace MB
 	/// <summary>
 	/// A single purpose operation that can be executed, base class for operation variants
 	/// </summary>
-	public abstract class Operation : MonoBehaviour, IOperation
+	public class Operation : MonoBehaviour
 	{
 		public const string Path = Toolbox.Paths.Box + "Operations/";
-		
-		public abstract void Execute();
-	}
 
-	public interface IOperation
-	{
-		void Execute();
+		public Process[] Processes { get; private set; }
+
+		public abstract class Process : MonoBehaviour
+		{
+			public const string Path = Operation.Path;
+
+			protected virtual void Reset()
+			{
+#if UNITY_EDITOR
+				if(GetComponentInParent<Operation>() == null)
+                {
+					var operation = gameObject.AddComponent<Operation>();
+					ComponentUtility.MoveComponentUp(operation);
+                }
+#endif
+			}
+
+			/// <summary>
+			/// Returns yieldable object when the operation wishes to execute over a period of time
+			/// </summary>
+			/// <returns>Yieldable Object</returns>
+			public abstract object Execute();
+		}
+
+		protected virtual void Awake()
+		{
+			Processes = Query(gameObject);
+		}
+
+		public virtual Coroutine Execute()
+        {
+			return StartCoroutine(Iterate());
+		}
+		public virtual IEnumerator Iterate()
+        {
+			return Procedure();
+			IEnumerator Procedure()
+			{
+				for (int i = 0; i < Processes.Length; i++)
+				{
+					var result = Processes[i].Execute();
+					if (result == null) continue;
+					yield return result;
+				}
+			}
+		}
+
+		//Static Utility
+
+		public static Process[] Query(GameObject gameObject)
+		{
+			return gameObject.GetComponentsInChildren<Process>(true);
+		}
 	}
 }

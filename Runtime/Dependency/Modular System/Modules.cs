@@ -60,7 +60,7 @@ namespace MB
 			switch (scope)
 			{
 				case ModuleScope.Local:
-					return module.transform.IsChildOf(reference.transform);
+					return module.Context.IsChildOf(reference.transform);
 
 				case ModuleScope.Global:
 					return true;
@@ -84,7 +84,7 @@ namespace MB
 
 	public interface IModule<TReference>
 	{
-		Transform transform { get; }
+		Transform Context { get; }
 
 		void Set(TReference reference);
 	}

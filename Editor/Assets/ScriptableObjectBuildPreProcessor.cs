@@ -28,7 +28,7 @@ namespace MB
 	/// </summary>
 	public class ScriptableObjectBuildPreProcessor : IPreprocessBuildWithReport
 	{
-		public int callbackOrder => 200;
+		public int callbackOrder => -400;
 
 		public void OnPreprocessBuild(BuildReport report)
 		{

@@ -33,22 +33,20 @@ namespace MB
 
             public const string Utility = Root + "Utility/";
         }
-        
-		public IOperation[] Operations { get; protected set; }
 
-        public virtual void Configure()
+        [SerializeField]
+        Operation operation;
+
+        protected virtual void Reset()
         {
-            Operations = GetComponentsInChildren<IOperation>(true);
+            operation = GetComponentInChildren<Operation>();
         }
 
+        public virtual void Configure() { }
         public virtual void Initialize() { }
 
-        public virtual void Invoke()
-        {
-            for (int i = 0; i < Operations.Length; i++)
-                Operations[i].Execute();
-        }
-	}
+        public virtual Coroutine Invoke() => operation.Execute();
+    }
 
 	public abstract class ExecutionRelay<TContext> : ExecutionRelay
         where TContext : class

@@ -629,6 +629,17 @@ namespace MB
                 }
             }
         }
+
+        public static IEnumerable<T> Infinite<T>(this IEnumerable<T> source)
+        {
+            while (true)
+            {
+                foreach (var item in source)
+                {
+                    yield return item;
+                }
+            }
+        }
         #endregion
 
         #region String
@@ -724,5 +735,19 @@ namespace MB
             await task;
         }
         #endregion
+
+        /// <summary>
+        /// Retrieves the GameObject of the Rigidbody attached to this Collider,
+        /// or the GameObject attached to the collider if no Rigidbody is attached to Collider
+        /// </summary>
+        /// <param name="collider"></param>
+        /// <returns></returns>
+        public static GameObject GetRoot(this Collider collider)
+        {
+            if (collider.attachedRigidbody == null)
+                return collider.gameObject;
+
+            return collider.attachedRigidbody.gameObject;
+        }
     }
 }

@@ -22,17 +22,21 @@ namespace MB
     [Serializable]
 	public class ButtonInput
 	{
-        public bool Press { get; protected set; }
+        public bool Click { get; protected set; }
 
         public bool Hold { get; protected set; }
 
         public bool Lift { get; protected set; }
 
+        public float Time { get; set; }
+
         public virtual void Process(bool input)
         {
             if (input)
             {
-                Press = !Press && !Hold;
+                Time += UnityEngine.Time.deltaTime;
+
+                Click = !Click && !Hold;
 
                 Lift = false;
             }
@@ -40,8 +44,10 @@ namespace MB
             {
                 Lift = !Lift && Hold;
 
-                Press = false;
+                Click = false;
             }
+
+            if (Click) Time = 0f;
 
             Hold = input;
         }
