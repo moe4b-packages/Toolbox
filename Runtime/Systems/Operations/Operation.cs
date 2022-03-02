@@ -22,12 +22,13 @@ namespace MB
 	/// <summary>
 	/// A single purpose operation that can be executed, base class for operation variants
 	/// </summary>
-	public class Operation : MonoBehaviour
+	public class Operation : MonoBehaviour, PreAwake.IInterface
 	{
 		public const string Path = Toolbox.Paths.Box + "Operations/";
 
-		public Process[] Processes { get; private set; }
-
+		[ReadOnly]
+		[SerializeField]
+		Process[] processes;
 		public abstract class Process : MonoBehaviour
 		{
 			public const string Path = Operation.Path;
@@ -50,9 +51,9 @@ namespace MB
 			public abstract object Execute();
 		}
 
-		protected virtual void Awake()
-		{
-			Processes = Query(gameObject);
+		public virtual void PreAwake()
+        {
+			processes = Query(gameObject);
 		}
 
 		public virtual Coroutine Execute()
@@ -64,9 +65,9 @@ namespace MB
 			return Procedure();
 			IEnumerator Procedure()
 			{
-				for (int i = 0; i < Processes.Length; i++)
+				for (int i = 0; i < processes.Length; i++)
 				{
-					var result = Processes[i].Execute();
+					var result = processes[i].Execute();
 					if (result == null) continue;
 					yield return result;
 				}
