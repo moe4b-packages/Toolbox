@@ -59,7 +59,7 @@ namespace MB
 		static GlobalCoroutine()
 		{
 #if UNITY_EDITOR
-			if (Application.isPlaying == false)
+			if (EditorApplication.isPlaying == false)
 				throw new Exception("Global Coroutines Cannot be Used in edit-time, Only at play/run-Time");
 #endif
 

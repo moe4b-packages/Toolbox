@@ -443,6 +443,13 @@ namespace MB
             throw new Exception($"Unsupported Platform: {Application.platform}");
         }
         #endregion
+
+        public static void SetDirty(Object target)
+        {
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(target);
+#endif
+        }
     }
 
     public static partial class MUtilityExtensions
