@@ -80,8 +80,13 @@ namespace MB
             ID += 1;
             Numerators.Clear();
 
-            Attachment = null;
             Checker = null;
+
+            if (Attachment is not null)
+            {
+                Record.Unregister(Attachment, this);
+                Attachment = null;
+            }
 
             if (OnFinish is not null)
             {
@@ -148,9 +153,6 @@ namespace MB
                 Debug.LogWarning($"Trying to End Non-Running MRoutine");
                 return false;
             }
-
-            if (routine.Attachment != null)
-                Record.Unregister(routine.Attachment, routine);
 
             routine.Dispose();
             return true;
