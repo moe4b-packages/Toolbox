@@ -36,18 +36,6 @@ namespace MB
             }
         }
 
-        [PostProcessScene]
-        static void PostProcessScene()
-        {
-            var scene = SceneManager.GetActiveScene();
-
-            using (ComponentQuery.Collection.NonAlloc.InScene<IInterface>(scene, out var list))
-            {
-                for (int i = 0; i < list.Count; i++)
-                    Process(list[i]);
-            }
-        }
-
         internal static void ProcessAssets()
         {
             foreach (var asset in AssetCollection.List)
@@ -68,6 +56,18 @@ namespace MB
                         Process(context);
                         break;
                 }
+            }
+        }
+
+        [PostProcessScene]
+        static void PostProcessScene()
+        {
+            var scene = SceneManager.GetActiveScene();
+
+            using (ComponentQuery.Collection.NonAlloc.InScene<IInterface>(scene, out var list))
+            {
+                for (int i = 0; i < list.Count; i++)
+                    Process(list[i]);
             }
         }
 
