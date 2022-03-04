@@ -22,31 +22,27 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Paths.Rewind + "Trigger Rewind")]
-	public class TriggerRewind : MonoBehaviour
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Physics Trigger Rewind")]
+	public class PhysicsTriggerRewind : MonoBehaviour
 	{
-        [SerializeField]
-        UnityEvent<Collider> onEnter = default;
-        public UnityEvent<Collider> OnEnter => onEnter;
-        void OnTriggerEnter(Collider context)
+        public delegate void EventDelegate(Collider collider);
+
+        public event EventDelegate EnterEvent;
+        void OnTriggerEnter(Collider collider)
         {
-            onEnter?.Invoke(context);
+            EnterEvent?.Invoke(collider);
         }
 
-        [SerializeField]
-        UnityEvent<Collider> onStay = default;
-        public UnityEvent<Collider> OnStay => onStay;
-        void OnTriggerStay(Collider context)
+        public event EventDelegate StayEvent;
+        void OnTriggerStay(Collider collider)
         {
-            onStay?.Invoke(context);
+            StayEvent?.Invoke(collider);
         }
 
-        [SerializeField]
-        UnityEvent<Collider> onExit = default;
-        public UnityEvent<Collider> OnExit => onExit;
-        void OnTriggerExit(Collider context)
+        public event EventDelegate ExitEvent;
+        void OnTriggerExit(Collider collider)
         {
-            onExit?.Invoke(context);
+            ExitEvent?.Invoke(collider);
         }
     }
 }

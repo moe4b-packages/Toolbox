@@ -22,31 +22,27 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Paths.Rewind + "Collision Rewind")]
-	public class CollisionRewind : MonoBehaviour
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Physics Collision Rewind")]
+	public class PhysicsCollisionRewind : MonoBehaviour
     {
-        [SerializeField]
-        UnityEvent<Collision> onEnter = default;
-        public UnityEvent<Collision> OnEnter => onEnter;
+        public delegate void EventDelegate(Collision collision);
+
+        public event EventDelegate EnterEvent;
         void OnCollisionEnter(Collision collision)
         {
-            onEnter?.Invoke(collision);
+            EnterEvent?.Invoke(collision);
         }
 
-        [SerializeField]
-        UnityEvent<Collision> onStay = default;
-        public UnityEvent<Collision> OnStay => onStay;
+        public event EventDelegate StayEvent;
         void OnCollisionStay(Collision collision)
         {
-            onStay?.Invoke(collision);
+            StayEvent?.Invoke(collision);
         }
 
-        [SerializeField]
-        UnityEvent<Collision> onExit = default;
-        public UnityEvent<Collision> OnExit => onExit;
+        public event EventDelegate ExitEvent;
         void OnCollisionExit(Collision collision)
         {
-            onExit?.Invoke(collision);
+            ExitEvent?.Invoke(collision);
         }
     }
 }

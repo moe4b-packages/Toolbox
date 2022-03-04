@@ -22,23 +22,19 @@ using UnityEngine.EventSystems;
 
 namespace MB
 {
-    [AddComponentMenu(Toolbox.Paths.Rewind + "Activation Rewind")]
-    public class ActivationRewind : MonoBehaviour
+    [AddComponentMenu(Toolbox.Paths.Rewind + "Game Object Activation Rewind")]
+    public class GameObjectActivationRewind : MonoBehaviour
 	{
-        [SerializeField]
-        UnityEvent enableEvent = default;
-        public UnityEvent EnableEvent => enableEvent;
+        public event Action EnableEvent;
         protected virtual void OnEnable()
         {
-            enableEvent?.Invoke();
+            EnableEvent?.Invoke();
         }
 
-        [SerializeField]
-        UnityEvent disableEvent = default;
-        public UnityEvent DisableEvent => disableEvent;
+        public event Action DisableEvent;
         protected virtual void OnDisable()
         {
-            disableEvent?.Invoke();
+            DisableEvent?.Invoke();
         }
     }
 }

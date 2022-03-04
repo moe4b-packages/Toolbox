@@ -26,11 +26,14 @@ namespace MB
 	{
         public Dictionary<string, HashSet<Action>> Dictionary { get; private set; }
 
-        List<Action> CallbackPool;
+        void Awake()
+        {
+            Dictionary = new Dictionary<string, HashSet<Action>>();
+        }
 
         public delegate void TriggerDelegate(string id);
-		public event TriggerDelegate OnTrigger;
-		public void Trigger(string id)
+        public event TriggerDelegate OnTrigger;
+        public void Trigger(string id)
         {
             OnTrigger?.Invoke(id);
 
@@ -44,12 +47,6 @@ namespace MB
 
                 CallbackPool.Clear();
             }
-        }
-
-        void Awake()
-        {
-            CallbackPool = new List<Action>();
-            Dictionary = new Dictionary<string, HashSet<Action>>();
         }
 
         public bool Register(string id, Action callback)
@@ -68,6 +65,14 @@ namespace MB
                 return false;
 
             return set.Remove(callback);
+        }
+
+        //Static Utility
+        static List<Action> CallbackPool;
+
+        static AnimationTriggerRewind()
+        {
+            CallbackPool = new List<Action>();
         }
     }
 }

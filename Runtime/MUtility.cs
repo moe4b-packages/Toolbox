@@ -26,6 +26,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using UnityEngine.Events;
 
 namespace MB
 {
@@ -756,5 +757,82 @@ namespace MB
 
             return collider.attachedRigidbody.gameObject;
         }
+
+        #region Unity Event
+        /// <summary>
+        /// Listens to a single invoke of the Unity Action
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="callback"></param>
+        public static void Once(this UnityEvent source, UnityAction callback)
+        {
+            source.AddListener(Surrogate);
+            void Surrogate()
+            {
+                source.RemoveListener(Surrogate);
+                callback();
+            }
+        }
+
+        /// <summary>
+        /// Listens to a single invoke of the Unity Action
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="callback"></param>
+        public static void Once<T1>(this UnityEvent<T1> source, UnityAction<T1> callback)
+        {
+            source.AddListener(Surrogate);
+            void Surrogate(T1 arg1)
+            {
+                source.RemoveListener(Surrogate);
+                callback(arg1);
+            }
+        }
+
+        /// <summary>
+        /// Listens to a single invoke of the Unity Action
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="callback"></param>
+        public static void Once<T1, T2>(this UnityEvent<T1, T2> source, UnityAction<T1, T2> callback)
+        {
+            source.AddListener(Surrogate);
+            void Surrogate(T1 arg1, T2 arg2)
+            {
+                source.RemoveListener(Surrogate);
+                callback(arg1, arg2);
+            }
+        }
+
+        /// <summary>
+        /// Listens to a single invoke of the Unity Action
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="callback"></param>
+        public static void Once<T1, T2, T3>(this UnityEvent<T1, T2, T3> source, UnityAction<T1, T2, T3> callback)
+        {
+            source.AddListener(Surrogate);
+            void Surrogate(T1 arg1, T2 arg2, T3 arg3)
+            {
+                source.RemoveListener(Surrogate);
+                callback(arg1, arg2, arg3);
+            }
+        }
+
+        /// <summary>
+        /// Listens to a single invoke of the Unity Action
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="callback"></param>
+        public static void Once<T1, T2, T3, T4>(this UnityEvent<T1, T2, T3, T4> source, UnityAction<T1, T2, T3, T4> callback)
+        {
+            source.AddListener(Surrogate);
+            void Surrogate(T1 arg1, T2 arg2, T3 arg3, T4 arg4)
+            {
+                source.RemoveListener(Surrogate);
+                callback(arg1, arg2, arg3, arg4);
+            }
+        }
+        #endregion
     }
 }
