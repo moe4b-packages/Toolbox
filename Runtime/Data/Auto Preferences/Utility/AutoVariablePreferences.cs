@@ -6,6 +6,9 @@ using UnityEngine.UIElements;
 
 namespace MB
 {
+    /// <summary>
+    /// Component that allows saving any variable to Auto Prefs
+    /// </summary>
     [SerializedVariable.Ignore]
     [AddComponentMenu(AutoPreferences.Path + "Auto Variable Preferences")]
     public class AutoVariablePreferences : MonoBehaviour

@@ -36,7 +36,6 @@ namespace MB
 
             Initializer.Configure(Targets);
         }
-
         void Start()
         {
             Initializer.Initialize(Targets);
