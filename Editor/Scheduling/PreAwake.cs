@@ -20,23 +20,39 @@ namespace MB
     public static class PreAwake
     {
 #if UNITY_EDITOR
+        #region Callbacks
         [InitializeOnLoadMethod]
-        static void OnLoad()
-        {
-            ProcessAssets();
-        }
+        static void OnLoad() => ProcessActive();
 
         class PreProcessBuild : IPreprocessBuildWithReport
         {
             public int callbackOrder => -400;
 
-            public void OnPreprocessBuild(BuildReport report)
-            {
-                PreAwake.ProcessAssets();
-            }
+            public void OnPreprocessBuild(BuildReport report) => PreAwake.InvokeAssets();
         }
 
-        internal static void ProcessAssets()
+        [PostProcessScene]
+        static void PostProcessScene()
+        {
+            var scene = SceneManager.GetActiveScene();
+
+            InvokeScene(scene);
+        }
+        #endregion
+
+        internal static void ProcessActive()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                InvokeScene(scene);
+            }
+
+            InvokeAssets();
+        }
+
+        #region Controls
+        internal static void InvokeAssets()
         {
             foreach (var asset in AssetCollection.List)
             {
@@ -46,36 +62,32 @@ namespace MB
                         using (ComponentQuery.Collection.NonAlloc.InHierarchy<IInterface>(gameObject, out var list))
                         {
                             foreach (var item in list)
-                            {
-                                Process(item);
-                            }
+                                Invoke(item);
                         }
                         break;
 
                     case IInterface context:
-                        Process(context);
+                        Invoke(context);
                         break;
                 }
             }
         }
 
-        [PostProcessScene]
-        static void PostProcessScene()
+        static void InvokeScene(Scene scene)
         {
-            var scene = SceneManager.GetActiveScene();
-
             using (ComponentQuery.Collection.NonAlloc.InScene<IInterface>(scene, out var list))
             {
                 for (int i = 0; i < list.Count; i++)
-                    Process(list[i]);
+                    Invoke(list[i]);
             }
         }
 
-        internal static void Process(IInterface context)
+        internal static void Invoke(IInterface context)
         {
             context.PreAwake();
-            EditorUtility.SetDirty(context as Object);
+            MUtility.SetDirty(context as Object);
         }
+        #endregion
 #endif
 
         public interface IInterface

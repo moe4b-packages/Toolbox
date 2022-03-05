@@ -150,6 +150,20 @@ namespace MB
             menu.AddItem(content, on, function, data);
         }
         #endregion
+
+        [MenuItem("GameObject/Mark All Dirty")]
+        public static void MarkAllDirty()
+        {
+            foreach (var gameObject in Selection.gameObjects)
+            {
+                MUtility.SetDirty(gameObject);
+
+                foreach (var behaviour in gameObject.GetComponentsInChildren<Component>(true))
+                {
+                    MUtility.SetDirty(behaviour);
+                }
+            }
+        }
     }
 }
 #endif
