@@ -5,8 +5,10 @@ using UnityEngine;
 
 namespace MB
 {
-	public interface IModules
+    public interface IModules
 	{
+		public List<Component> Components { get; }
+
 		TTarget Find<TTarget>()
 				where TTarget : class;
 
@@ -15,20 +17,27 @@ namespace MB
 	}
 
 	[Serializable]
-    public class Modules<TReference> : IModules
+	public class Modules<TReference> : IModules
 		where TReference : Component
-    {
+	{
 		public TReference Reference { get; protected set; }
 
 		[SerializeField]
-		List<Component> components;
+		protected List<Component> components;
 		public List<Component> Components => components;
 
-        #region Modifications
-        public void Register(UObjectSurrogate target)
+		public void Configure(TReference reference)
 		{
-			using(ComponentQuery.Collection.NonAlloc.InHierarchy<IModule<TReference>>(target, out var list))
-            {
+			this.Reference = reference;
+
+			Clear();
+		}
+
+		#region Register
+		public void Register(GameObject gameObject)
+		{
+			using (ComponentQuery.Collection.NonAlloc.InHierarchy<IModule<TReference>>(gameObject, out var list))
+			{
 				for (int i = 0; i < list.Count; i++)
 					components.Add(list[i] as Component);
 			}
@@ -37,27 +46,24 @@ namespace MB
 		public void Register(IModules collection) => Register(collection, ModuleScope.Local);
 		public void Register(IModules collection, ModuleScope scope)
 		{
-			var selection = collection.FindAll<IModule<TReference>>();
-
-			for (int i = 0; i < selection.Count; i++)
-				if (ValidateScope(Reference, selection[i], scope))
-					components.Add(selection[i] as Component);
+			for (int i = 0; i < collection.Components.Count; i++)
+				if (collection.Components[i] is IModule<TReference> module)
+					if (ValidateScope(Reference, collection.Components[i], scope))
+						components.Add(collection.Components[i]);
 		}
+		#endregion
 
 		public void Clear()
 		{
 			components.Clear();
 		}
-        #endregion
 
-		public void Set(TReference reference)
+		public void Set()
 		{
-			Reference = reference;
-
 			for (int i = 0; i < components.Count; i++)
-            {
+			{
 				var target = components[i] as IModule<TReference>;
-				target.Set(reference);
+				target.Set(Reference);
 			}
 		}
 
@@ -118,12 +124,12 @@ namespace MB
 
 		//Static Utility
 
-		public static bool ValidateScope(TReference reference, IModule<TReference> module, ModuleScope scope)
+		public static bool ValidateScope(TReference reference, Component module, ModuleScope scope)
 		{
 			switch (scope)
 			{
 				case ModuleScope.Local:
-					return module.Self.transform.IsChildOf(reference.transform);
+					return module.transform.IsChildOf(reference.transform);
 
 				case ModuleScope.Global:
 					return true;
@@ -134,11 +140,10 @@ namespace MB
 	}
 
     public interface IModule<TReference>
+		where TReference : Component
     {
-		public GameObject Self { get; }
-
 		void Set(TReference reference);
-    }
+	}
 
 	public enum ModuleScope
 	{
