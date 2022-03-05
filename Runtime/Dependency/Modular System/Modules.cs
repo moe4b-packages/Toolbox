@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace MB
 {
-    public interface IModules
+	#region Segment
+	public interface ISegment
 	{
 		public List<Component> Components { get; }
 
@@ -17,9 +18,10 @@ namespace MB
 	}
 
 	[Serializable]
-	public class Modules<TReference> : IModules
+	public class Segments<TReference, TInterface> : ISegment
 		where TReference : Component
-	{
+		where TInterface : class
+    {
 		public TReference Reference { get; protected set; }
 
 		[SerializeField]
@@ -36,18 +38,18 @@ namespace MB
 		#region Register
 		public void Register(GameObject gameObject)
 		{
-			using (ComponentQuery.Collection.NonAlloc.InHierarchy<IModule<TReference>>(gameObject, out var list))
+			using (ComponentQuery.Collection.NonAlloc.InHierarchy<TInterface>(gameObject, out var list))
 			{
 				for (int i = 0; i < list.Count; i++)
 					components.Add(list[i] as Component);
 			}
 		}
 
-		public void Register(IModules collection) => Register(collection, ModuleScope.Local);
-		public void Register(IModules collection, ModuleScope scope)
+		public void Register(ISegment collection) => Register(collection, SegmentScope.Local);
+		public void Register(ISegment collection, SegmentScope scope)
 		{
 			for (int i = 0; i < collection.Components.Count; i++)
-				if (collection.Components[i] is IModule<TReference> module)
+				if (collection.Components[i] is TInterface target)
 					if (ValidateScope(Reference, collection.Components[i], scope))
 						components.Add(collection.Components[i]);
 		}
@@ -56,15 +58,6 @@ namespace MB
 		public void Clear()
 		{
 			components.Clear();
-		}
-
-		public void Set()
-		{
-			for (int i = 0; i < components.Count; i++)
-			{
-				var target = components[i] as IModule<TReference>;
-				target.Set(Reference);
-			}
 		}
 
 		#region Query
@@ -117,25 +110,61 @@ namespace MB
 		}
 		#endregion
 
-		public Modules()
+		public Segments()
 		{
 			components = new List<Component>();
 		}
 
 		//Static Utility
 
-		public static bool ValidateScope(TReference reference, Component module, ModuleScope scope)
+		public static bool ValidateScope(TReference reference, Component module, SegmentScope scope)
 		{
 			switch (scope)
 			{
-				case ModuleScope.Local:
+				case SegmentScope.Local:
 					return module.transform.IsChildOf(reference.transform);
 
-				case ModuleScope.Global:
+				case SegmentScope.Global:
 					return true;
 			}
 
 			throw new NotImplementedException();
+		}
+	}
+
+	public enum SegmentScope
+	{
+		Local, Global
+	}
+	#endregion
+
+	#region Behaviour
+	[Serializable]
+	public class Behaviours<TReference> : Segments<TReference, IBehaviour<TReference>>
+		where TReference : Component
+	{
+
+	}
+
+	public interface IBehaviour<TReference>
+		where TReference : Component
+	{
+
+	}
+	#endregion
+
+	#region Modules
+	[Serializable]
+	public class Modules<TReference> : Segments<TReference, IModule<TReference>>
+		where TReference : Component
+	{
+		public void Set()
+		{
+			for (int i = 0; i < components.Count; i++)
+			{
+				var target = components[i] as IModule<TReference>;
+				target.Set(Reference);
+			}
 		}
 	}
 
@@ -144,9 +173,5 @@ namespace MB
     {
 		void Set(TReference reference);
 	}
-
-	public enum ModuleScope
-	{
-		Local, Global
-	}
+    #endregion
 }
