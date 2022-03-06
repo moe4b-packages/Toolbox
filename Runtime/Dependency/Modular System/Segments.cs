@@ -27,7 +27,7 @@ namespace MB
 		protected List<Component> components;
 		public List<Component> Components => components;
 
-		public void Configure(TReference reference)
+		public void Prepare(TReference reference)
 		{
 			this.Reference = reference;
 
@@ -115,7 +115,7 @@ namespace MB
 		}
         public Segments(TReference reference) : this()
         {
-			Configure(reference);
+			Prepare(reference);
         }
 
 		//Static Utility

@@ -9,12 +9,12 @@ namespace MB
 	public class Behaviours<TReference> : Segments<TReference, IBehaviour<TReference>>
 		where TReference : Component
 	{
-		public virtual void Awake()
+		public virtual void Configure()
         {
             for (int i = 0; i < components.Count; i++)
 				(components[i] as IBehaviour<TReference>).Configure();
         }
-		public virtual void Start()
+		public virtual void Initialize()
         {
 			for (int i = 0; i < components.Count; i++)
 				(components[i] as IBehaviour<TReference>).Initialize();
