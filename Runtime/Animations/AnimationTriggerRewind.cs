@@ -23,13 +23,8 @@ namespace MB
 {
     [AddComponentMenu(Toolbox.Paths.Rewind + "Animation Trigger Rewind")]
     public class AnimationTriggerRewind : MonoBehaviour
-	{
+    {
         public Dictionary<string, HashSet<Action>> Dictionary { get; private set; }
-
-        void Awake()
-        {
-            Dictionary = new Dictionary<string, HashSet<Action>>();
-        }
 
         public delegate void TriggerDelegate(string id);
         public event TriggerDelegate OnTrigger;
@@ -65,6 +60,11 @@ namespace MB
                 return false;
 
             return set.Remove(callback);
+        }
+
+        public AnimationTriggerRewind()
+        {
+            Dictionary = new Dictionary<string, HashSet<Action>>();
         }
 
         //Static Utility
