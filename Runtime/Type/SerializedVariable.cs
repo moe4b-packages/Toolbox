@@ -72,7 +72,10 @@ namespace MB
             if (target == null || name == "")
                 return "None";
 
-            return $"{target.GetType().Name} -> {name}";
+            if (target is GameObject)
+                return $"{target.GetType().Name} -> {name}";
+            else
+                return $"{name}";
         }
 
 #if UNITY_EDITOR
@@ -137,19 +140,14 @@ namespace MB
                     else
                     {
                         var area = MUtility.GUICoordinates.SliceLine(ref rect);
-                        EditorGUI.PropertyField(area, context, label);
-                    }
 
-                    if (context.objectReferenceValue != null)
-                    {
-                        if (target.objectReferenceValue is Component instance)
+                        EditorGUI.BeginChangeCheck();
+                        EditorGUI.PropertyField(area, context, label);
+                        if (EditorGUI.EndChangeCheck())
                         {
-                            if (instance.gameObject != context.objectReferenceValue)
-                            {
-                                target.objectReferenceValue = null;
-                                id.stringValue = string.Empty;
-                                implementation.intValue = 0;
-                            }
+                            target.objectReferenceValue = null;
+                            id.stringValue = string.Empty;
+                            implementation.intValue = 0;
                         }
                     }
                 }
@@ -160,9 +158,7 @@ namespace MB
                     var area = MUtility.GUICoordinates.SliceLine(ref rect);
 
                     if (local)
-                    {
                         area = EditorGUI.PrefixLabel(area, label);
-                    }
 
                     var text = FormatLabel(target.objectReferenceValue, id.stringValue);
                     var content = new GUIContent(text);
@@ -171,7 +167,7 @@ namespace MB
                     {
                         var selection = new Entry(target.objectReferenceValue, id.stringValue, (ImplementationType)implementation.intValue);
 
-                        Dropdown.Show(area, context.objectReferenceValue as GameObject, selection, Handler);
+                        Dropdown.Show(area, context.objectReferenceValue, selection, Handler);
 
                         void Handler(Entry entry)
                         {
@@ -192,15 +188,22 @@ namespace MB
         {
             public delegate void HandlerDelegate(Entry entry);
 
-            public static void Show(Rect rect, GameObject gameObject, Entry selection, HandlerDelegate handler)
+            public static void Show(Rect rect, Object target, Entry selection, HandlerDelegate handler)
             {
                 var menu = new GenericMenu();
 
-                Register(menu, gameObject, selection, Callback);
+                if (target is GameObject gameObject)
+                {
+                    Register(menu, target, selection, Callback, false);
 
-                var components = gameObject.GetComponents<Component>();
-                for (int i = 0; i < components.Length; i++)
-                    Register(menu, components[i], selection, Callback);
+                    var components = gameObject.GetComponents<Component>();
+                    for (int i = 0; i < components.Length; i++)
+                        Register(menu, components[i], selection, Callback, false);
+                }
+                else
+                {
+                    Register(menu, target, selection, Callback, true);
+                }
 
                 menu.AddSeparator("");
 
@@ -216,7 +219,7 @@ namespace MB
                 }
             }
 
-            static void Register(GenericMenu menu, Object target, Entry selection, GenericMenu.MenuFunction2 callback)
+            static void Register(GenericMenu menu, Object target, Entry selection, GenericMenu.MenuFunction2 callback, bool root)
             {
                 var type = target.GetType();
 
@@ -229,7 +232,13 @@ namespace MB
 
                     var entry = new Entry(target, variable.Member.Name, implementation);
 
-                    var text = $"{type.Name}/{variable.Name} ({FormatTypeName(variable.ValueType)})";
+                    string text;
+
+                    if (root)
+                        text = $"{variable.Name} ({FormatTypeName(variable.ValueType)})";
+                    else
+                        text = $"{type.Name}/{variable.Name} ({FormatTypeName(variable.ValueType)})";
+                    
                     var content = new GUIContent(text);
 
                     var isOn = entry == selection;
