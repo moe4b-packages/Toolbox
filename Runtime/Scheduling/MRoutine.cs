@@ -254,9 +254,10 @@ namespace MB
             /// <summary>
             /// Starts the current routine, must be called explicitly when creating routines
             /// </summary>
-            public void Start()
+            public Handle Start()
             {
                 Runtime.Initiate(routine);
+                return this;
             }
 
             /// <summary>
