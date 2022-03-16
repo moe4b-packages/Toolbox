@@ -30,12 +30,16 @@ namespace MB
         [SerializeField]
         ImplementationType implementation;
         public ImplementationType Implementation => implementation;
+        public enum ImplementationType
+        {
+            Field, Property
+        }
 
         public bool IsAssigned
         {
             get
             {
-                if (target == null)
+                if (context == null || target == null)
                     return false;
 
                 if (string.IsNullOrEmpty(id))
@@ -47,37 +51,18 @@ namespace MB
 
         public VariableInfo Load() => Load(target, id, implementation);
 
-        public const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
-
-        public static VariableInfo Load(Object target, string name, ImplementationType implementation)
+        public SerializedVariable(Object target, string id, ImplementationType implementation)
         {
-            var type = target.GetType();
-
-            switch (implementation)
-            {
-                case ImplementationType.Field:
-                    var field = type.GetField(name, Flags);
-                    return new VariableInfo(field);
-
-                case ImplementationType.Property:
-                    var property = type.GetProperty(name, Flags);
-                    return new VariableInfo(property);
-            }
-
-            throw new ArgumentOutOfRangeException(nameof(implementation));
-        }
-
-        public static string FormatLabel(Object target, string name)
-        {
-            if (target == null || name == "")
-                return "None";
-
-            if (target is GameObject)
-                return $"{target.GetType().Name} -> {name}";
+            if (target is Component component)
+                context = component.gameObject;
             else
-                return $"{name}";
+                context = target;
+
+            this.id = id;
+            this.implementation = implementation;
         }
 
+        #region Drawer
 #if UNITY_EDITOR
         [CustomPropertyDrawer(typeof(SelectionAttribute))]
         [CustomPropertyDrawer(typeof(SerializedVariable))]
@@ -160,12 +145,12 @@ namespace MB
                     if (local)
                         area = EditorGUI.PrefixLabel(area, label);
 
-                    var text = FormatLabel(target.objectReferenceValue, id.stringValue);
+                    var text = FormatLabel(context.objectReferenceValue, target.objectReferenceValue, id.stringValue);
                     var content = new GUIContent(text);
 
                     if (EditorGUI.DropdownButton(area, content, FocusType.Keyboard))
                     {
-                        var selection = new Entry(target.objectReferenceValue, id.stringValue, (ImplementationType)implementation.intValue);
+                        var selection = new Entry(context.objectReferenceValue, target.objectReferenceValue, id.stringValue, (ImplementationType)implementation.intValue);
 
                         Dropdown.Show(area, context.objectReferenceValue, selection, Handler);
 
@@ -188,21 +173,21 @@ namespace MB
         {
             public delegate void HandlerDelegate(Entry entry);
 
-            public static void Show(Rect rect, Object target, Entry selection, HandlerDelegate handler)
+            public static void Show(Rect rect, Object context, Entry selection, HandlerDelegate handler)
             {
                 var menu = new GenericMenu();
 
-                if (target is GameObject gameObject)
+                if (context is GameObject gameObject)
                 {
-                    Register(menu, target, selection, Callback, false);
+                    Register(menu, context, context, selection, Callback, false);
 
                     var components = gameObject.GetComponents<Component>();
                     for (int i = 0; i < components.Length; i++)
-                        Register(menu, components[i], selection, Callback, false);
+                        Register(menu, context, components[i], selection, Callback, false);
                 }
                 else
                 {
-                    Register(menu, target, selection, Callback, true);
+                    Register(menu, context, context, selection, Callback, true);
                 }
 
                 menu.AddSeparator("");
@@ -219,7 +204,7 @@ namespace MB
                 }
             }
 
-            static void Register(GenericMenu menu, Object target, Entry selection, GenericMenu.MenuFunction2 callback, bool root)
+            static void Register(GenericMenu menu, Object context, Object target, Entry selection, GenericMenu.MenuFunction2 callback, bool root)
             {
                 var type = target.GetType();
 
@@ -230,7 +215,7 @@ namespace MB
                 {
                     var implementation = GetImplementationType(variable);
 
-                    var entry = new Entry(target, variable.Member.Name, implementation);
+                    var entry = new Entry(context, target, variable.Member.Name, implementation);
 
                     string text;
 
@@ -238,7 +223,7 @@ namespace MB
                         text = $"{variable.Name} ({FormatTypeName(variable.ValueType)})";
                     else
                         text = $"{type.Name}/{variable.Name} ({FormatTypeName(variable.ValueType)})";
-                    
+
                     var content = new GUIContent(text);
 
                     var isOn = entry == selection;
@@ -262,29 +247,117 @@ namespace MB
             }
         }
 
-        public static string FormatTypeName(Type type)
+        public readonly struct Entry
         {
-            if (type == typeof(float))
-                return "Float";
+            public readonly Object Context { get; }
+            public readonly Object Target { get; }
+            public readonly string Name { get; }
+            public readonly ImplementationType Implementation { get; }
 
-            if (type == typeof(double))
-                return "Double";
+            public override bool Equals(object obj)
+            {
+                if (obj is Entry target)
+                    return Equals(target);
 
-            if (type == typeof(int))
-                return "Int";
+                return false;
+            }
+            public bool Equals(Entry target)
+            {
+                if (this.Target != target.Target) return false;
+                if (this.Name != target.Name) return false;
+                if (this.Implementation != target.Implementation) return false;
 
-            if (type == typeof(short))
-                return "Short";
+                return true;
+            }
 
-            if (type == typeof(long))
-                return "Long";
+            public override int GetHashCode() => (Target, Name, Implementation).GetHashCode();
 
-            if (type == typeof(bool))
-                return "Bool";
+            public readonly string TextCache { get; }
+            public override string ToString() => TextCache;
 
-            return type.Name;
+            public Entry(Object context, Object target, string name, ImplementationType implementation)
+            {
+                this.Context = context;
+                this.Target = target;
+                this.Name = name;
+                this.Implementation = implementation;
+
+                TextCache = FormatLabel(Context, Target, Name);
+            }
+
+            public static bool operator ==(Entry right, Entry left) => right.Equals(left);
+            public static bool operator !=(Entry right, Entry left) => right.Equals(left);
+        }
+#endif
+        #endregion
+
+        #region Attributes
+        [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+        public class SelectionAttribute : PropertyAttribute
+        {
+            /// <summary>
+            /// Set to true to have the variable selection limited to the gameObject which the component that this field resides on
+            /// </summary>
+            public bool Local { get; set; } = false;
+
+            public Scope Scope { get; }
+
+            public SelectionAttribute() : this(Scope.All) { }
+            public SelectionAttribute(Scope scope)
+            {
+                this.Scope = scope;
+            }
         }
 
+        [Flags]
+        public enum Scope
+        {
+            Fields = 1 << 0,
+            Properties = 1 << 1,
+
+            All = ~1,
+        }
+
+        [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
+        public class IgnoreAttribute : PropertyAttribute
+        {
+
+        }
+        #endregion
+
+        #region Static Utility
+        public const BindingFlags Flags = BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy;
+
+        public static VariableInfo Load(Object target, string name, ImplementationType implementation)
+        {
+            var type = target.GetType();
+
+            switch (implementation)
+            {
+                case ImplementationType.Field:
+                    var field = type.GetField(name, Flags);
+                    return new VariableInfo(field);
+
+                case ImplementationType.Property:
+                    var property = type.GetProperty(name, Flags);
+                    return new VariableInfo(property);
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(implementation));
+        }
+
+        public static string FormatLabel(Object context, Object target, string name)
+        {
+            if (target == null || name == "")
+                return "None";
+
+            if (context is GameObject)
+                return $"{target.GetType().Name} -> {name}";
+            else
+                return $"{name}";
+        }
+
+#if UNITY_EDITOR
         public static class TypeAnalyzer
         {
             public static Dictionary<Type, List<VariableInfo>> Cache;
@@ -355,82 +428,29 @@ namespace MB
             }
         }
 
-        public readonly struct Entry
+        public static string FormatTypeName(Type type)
         {
-            public readonly Object Target { get; }
-            public readonly string Name { get; }
-            public readonly ImplementationType Implementation { get; }
+            if (type == typeof(float))
+                return "Float";
 
-            public override bool Equals(object obj)
-            {
-                if (obj is Entry target)
-                    return Equals(target);
+            if (type == typeof(double))
+                return "Double";
 
-                return false;
-            }
-            public bool Equals(Entry target)
-            {
-                if (this.Target != target.Target) return false;
-                if (this.Name != target.Name) return false;
-                if (this.Implementation != target.Implementation) return false;
+            if (type == typeof(int))
+                return "Int";
 
-                return true;
-            }
+            if (type == typeof(short))
+                return "Short";
 
-            public override int GetHashCode() => (Target, Name, Implementation).GetHashCode();
+            if (type == typeof(long))
+                return "Long";
 
-            public readonly string TextCache { get; }
-            public override string ToString() => TextCache;
+            if (type == typeof(bool))
+                return "Bool";
 
-            public Entry(Object target, string name, ImplementationType implementation)
-            {
-                this.Target = target;
-                this.Name = name;
-                this.Implementation = implementation;
-
-                TextCache = FormatLabel(Target, Name);
-            }
-
-            public static bool operator ==(Entry right, Entry left) => right.Equals(left);
-            public static bool operator !=(Entry right, Entry left) => right.Equals(left);
+            return type.Name;
         }
 #endif
-
-        [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
-        public class SelectionAttribute : PropertyAttribute
-        {
-            /// <summary>
-            /// Set to true to have the variable selection limited to the gameObject which the component that this field resides on
-            /// </summary>
-            public bool Local { get; set; } = false;
-
-            public Scope Scope { get; }
-
-            public SelectionAttribute() : this(Scope.All) { }
-            public SelectionAttribute(Scope scope)
-            {
-                this.Scope = scope;
-            }
-        }
-
-        [AttributeUsage(AttributeTargets.Class | AttributeTargets.Field | AttributeTargets.Property, Inherited = true, AllowMultiple = false)]
-        public class IgnoreAttribute : PropertyAttribute
-        {
-            
-        }
-
-        [Flags]
-        public enum Scope
-        {
-            Fields = 1 << 0,
-            Properties = 1 << 1,
-
-            All = ~1,
-        }
-
-        public enum ImplementationType
-        {
-            Field, Property
-        }
+        #endregion
     }
 }
