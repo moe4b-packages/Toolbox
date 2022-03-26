@@ -76,10 +76,10 @@ namespace MB
             switch (EditorUserBuildSettings.activeBuildTarget)
             {
                 case BuildTarget.StandaloneOSX:
-                    return RuntimePlatform.OSXPlayer;
+                    return RuntimePlatform.OSXEditor;
 
                 case BuildTarget.StandaloneWindows:
-                    return RuntimePlatform.WindowsPlayer;
+                    return RuntimePlatform.WindowsEditor;
 
                 case BuildTarget.iOS:
                     return RuntimePlatform.IPhonePlayer;
@@ -97,7 +97,7 @@ namespace MB
                     return RuntimePlatform.WSAPlayerX64;
 
                 case BuildTarget.StandaloneLinux64:
-                    return RuntimePlatform.LinuxPlayer;
+                    return RuntimePlatform.LinuxEditor;
 
                 case BuildTarget.PS4:
                     return RuntimePlatform.PS4;
