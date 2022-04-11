@@ -25,9 +25,11 @@ namespace MB
     [Serializable]
     public class MSceneAsset : ISerializationCallbackReceiver
     {
+#if UNITY_EDITOR
         [SerializeField]
         Object asset;
         public Object Asset => asset;
+#endif
 
         [SerializeField]
         bool registered;
@@ -73,14 +75,14 @@ namespace MB
 #endif
         }
 
+#if UNITY_EDITOR
         public MSceneAsset(Object asset)
         {
             this.asset = asset;
 
-#if UNITY_EDITOR
             Refresh();
-#endif
         }
+#endif
 
         public static implicit operator int(MSceneAsset scene) => scene.Index;
 
@@ -89,15 +91,14 @@ namespace MB
 
         public static bool TryFind(Object asset, out bool active, out string id, out int index, out string path)
         {
-            index = 0;
-
             if (asset != null)
             {
+                index = 0;
+                path = AssetDatabase.GetAssetPath(asset);
+
                 foreach (var entry in EditorBuildSettings.scenes)
                 {
-                    var scene = AssetDatabase.LoadAssetAtPath<SceneAsset>(entry.path);
-
-                    if (scene == asset)
+                    if (entry.path == path)
                     {
                         active = entry.enabled;
                         id = asset.name;
@@ -109,10 +110,10 @@ namespace MB
                 }
             }
 
-            active = false;
+            path = string.Empty;
             id = string.Empty;
             index = 0;
-            path = string.Empty;
+            active = false;
             return false;
         }
 
@@ -219,7 +220,6 @@ namespace MB
                 if (GUI.Button(area, instructions)) callback?.Invoke();
             }
         }
-#endif
 
         public class AssetComparer : IEqualityComparer<MSceneAsset>
         {
@@ -238,5 +238,6 @@ namespace MB
                 return target.asset.GetHashCode();
             }
         }
+#endif
     }
 }
