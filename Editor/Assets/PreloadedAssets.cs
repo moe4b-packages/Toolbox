@@ -22,24 +22,24 @@ namespace MB
 		
 		internal static class Cache
 		{
-			private static readonly List<Object> list;
+			private static readonly HashSet<Object> collection;
 
-			internal static List<Object> Load()
+			internal static HashSet<Object> Load()
 			{
-				list.Clear();
+				collection.Clear();
 
 				var array = Get();
-				list.AddRange(array);
+				collection.UnionWith(array);
 
-				list.RemoveAll(IsNull);
+				collection.RemoveWhere(IsNull);
 				bool IsNull(Object target) => target == null;
 
-				return list;
+				return collection;
 			}
 
 			static Cache()
 			{
-				list = new List<Object>();
+				collection = new HashSet<Object>();
 			}
 		}
 
@@ -55,7 +55,7 @@ namespace MB
 		{
 			var collection = Cache.Load();
 
-			collection.AddRange(range);
+			collection.UnionWith(range);
 
 			Set(collection);
 		}
@@ -72,8 +72,7 @@ namespace MB
 		{
 			var collection = Cache.Load();
 
-			collection.RemoveAll(Contained);
-			bool Contained(Object target) => range.Contains(target);
+			collection.ExceptWith(range);
 
 			Set(collection);
 		}
@@ -87,7 +86,7 @@ namespace MB
 		/// <param name="list"></param>
 		/// <returns></returns>
 		/// <exception cref="InvalidOperationException"></exception>
-		public static Handle Lease(out List<Object> list)
+		public static Handle Lease(out HashSet<Object> list)
 		{
 			if (LeaseLock)
 				throw new InvalidOperationException("Cannot Lease Multiple PreloadedAssets Handles");
@@ -108,11 +107,11 @@ namespace MB
 
 		public struct Handle : IDisposable
 		{
-			internal List<Object> list;
+			internal HashSet<Object> list;
 
 			public void Dispose() => Return(this);
 
-			public Handle(List<Object> hashset)
+			public Handle(HashSet<Object> hashset)
 			{
 				this.list = hashset;
 			}
