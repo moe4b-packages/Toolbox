@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -10,6 +11,7 @@ namespace MB
     /// <summary>
     /// Creates a UI where you can search for enum values by their names
     /// </summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public class SearchableEnumAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR

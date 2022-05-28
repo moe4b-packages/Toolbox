@@ -23,6 +23,7 @@ namespace MB
     /// Attribute to apply to fields to make them read only, can specify which play mode to make read only,
     /// NOTE: overrides user defined property drawers, and as such can cause problems, please only use for default drawn types
     /// </summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public class ReadOnlyAttribute : PropertyAttribute
     {
         public ReadOnlyPlayMode Mode { get; }

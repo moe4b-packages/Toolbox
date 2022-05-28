@@ -23,6 +23,7 @@ namespace MB
     /// Attribute to apply to fields to make them viewable only in inspector debug mode
     /// NOTE: overrides user defined property drawers, and as such can cause problems, please only use for default drawn types
     /// </summary>
+    [AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
     public class DebugOnlyAttribute : PropertyAttribute
     {
 #if UNITY_EDITOR
@@ -41,12 +42,8 @@ namespace MB
 
             public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
             {
-                GUI.enabled = false;
-
                 if (Visibile)
                     EditorGUI.PropertyField(rect, property, label, true);
-
-                GUI.enabled = true;
             }
         }
 #endif

@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -11,10 +12,11 @@ namespace MB
 	/// <summary>
 	/// Inlines a field containing a Scriptable Object to be editable directly
 	/// </summary>
-	public class InlineScriptableField : PropertyAttribute
+	[AttributeUsage(AttributeTargets.Field, Inherited = true, AllowMultiple = false)]
+	public class InlineScriptableFieldAttribute : PropertyAttribute
 	{
 		#if UNITY_EDITOR
-		[CustomPropertyDrawer(typeof(InlineScriptableField))]
+		[CustomPropertyDrawer(typeof(InlineScriptableFieldAttribute))]
 		public class Drawer : PropertyDrawer
 		{
 			public const float TopOffset = 1f;

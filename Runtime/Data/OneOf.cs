@@ -18,20 +18,33 @@ namespace MB
         public int Selection { get; }
         public bool Assigned => Selection > 0;
 
-        public bool Dispatch(Action<T1> callback1, Action<T2> callback2)
+        public void Dispatch(Action<T1> callback1, Action<T2> callback2)
         {
             switch (Selection)
             {
                 case 1:
                     callback1(Value1);
-                    return true;
+                    return;
 
                 case 2:
                     callback2(Value2);
-                    return true;
+                    return;
             }
 
-            return false;
+            throw new InvalidOperationException($"OneOf Value not Assigned");
+        }
+        public TResult Match<TResult>(Func<T1, TResult> callback1, Func<T2, TResult> callback2)
+        {
+            switch (Selection)
+            {
+                case 1:
+                    return callback1(Value1);
+
+                case 2:
+                    return callback2(Value2);
+            }
+
+            throw new InvalidOperationException($"OneOf Value not Assigned");
         }
 
         private OneOf(T1 value1, T2 value2, int selection)
@@ -62,24 +75,40 @@ namespace MB
         public int Selection { get; }
         public bool Assigned => Selection > 0;
 
-        public bool Dispatch(Action<T1> callback1, Action<T2> callback2, Action<T3> callback3)
+        public void Dispatch(Action<T1> callback1, Action<T2> callback2, Action<T3> callback3)
         {
             switch (Selection)
             {
                 case 1:
                     callback1(Value1);
-                    return true;
+                    return;
 
                 case 2:
                     callback2(Value2);
-                    return true;
+                    return;
 
                 case 3:
                     callback3(Value3);
-                    return true;
+                    return;
             }
 
-            return false;
+            throw new InvalidOperationException($"OneOf Value not Assigned");
+        }
+        public TResult Match<TResult>(Func<T1, TResult> callback1, Func<T2, TResult> callback2, Func<T3, TResult> callback3)
+        {
+            switch (Selection)
+            {
+                case 1:
+                    return callback1(Value1);
+
+                case 2:
+                    return callback2(Value2);
+
+                case 3:
+                    return callback3(Value3);
+            }
+
+            throw new InvalidOperationException($"OneOf Value not Assigned");
         }
 
         private OneOf(T1 value1, T2 value2, T3 value3, int selection)
