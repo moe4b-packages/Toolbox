@@ -39,14 +39,16 @@ namespace MB
         {
             var text = value.ToString();
 
-            var builder = new StringBuilder();
+            var capacity = text.Length + CalculateExtraCapacity(text);
+            var builder = new StringBuilder(capacity);
 
-            for (int i = 0; i < text.Length; i++)
+            builder.Append(text[0]);
+
+            for (int i = 1; i < text.Length - 1; i++)
             {
+                var previous = text[i - 1];
                 var current = text[i];
-
-                var next = ValidateIndexBounds(text.Length, i + 1) ? text[i + 1] : default;
-                var previous = ValidateIndexBounds(text.Length, i - 1) ? text[i - 1] : default;
+                var next = text[i + 1];
 
                 if (char.IsUpper(current))
                 {
@@ -56,18 +58,36 @@ namespace MB
                         builder.Append(' ');
                 }
 
-                if (char.IsNumber(current) && !char.IsNumber(previous))
-                    builder.Append(' ');
+                if (char.IsNumber(current))
+                {
+                    if (!char.IsNumber(previous))
+                        builder.Append(' ');
+                }
+                else
+                {
+                    if (char.IsNumber(previous))
+                        builder.Append(' ');
+                }
 
-                if (!char.IsNumber(current) && char.IsNumber(previous))
-                    builder.Append(' ');
-
-                if (text[i] == '_') current = ' ';
+                if (current == '_') current = ' ';
 
                 builder.Append(current);
             }
 
+            builder.Append(text[^1]);
+
             return builder.ToString();
+
+            static int CalculateExtraCapacity(string text)
+            {
+                var value = 0;
+
+                for (int i = 0; i < text.Length; i++)
+                    if (char.IsUpper(text[i]) || char.IsDigit(text[i]))
+                        value += 1;
+
+                return value;
+            }
         }
 
         public static RuntimePlatform CheckPlatform()
