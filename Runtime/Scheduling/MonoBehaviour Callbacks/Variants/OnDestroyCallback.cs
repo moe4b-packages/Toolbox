@@ -6,6 +6,7 @@ using Debug = UnityEngine.Debug;
 
 namespace MB
 {
+    [AddComponentMenu(Path + "On Destroy")]
 	public class OnDestroyCallback : MonobehaviourCallback
 	{
         void OnDestroy() => Invoke();

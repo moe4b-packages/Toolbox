@@ -74,5 +74,7 @@ namespace MB
         {
             CallbackPool = new List<Action>();
         }
+
+        public static AnimationTriggerRewind Retrieve(UObjectSurrogate target) => MonobehaviourCallback.Retrieve<AnimationTriggerRewind>(target);
     }
 }

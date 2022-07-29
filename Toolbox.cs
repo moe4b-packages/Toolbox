@@ -32,7 +32,7 @@ namespace MB
         {
             public const string Root = Name + "/";
 
-            public const string Box = Root + "Tool Box/";
+            public const string Box = Root + "Toolbox/";
 
             public const string Example = Box + "Example/";
 

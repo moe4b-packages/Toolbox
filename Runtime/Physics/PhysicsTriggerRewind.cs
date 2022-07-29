@@ -44,5 +44,7 @@ namespace MB
         {
             ExitEvent?.Invoke(collider);
         }
+
+        public static PhysicsTriggerRewind Retrieve(UObjectSurrogate target) => MonobehaviourCallback.Retrieve<PhysicsTriggerRewind>(target);
     }
 }

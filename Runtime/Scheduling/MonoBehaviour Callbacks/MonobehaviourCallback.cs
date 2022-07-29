@@ -10,6 +10,8 @@ namespace MB
 {
 	public abstract class MonobehaviourCallback : MonoBehaviour
 	{
+		public const string Path = Toolbox.Paths.Box + "Monobehaviour Callbacks/";
+
 		public event Action Event;
 		protected virtual void Invoke()
         {
@@ -20,7 +22,7 @@ namespace MB
 		public void Unregister(Action callback) => Event -= callback;
 
 		public static T Retrieve<T>(UObjectSurrogate target)
-			where T : MonobehaviourCallback
+			where T : Component
 		{
 			if (target.GameObject.TryGetComponent<T>(out var component) == false)
 				component = target.GameObject.AddComponent<T>();

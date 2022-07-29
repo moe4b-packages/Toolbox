@@ -36,5 +36,7 @@ namespace MB
         {
             DisableEvent?.Invoke();
         }
+
+        public static GameObjectActivationRewind Retrieve(UObjectSurrogate target) => MonobehaviourCallback.Retrieve<GameObjectActivationRewind>(target);
     }
 }

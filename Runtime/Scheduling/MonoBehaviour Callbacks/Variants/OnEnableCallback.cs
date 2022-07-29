@@ -6,7 +6,8 @@ using Debug = UnityEngine.Debug;
 
 namespace MB
 {
-	public class OnEnableCallback : MonobehaviourCallback
+    [AddComponentMenu(Path + "On Enable")]
+    public class OnEnableCallback : MonobehaviourCallback
 	{
         void OnEnable() => Invoke();
 
