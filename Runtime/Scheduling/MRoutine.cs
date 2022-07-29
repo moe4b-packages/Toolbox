@@ -15,15 +15,15 @@ namespace MB
     {
         ulong ID;
 
-        MonoBehaviour Attachment;
-        internal void Attach(MonoBehaviour behaviour)
+        OnDisableCallback Callback;
+        void Attach(MonoBehaviour behaviour)
         {
-            Attachment = behaviour;
-            Record.Register(Attachment, this);
+            Callback = OnDisableCallback.Retrieve(behaviour);
+            Callback.Event += End;
         }
 
         CheckDelegate Checker;
-        internal void Check(CheckDelegate value)
+        void Check(CheckDelegate value)
         {
             Checker = value;
         }
@@ -42,7 +42,7 @@ namespace MB
         bool Evaluate()
         {
             if (Checker is not null)
-                if (Checker() is true)
+                if (Checker() is false)
                     return true;
 
             if (Awaitable is not null && Awaitable.Evaluate())
@@ -82,24 +82,26 @@ namespace MB
 
             Checker = null;
 
-            if (Attachment is not null)
+            if (Callback != null)
             {
-                Record.Unregister(Attachment, this);
-                Attachment = null;
+                Callback.Event -= End;
+                Callback = null;
             }
 
-            if (OnFinish is not null)
+            if (OnFinish != null)
             {
                 OnFinish?.Invoke();
                 OnFinish = null;
             }
 
-            if (Awaitable is not null)
+            if (Awaitable != null)
             {
                 Awaitable.Dispose();
                 Awaitable = null;
             }
         }
+
+        void End() => Runtime.End(this);
 
         public MRoutine()
         {
@@ -109,7 +111,7 @@ namespace MB
 
         //Static Utility
 
-        #region Lifetime
+        #region Controls
         public static Handle Create(Func<IEnumerator> method)
         {
             var numerator = method();
@@ -131,32 +133,9 @@ namespace MB
                 return false;
             }
 
-            return End(handle.routine);
+            return Runtime.End(handle.routine);
         }
-        public static bool StopAll(MonoBehaviour behaviour)
-        {
-            var list = Record.IterateActive(behaviour);
-
-            if (list.Count == 0)
-                return false;
-
-            for (int i = 0; i < list.Count; i++)
-                End(list[i]);
-
-            return true;
-        }
-
-        internal static bool End(MRoutine routine)
-        {
-            if (Runtime.Processing.Remove(routine) == false)
-            {
-                Debug.LogWarning($"Trying to End Non-Running MRoutine");
-                return false;
-            }
-
-            routine.Dispose();
-            return true;
-        }
+        #endregion
 
         /// <summary>
         /// Object used to reference a routine operation
@@ -188,7 +167,7 @@ namespace MB
                 remove => routine.OnFinish -= value;
             }
 
-            internal bool Valdiate()
+            internal bool Validate()
             {
                 if (IsValid == false)
                 {
@@ -211,11 +190,11 @@ namespace MB
                 if (behaviour == null)
                     throw new ArgumentNullException(nameof(behaviour));
 
-                if (Valdiate() == false)
+                if (Validate() == false)
                     return this;
 
-                if (routine.Attachment != null)
-                    throw new InvalidOperationException($"Routine Already has '{routine.Attachment}' Attached");
+                if (routine.Callback != null)
+                    throw new InvalidOperationException($"Routine Already has been Attached");
 
                 routine.Attach(behaviour);
 
@@ -229,7 +208,7 @@ namespace MB
             /// <returns></returns>
             public Handle Check(CheckDelegate method)
             {
-                if (Valdiate() == false)
+                if (Validate() == false)
                     return this;
 
                 routine.Check(method);
@@ -244,7 +223,7 @@ namespace MB
             /// <returns></returns>
             public Handle Callback(Action method)
             {
-                if (Valdiate() == false)
+                if (Validate() == false)
                     return this;
 
                 OnFinish += method;
@@ -256,7 +235,7 @@ namespace MB
             /// </summary>
             public Handle Start()
             {
-                Runtime.Initiate(routine);
+                Runtime.Start(routine);
                 return this;
             }
 
@@ -275,15 +254,28 @@ namespace MB
 
         internal static class Runtime
         {
-            internal static HashSet<MRoutine> Processing;
+            static HashSet<MRoutine> Processing;
             static HashSet<MRoutine> Removals;
 
-            internal static void Initiate(MRoutine routine)
+            internal static void Start(MRoutine routine)
             {
-                Processing.Add(routine);
+                if(Processing.Add(routine) == false)
+                    throw new InvalidOperationException("Routine Already Started");
 
                 if (routine.Evaluate())
                     End(routine);
+            }
+
+            internal static bool End(MRoutine routine)
+            {
+                if (Runtime.Processing.Remove(routine) == false)
+                {
+                    Debug.LogWarning($"Trying to End Non-Running MRoutine");
+                    return false;
+                }
+
+                routine.Dispose();
+                return true;
             }
 
             static void Update()
@@ -292,7 +284,7 @@ namespace MB
                     if (routine.Evaluate())
                         Removals.Add(routine);
 
-                if(Removals.Count > 0)
+                if (Removals.Count > 0)
                 {
                     foreach (var routine in Removals)
                         End(routine);
@@ -300,7 +292,7 @@ namespace MB
                     Removals.Clear();
                 }
             }
-            
+
             static Runtime()
             {
                 Processing = new HashSet<MRoutine>();
@@ -309,58 +301,6 @@ namespace MB
                 MUtility.RegisterPlayerLoop<Update>(Update);
             }
         }
-
-        internal static class Record
-        {
-            internal static Dictionary<MonoBehaviour, HashSet<MRoutine>> Collection { get; }
-            static List<MRoutine> cache;
-
-            internal static void Register(MonoBehaviour behaviour, MRoutine routine)
-            {
-                if (Collection.TryGetValue(behaviour, out var set) == false)
-                {
-                    DisposablePool.HashSet<MRoutine>.Lease(out set);
-                    Collection.Add(behaviour, set);
-                }
-
-                set.Add(routine);
-            }
-            internal static bool Unregister(MonoBehaviour behaviour, MRoutine routine)
-            {
-                if (Collection.TryGetValue(behaviour, out var set) == false)
-                    return false;
-
-                var removed = set.Remove(routine);
-
-                if (set.Count == 0)
-                {
-                    Collection.Remove(behaviour);
-                    DisposablePool.HashSet<MRoutine>.Return(set);
-                }
-
-                return removed;
-            }
-
-            internal static List<MRoutine> IterateActive(MonoBehaviour behaviour)
-            {
-                cache.Clear();
-
-                if (Collection.TryGetValue(behaviour, out var set))
-                {
-                    foreach (var routine in set)
-                        cache.Add(routine);
-                }
-
-                return cache;
-            }
-
-            static Record()
-            {
-                Collection = new Dictionary<MonoBehaviour, HashSet<MRoutine>>();
-                cache = new List<MRoutine>();
-            }
-        }
-        #endregion
 
         #region Commands
         /// <summary>
