@@ -111,7 +111,7 @@ namespace MB
 
         //Static Utility
 
-        #region Controls
+        #region Lifetime
         public static Handle Create(Func<IEnumerator> method)
         {
             var numerator = method();
@@ -179,7 +179,7 @@ namespace MB
             }
 
             /// <summary>
-            /// Attach this routine to a Monobehaviour so it can be stopped using MRoutine.StopAll(behaviour)
+            /// Attach this routine to a GameObject so it can be stopped when said GameObject is disabled
             /// </summary>
             /// <param name="behaviour"></param>
             /// <returns></returns>
@@ -202,7 +202,7 @@ namespace MB
             }
 
             /// <summary>
-            /// Add a constant running checking method, this method will cause the routine to stop if it returns true
+            /// Add a constant running checking method, this method will cause the routine to stop if it returns false
             /// </summary>
             /// <param name="method"></param>
             /// <returns></returns>
@@ -255,11 +255,11 @@ namespace MB
         internal static class Runtime
         {
             static HashSet<MRoutine> Processing;
-            static HashSet<MRoutine> Removals;
+            static List<MRoutine> List;
 
             internal static void Start(MRoutine routine)
             {
-                if(Processing.Add(routine) == false)
+                if (Processing.Add(routine) == false)
                     throw new InvalidOperationException("Routine Already Started");
 
                 if (routine.Evaluate())
@@ -268,7 +268,7 @@ namespace MB
 
             internal static bool End(MRoutine routine)
             {
-                if (Runtime.Processing.Remove(routine) == false)
+                if (Processing.Remove(routine) == false)
                 {
                     Debug.LogWarning($"Trying to End Non-Running MRoutine");
                     return false;
@@ -281,22 +281,19 @@ namespace MB
             static void Update()
             {
                 foreach (var routine in Processing)
-                    if (routine.Evaluate())
-                        Removals.Add(routine);
+                    List.Add(routine);
 
-                if (Removals.Count > 0)
-                {
-                    foreach (var routine in Removals)
-                        End(routine);
+                for (int i = 0; i < List.Count; i++)
+                    if (List[i].Evaluate())
+                        End(List[i]);
 
-                    Removals.Clear();
-                }
+                List.Clear();
             }
 
             static Runtime()
             {
                 Processing = new HashSet<MRoutine>();
-                Removals = new HashSet<MRoutine>();
+                List = new List<MRoutine>();
 
                 MUtility.RegisterPlayerLoop<Update>(Update);
             }
@@ -351,7 +348,7 @@ namespace MB
             {
                 if (attach) return numerator;
 
-                var handle = Create(numerator);
+                var handle = Create(numerator).Start();
                 return Routine(handle);
             }
 
