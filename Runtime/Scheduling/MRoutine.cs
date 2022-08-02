@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 using UnityEngine;
 using UnityEngine.Android;
@@ -11,115 +13,8 @@ using Object = UnityEngine.Object;
 
 namespace MB
 {
-    public class MRoutine
+    public static class MRoutine
     {
-        ulong ID;
-
-        OnDisableCallback Callback;
-        void Attach(MonoBehaviour behaviour)
-        {
-            Callback = OnDisableCallback.Retrieve(behaviour);
-            Callback.Event += Stop;
-        }
-
-        CheckDelegate Checker;
-        void Check(CheckDelegate value)
-        {
-            Checker = value;
-        }
-        public delegate bool CheckDelegate();
-
-        Stack<IEnumerator> Numerators;
-        IAwaitable Awaitable;
-
-        bool StopSignal;
-
-        public event Action OnFinish;
-
-        void Configure(IEnumerator numerator)
-        {
-            Numerators.Push(numerator);
-        }
-
-        bool Evaluate()
-        {
-            if (StopSignal)
-                return true;
-
-            if (Checker is not null)
-                if (Checker() is false)
-                    return true;
-
-            if (Awaitable is not null && Awaitable.Evaluate())
-            {
-                Awaitable.Dispose();
-                Awaitable = null;
-            }
-
-            while (Awaitable is null)
-            {
-                if (Numerators.TryPeek(out var iterator) == false)
-                    return true;
-
-                if (iterator.MoveNext() == false)
-                {
-                    if (StopSignal)
-                        return true;
-
-                    Numerators.Pop();
-                    continue;
-                }
-
-                if (TryConvertIteratorToAwaitable(iterator.Current, out Awaitable) == false)
-                {
-                    if (iterator.Current is IEnumerator nest)
-                        Numerators.Push(nest);
-                    else
-                        Debug.LogWarning($"MRoutine Cannot yield on '{iterator.Current}' of Type '{iterator.Current.GetType()}'");
-                } 
-            }
-
-            return false;
-        }
-
-        void Stop() => Runtime.Stop(this);
-
-        void Dispose()
-        {
-            ID += 1;
-            Numerators.Clear();
-
-            Checker = null;
-
-            StopSignal = false;
-
-            if (Callback != null)
-            {
-                Callback.Event -= Stop;
-                Callback = null;
-            }
-
-            if (OnFinish != null)
-            {
-                OnFinish?.Invoke();
-                OnFinish = null;
-            }
-
-            if (Awaitable != null)
-            {
-                Awaitable.Dispose();
-                Awaitable = null;
-            }
-        }
-
-        public MRoutine()
-        {
-            ID = 0;
-            Numerators = new Stack<IEnumerator>();
-        }
-
-        //Static Utility
-
         #region Lifetime
         public static Handle Create(Func<IEnumerator> method)
         {
@@ -128,49 +23,23 @@ namespace MB
         }
         public static Handle Create(IEnumerator numerator)
         {
-            var routine = Pool<MRoutine>.Lease();
-            routine.Configure(numerator);
-
-            return new Handle(routine);
+            var routine = Pool<Processor>.Lease();
+            return new Handle(routine, numerator);
         }
 
-        public static bool Stop(Handle handle)
-        {
-            if (handle.IsValid == false)
-            {
-                Debug.LogWarning("Trying to Stop MRoutine with Invalid Handle");
-                return false;
-            }
-
-            Runtime.Stop(handle.routine);
-            return true;
-        }
+        public static bool Stop(Handle handle) => handle.Stop();
         #endregion
-
-        static bool TryConvertIteratorToAwaitable(object target, out IAwaitable awaitable)
-        {
-            if (target is IAwaitable instruction)
-            {
-                awaitable = instruction;
-                return true;
-            }
-            else if (Command.Converter.TryProcess(target, out awaitable))
-            {
-                return true;
-            }
-
-            return false;
-        }
 
         /// <summary>
         /// Object used to reference a routine operation
         /// </summary>
         public readonly struct Handle
         {
-            internal readonly MRoutine routine;
+            internal readonly Processor processor;
+            internal readonly IEnumerator numerator;
             internal readonly ulong ID;
 
-            public bool IsAssigned => routine is not null;
+            public bool IsAssigned => processor != null;
 
             /// <summary>
             /// Returns true as long as the routine that this handle was retrieved for is still running
@@ -182,46 +51,37 @@ namespace MB
                     if (IsAssigned == false)
                         return false;
 
-                    return routine.ID == ID;
+                    return processor.ID == ID;
                 }
             }
 
             public event Action OnFinish
             {
-                add => routine.OnFinish += value;
-                remove => routine.OnFinish -= value;
+                add => processor.OnFinish += value;
+                remove => processor.OnFinish -= value;
             }
 
-            internal bool Validate()
+            void Validate()
             {
                 if (IsValid == false)
-                {
-                    Debug.LogWarning("Trying to Perform Operation on Invalid Routine Handle");
-                    return false;
-                }
-
-                return true;
+                    throw new InvalidOperationException("Trying to Perform Operation on Invalid Routine Handle");
             }
 
+            #region Controls
             /// <summary>
-            /// Attach this routine to a GameObject so it can be stopped when said GameObject is disabled
+            /// Attach this routine to a GameObject so it can be stopped when said GameObject is disabled/destroyed
             /// </summary>
             /// <param name="behaviour"></param>
             /// <returns></returns>
             /// <exception cref="ArgumentNullException"></exception>
-            /// <exception cref="InvalidOperationException"></exception>
-            public Handle Attach(MonoBehaviour behaviour)
+            public Handle Attach(GameObject gameObject)
             {
-                if (behaviour == null)
-                    throw new ArgumentNullException(nameof(behaviour));
+                if (gameObject == null)
+                    throw new ArgumentNullException(nameof(gameObject));
 
-                if (Validate() == false)
-                    return this;
+                Validate();
 
-                if (routine.Callback != null)
-                    throw new InvalidOperationException($"Routine Already has been Attached");
-
-                routine.Attach(behaviour);
+                processor.Attach(gameObject);
 
                 return this;
             }
@@ -233,10 +93,9 @@ namespace MB
             /// <returns></returns>
             public Handle Check(CheckDelegate method)
             {
-                if (Validate() == false)
-                    return this;
+                Validate();
 
-                routine.Check(method);
+                processor.Check(method);
 
                 return this;
             }
@@ -248,8 +107,7 @@ namespace MB
             /// <returns></returns>
             public Handle Callback(Action method)
             {
-                if (Validate() == false)
-                    return this;
+                Validate();
 
                 OnFinish += method;
                 return this;
@@ -260,7 +118,9 @@ namespace MB
             /// </summary>
             public Handle Start()
             {
-                Runtime.Start(routine);
+                Validate();
+
+                processor.Start(numerator);
                 return this;
             }
 
@@ -268,68 +128,190 @@ namespace MB
             /// Attempts to stop the referenced Routine
             /// </summary>
             /// <returns>true if stopped successfully</returns>
-            public bool Stop() => MRoutine.Stop(this);
-
-            public Handle(MRoutine routine)
+            public bool Stop()
             {
-                this.routine = routine;
-                ID = routine.ID;
+                if (IsValid == false)
+                    return false;
+
+                return processor.TryStop();
+            }
+            #endregion
+
+            public TaskAwaiter GetAwaiter()
+            {
+                return Procedure(this).GetAwaiter();
+                async Task Procedure(Handle handle)
+                {
+                    while (handle.IsValid)
+                        await Task.Delay(10);
+                }
+            }
+
+            internal Handle(Processor processor, IEnumerator numerator)
+            {
+                this.processor = processor;
+                this.numerator = numerator;
+
+                ID = processor.ID;
             }
         }
 
-        internal static class Runtime
+        internal class Processor
         {
-            static HashSet<MRoutine> Processing;
-            static List<MRoutine> List;
+            public ulong ID { get; private set; }
 
-            internal static void Start(MRoutine routine)
+            OnDisableCallback Callback;
+            internal void Attach(GameObject gameObject)
             {
-                if (Processing.Add(routine) == false)
+                if (Callback != null)
+                    throw new InvalidOperationException($"Routine Already has been Attached");
+
+                Callback = OnDisableCallback.Retrieve(gameObject);
+                Callback.Event += Stop;
+            }
+
+            CheckDelegate Checker;
+            internal void Check(CheckDelegate value)
+            {
+                Checker = value;
+            }
+            
+            Stack<IEnumerator> Numerators;
+            IAwaitable Awaitable;
+
+            internal State State { get; private set; }
+
+            public event Action OnFinish;
+
+            internal void Start(IEnumerator numerator)
+            {
+                if (State != State.Idle)
                     throw new InvalidOperationException("Routine Already Started");
 
-                if (routine.Evaluate())
-                    Dispose(routine);
+                State = State.Active;
+
+                Numerators.Push(numerator);
+
+                Runtime.OnProcess += Process;
+
+                Process();
             }
 
-            internal static void Stop(MRoutine routine)
+            internal void Stop() => TryStop();
+            internal bool TryStop()
             {
-                routine.StopSignal = true;
-            }
-
-            static void Update()
-            {
-                foreach (var routine in Processing)
-                    List.Add(routine);
-
-                for (int i = 0; i < List.Count; i++)
-                    if (List[i].Evaluate())
-                        Dispose(List[i]);
-
-                List.Clear();
-            }
-
-            static bool Dispose(MRoutine routine)
-            {
-                if (Processing.Remove(routine) == false)
-                {
-                    Debug.LogWarning($"Trying to End Non-Running MRoutine");
+                if (State != State.Active)
                     return false;
+
+                State = State.Stopping;
+                return true;
+            }
+
+            void Process()
+            {
+                if (Evaluate())
+                    Dispose();
+            }
+            bool Evaluate()
+            {
+                if (State == State.Stopping)
+                    return true;
+
+                if (Checker != null && Checker() == false)
+                    return true;
+
+                if (Awaitable != null && Awaitable.Evaluate())
+                {
+                    Awaitable.Dispose();
+                    Awaitable = null;
                 }
 
-                routine.Dispose();
-                return true;
+                while (Awaitable == null)
+                {
+                    if (Numerators.TryPeek(out var iterator) == false)
+                        return true;
+
+                    if (iterator.MoveNext())
+                    {
+                        if (TryConvertTargetToAwaitable(iterator.Current, out Awaitable) == false)
+                        {
+                            if (iterator.Current is IEnumerator nest)
+                                Numerators.Push(nest);
+                            else
+                                throw new InvalidOperationException($"MRoutine Cannot yield on '{iterator.Current}' of Type '{iterator.Current.GetType()}'");
+                        }
+                    }
+                    else
+                    {
+                        if (State == State.Stopping)
+                            return true;
+
+                        Numerators.Pop();
+                    }
+                }
+
+                return false;
+            }
+
+            void Dispose()
+            {
+                ID += 1;
+                Numerators.Clear();
+
+                Checker = null;
+
+                if (Callback != null)
+                {
+                    Callback.Event -= Stop;
+                    Callback = null;
+                }
+
+                if (OnFinish != null)
+                {
+                    OnFinish?.Invoke();
+                    OnFinish = null;
+                }
+
+                if (Awaitable != null)
+                {
+                    Awaitable.Dispose();
+                    Awaitable = null;
+                }
+
+                State = State.Idle;
+
+                Pool<Processor>.Return(this);
+            }
+
+            public Processor()
+            {
+                ID = 0;
+                Numerators = new Stack<IEnumerator>();
+                State = State.Idle;
+            }
+        }
+
+        internal enum State
+        {
+            Idle, Active, Stopping
+        }
+
+        public delegate bool CheckDelegate();
+
+        internal static class Runtime
+        {
+            internal static event Action OnProcess;
+            static void Process()
+            {
+                OnProcess?.Invoke();
             }
 
             static Runtime()
             {
-                Processing = new HashSet<MRoutine>();
-                List = new List<MRoutine>();
-
-                MUtility.RegisterPlayerLoop<Update>(Update);
+                MUtility.RegisterPlayerLoop<Update>(Process);
             }
         }
 
-        #region Commands
         /// <summary>
         /// Class that contains all wait methods
         /// </summary>
@@ -383,6 +365,54 @@ namespace MB
                 return instance;
             }
 
+            public static Command.WaitForTask Task(Task task)
+            {
+                var instance = Command.WaitForTask.Lease();
+                instance.task = task;
+                return instance;
+            }
+
+            #region All
+            public static Command.WaitForAllOperation All(object target1, object target2)
+            {
+                var instance = Command.WaitForAllOperation.Lease();
+
+                var list = instance.list;
+                list.EnsureCapacity(2);
+
+                TryAddAll(ref list, target1);
+                TryAddAll(ref list, target2);
+
+                return instance;
+            }
+            public static Command.WaitForAllOperation All(object target1, object target2, object target3)
+            {
+                var instance = Command.WaitForAllOperation.Lease();
+
+                var list = instance.list;
+                list.EnsureCapacity(3);
+
+                TryAddAll(ref list, target1);
+                TryAddAll(ref list, target2);
+                TryAddAll(ref list, target3);
+
+                return instance;
+            }
+            public static Command.WaitForAllOperation All(object target1, object target2, object target3, object target4)
+            {
+                var instance = Command.WaitForAllOperation.Lease();
+
+                var list = instance.list;
+                list.EnsureCapacity(4);
+
+                TryAddAll(ref list, target1);
+                TryAddAll(ref list, target2);
+                TryAddAll(ref list, target3);
+                TryAddAll(ref list, target4);
+
+                return instance;
+            }
+
             public static Command.WaitForAllOperation All(params object[] targets)
             {
                 var instance = Command.WaitForAllOperation.Lease();
@@ -392,7 +422,7 @@ namespace MB
 
                 for (int i = 0; i < targets.Length; i++)
                 {
-                    if (TryConvertIteratorToAwaitable(targets[i], out var awaitable))
+                    if (TryConvertTargetToAwaitable(targets[i], out var awaitable))
                         list.Add(awaitable);
                     else
                         Debug.LogWarning($"MRoutine Cannot yield on '{targets}' of Type '{targets.GetType()}'");
@@ -400,6 +430,15 @@ namespace MB
 
                 return instance;
             }
+
+            static void TryAddAll(ref List<IAwaitable> list, object target)
+            {
+                if (TryConvertTargetToAwaitable(target, out var awaitable))
+                    list.Add(awaitable);
+                else
+                    Debug.LogWarning($"MRoutine Cannot yield on '{target}' of Type '{target.GetType()}'");
+            }
+            #endregion
         }
 
         /// <summary>
@@ -408,17 +447,19 @@ namespace MB
         public interface IAwaitable
         {
             /// <summary>
-            /// Invoked every frame to check if the current awaitable has finished
+            /// Invoked every frame to check if the current awaitable has finished,
+            /// can still be invoked multiple times after returning true
             /// </summary>
             /// <returns>True when the current operation is finished</returns>
             bool Evaluate();
 
             /// <summary>
-            /// Used to clean up awaitables, will be executed when the awaitable is out of scope
+            /// Used to clean up awaitables, will be executed when the awaitable is no longer needed
             /// </summary>
             void Dispose();
         }
 
+        #region Commands
         /// <summary>
         /// Awaitable abstract class to be used for yield returns
         /// </summary>
@@ -539,6 +580,19 @@ namespace MB
                     operation = null;
                 }
             }
+            public class WaitForTask : Command<WaitForTask>
+            {
+                public Task task;
+
+                public override bool Evaluate() => task.IsCompleted;
+
+                public override void Dispose()
+                {
+                    base.Dispose();
+
+                    task = null;
+                }
+            }
             public class WaitForAllOperation : Command<WaitForAllOperation>
             {
                 public List<IAwaitable> list;
@@ -572,7 +626,7 @@ namespace MB
         }
 
         /// <summary>
-        /// Generic awaitable abstract class to be used for yield returns, will dispose of it's self when done with
+        /// Generic awaitable poolable abstract class to be used for yield returns, will dispose of it's self when done with
         /// </summary>
         /// <typeparam name="T"></typeparam>
         public abstract class Command<T> : Command
@@ -580,7 +634,7 @@ namespace MB
         {
             public T Self { get; }
 
-            public override void Dispose() => Pool<T>.Return(Self);
+            public override void Dispose() => Return(Self);
 
             public Command()
             {
@@ -620,6 +674,26 @@ namespace MB
             {
                 stack = new Stack<T>();
             }
+        }
+
+        static bool TryConvertTargetToAwaitable(object target, out IAwaitable awaitable)
+        {
+            if (target is IAwaitable instruction)
+            {
+                awaitable = instruction;
+                return true;
+            }
+            else if (target is Task task)
+            {
+                awaitable = Wait.Task(task);
+                return true;
+            }
+            else if (Command.Converter.TryProcess(target, out awaitable))
+            {
+                return true;
+            }
+
+            return false;
         }
     }
 }
