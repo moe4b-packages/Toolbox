@@ -22,6 +22,7 @@ namespace MB
 	/// <summary>
 	/// A single purpose operation that can be executed, base class for operation variants
 	/// </summary>
+	[AddComponentMenu(Path + "Operation")]
 	public class Operation : MonoBehaviour, PreAwake.IInterface
 	{
 		public const string Path = Toolbox.Paths.Box + "Operations/";
@@ -31,16 +32,16 @@ namespace MB
 		Process[] processes;
 		public abstract class Process : MonoBehaviour
 		{
-			public const string Path = Operation.Path;
+			public const string Path = Operation.Path + "Process/";
 
 			protected virtual void Reset()
 			{
 #if UNITY_EDITOR
-				if(GetComponentInParent<Operation>() == null)
-                {
+				if (GetComponentInParent<Operation>() == null)
+				{
 					var operation = gameObject.AddComponent<Operation>();
 					ComponentUtility.MoveComponentUp(operation);
-                }
+				}
 #endif
 			}
 
@@ -52,23 +53,20 @@ namespace MB
 		}
 
 		public virtual void PreAwake()
-        {
+		{
 			processes = Query(gameObject);
 		}
 
-		public virtual Coroutine Execute()
-        {
-			return StartCoroutine(Iterate());
-		}
-		public virtual IEnumerator Iterate()
-        {
-			return Procedure();
+		public virtual MRoutine.Handle Execute()
+		{
+			return MRoutine.Create(Procedure()).Start();
+
 			IEnumerator Procedure()
 			{
 				for (int i = 0; i < processes.Length; i++)
 				{
 					var result = processes[i].Execute();
-					if (result == null) continue;
+					if (result == default) continue;
 					yield return result;
 				}
 			}

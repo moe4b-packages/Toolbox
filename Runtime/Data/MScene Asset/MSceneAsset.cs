@@ -32,20 +32,20 @@ namespace MB
 #endif
 
         [SerializeField]
-        bool registered;
-        public bool Registered => registered;
+        bool inBuild;
+        public bool InBuild => inBuild;
 
         [SerializeField]
-        bool active;
-        public bool Active => active;
+        bool enabled;
+        public bool Enabled => enabled;
 
         [SerializeField]
-        string id;
-        public string ID => id;
+        string name;
+        public string Name => name;
 
         [SerializeField]
-        int index;
-        public int Index => index;
+        int buildIndex;
+        public int BuildIndex => buildIndex;
 
         [SerializeField]
         string path;
@@ -62,7 +62,7 @@ namespace MB
 #if UNITY_EDITOR
         public void Refresh()
         {
-            registered = TryFind(asset, out active, out id, out index, out path);
+            inBuild = TryFind(asset, out enabled, out name, out buildIndex, out path);
         }
 #endif
 
@@ -84,7 +84,7 @@ namespace MB
         }
 #endif
 
-        public static implicit operator int(MSceneAsset scene) => scene.Index;
+        public static implicit operator int(MSceneAsset scene) => scene.BuildIndex;
 
 #if UNITY_EDITOR
         //Static Utility
@@ -157,11 +157,11 @@ namespace MB
         {
             public static float LineHeight => EditorGUIUtility.singleLineHeight;
 
-            public static void FindProperties(SerializedProperty property, out SerializedProperty asset, out SerializedProperty registered, out SerializedProperty active)
+            public static void FindProperties(SerializedProperty property, out SerializedProperty asset, out SerializedProperty inBuild, out SerializedProperty enabled)
             {
-                asset = property.FindPropertyRelative(nameof(asset));
-                registered = property.FindPropertyRelative(nameof(registered));
-                active = property.FindPropertyRelative(nameof(active));
+                asset = property.FindPropertyRelative(nameof(MSceneAsset.asset));
+                inBuild = property.FindPropertyRelative(nameof(MSceneAsset.inBuild));
+                enabled = property.FindPropertyRelative(nameof(MSceneAsset.enabled));
             }
 
             public override float GetPropertyHeight(SerializedProperty property, GUIContent label)

@@ -34,9 +34,11 @@ namespace MB
 
             public const string Box = Root + "Toolbox/";
 
-            public const string Example = Box + "Example/";
-
             public const string Rewind = Box + "Rewind/";
+
+            public const string Misc = Box + "Misc/";
+
+            public const string Example = Misc + "Example/";
         }
 
         [RuntimeInitializeOnLoadMethod]

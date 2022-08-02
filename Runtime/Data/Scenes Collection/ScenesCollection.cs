@@ -54,7 +54,7 @@ namespace MB
 #endif
 
             Dictionary.Clear();
-            Dictionary.AddAll(List, x => x.ID);
+            Dictionary.AddAll(List, x => x.Name);
         }
 
 #if UNITY_EDITOR

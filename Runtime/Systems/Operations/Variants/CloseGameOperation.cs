@@ -30,7 +30,7 @@ namespace MB
             Application.Quit();
 #endif
 
-            return null;
+            return default;
         }
     }
 }

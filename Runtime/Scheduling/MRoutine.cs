@@ -19,7 +19,7 @@ namespace MB
         void Attach(MonoBehaviour behaviour)
         {
             Callback = OnDisableCallback.Retrieve(behaviour);
-            Callback.Event += End;
+            Callback.Event += Stop;
         }
 
         CheckDelegate Checker;
@@ -32,6 +32,8 @@ namespace MB
         Stack<IEnumerator> Numerators;
         IAwaitable Awaitable;
 
+        bool StopSignal;
+
         public event Action OnFinish;
 
         void Configure(IEnumerator numerator)
@@ -41,6 +43,9 @@ namespace MB
 
         bool Evaluate()
         {
+            if (StopSignal)
+                return true;
+
             if (Checker is not null)
                 if (Checker() is false)
                     return true;
@@ -58,22 +63,26 @@ namespace MB
 
                 if (iterator.MoveNext() == false)
                 {
+                    if (StopSignal)
+                        return true;
+
                     Numerators.Pop();
                     continue;
                 }
 
-                if (iterator.Current is IAwaitable instruction)
-                    Awaitable = instruction;
-                else if (iterator.Current is IEnumerator nest)
-                    Numerators.Push(nest);
-                else if (iterator.Current is Handle handle)
-                    Awaitable = Wait.Routine(handle);
-                else if (Command.Converter.TryProcess(iterator.Current, out Awaitable) == false)
-                    Debug.LogWarning($"MRoutine Cannot yield on '{iterator.Current}' of Type '{iterator.Current.GetType()}'");
+                if (TryConvertIteratorToAwaitable(iterator.Current, out Awaitable) == false)
+                {
+                    if (iterator.Current is IEnumerator nest)
+                        Numerators.Push(nest);
+                    else
+                        Debug.LogWarning($"MRoutine Cannot yield on '{iterator.Current}' of Type '{iterator.Current.GetType()}'");
+                } 
             }
 
             return false;
         }
+
+        void Stop() => Runtime.Stop(this);
 
         void Dispose()
         {
@@ -82,9 +91,11 @@ namespace MB
 
             Checker = null;
 
+            StopSignal = false;
+
             if (Callback != null)
             {
-                Callback.Event -= End;
+                Callback.Event -= Stop;
                 Callback = null;
             }
 
@@ -100,8 +111,6 @@ namespace MB
                 Awaitable = null;
             }
         }
-
-        void End() => Runtime.End(this);
 
         public MRoutine()
         {
@@ -133,9 +142,25 @@ namespace MB
                 return false;
             }
 
-            return Runtime.End(handle.routine);
+            Runtime.Stop(handle.routine);
+            return true;
         }
         #endregion
+
+        static bool TryConvertIteratorToAwaitable(object target, out IAwaitable awaitable)
+        {
+            if (target is IAwaitable instruction)
+            {
+                awaitable = instruction;
+                return true;
+            }
+            else if (Command.Converter.TryProcess(target, out awaitable))
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         /// <summary>
         /// Object used to reference a routine operation
@@ -263,19 +288,12 @@ namespace MB
                     throw new InvalidOperationException("Routine Already Started");
 
                 if (routine.Evaluate())
-                    End(routine);
+                    Dispose(routine);
             }
 
-            internal static bool End(MRoutine routine)
+            internal static void Stop(MRoutine routine)
             {
-                if (Processing.Remove(routine) == false)
-                {
-                    Debug.LogWarning($"Trying to End Non-Running MRoutine");
-                    return false;
-                }
-
-                routine.Dispose();
-                return true;
+                routine.StopSignal = true;
             }
 
             static void Update()
@@ -285,9 +303,21 @@ namespace MB
 
                 for (int i = 0; i < List.Count; i++)
                     if (List[i].Evaluate())
-                        End(List[i]);
+                        Dispose(List[i]);
 
                 List.Clear();
+            }
+
+            static bool Dispose(MRoutine routine)
+            {
+                if (Processing.Remove(routine) == false)
+                {
+                    Debug.LogWarning($"Trying to End Non-Running MRoutine");
+                    return false;
+                }
+
+                routine.Dispose();
+                return true;
             }
 
             static Runtime()
@@ -339,19 +369,6 @@ namespace MB
                 return instance;
             }
 
-            public static object Routine(Func<IEnumerator> function, bool attach = true)
-            {
-                var numerator = function();
-                return Routine(numerator, attach);
-            }
-            public static object Routine(IEnumerator numerator, bool attach = true)
-            {
-                if (attach) return numerator;
-
-                var handle = Create(numerator).Start();
-                return Routine(handle);
-            }
-
             public static Command.WaitForRoutine Routine(Handle handle)
             {
                 var instance = Command.WaitForRoutine.Lease();
@@ -363,6 +380,24 @@ namespace MB
             {
                 var instance = Command.WaitForAsyncOperation.Lease();
                 instance.operation = operation;
+                return instance;
+            }
+
+            public static Command.WaitForAllOperation All(params object[] targets)
+            {
+                var instance = Command.WaitForAllOperation.Lease();
+
+                var list = instance.list;
+                list.EnsureCapacity(targets.Length);
+
+                for (int i = 0; i < targets.Length; i++)
+                {
+                    if (TryConvertIteratorToAwaitable(targets[i], out var awaitable))
+                        list.Add(awaitable);
+                    else
+                        Debug.LogWarning($"MRoutine Cannot yield on '{targets}' of Type '{targets.GetType()}'");
+                }
+
                 return instance;
             }
         }
@@ -447,6 +482,7 @@ namespace MB
                 {
                     Dictionary = new();
 
+                    Register<Handle>(Wait.Routine);
                     Register<AsyncOperation>(Wait.AsyncOperation);
                     Register<UnityWebRequestAsyncOperation>(Wait.AsyncOperation);
                 }
@@ -501,6 +537,36 @@ namespace MB
                     base.Dispose();
 
                     operation = null;
+                }
+            }
+            public class WaitForAllOperation : Command<WaitForAllOperation>
+            {
+                public List<IAwaitable> list;
+
+                public override bool Evaluate()
+                {
+                    bool result = true;
+
+                    for (int i = 0; i < list.Count; i++)
+                        if (list[i].Evaluate() == false)
+                            result = false;
+
+                    return result;
+                }
+
+                public override void Dispose()
+                {
+                    base.Dispose();
+
+                    for (int i = 0; i < list.Count; i++)
+                        list[i].Dispose();
+
+                    list.Clear();
+                }
+
+                public WaitForAllOperation()
+                {
+                    list = new List<IAwaitable>();
                 }
             }
         }

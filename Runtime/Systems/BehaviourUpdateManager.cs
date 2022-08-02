@@ -9,6 +9,7 @@ namespace MB
 	/// System to provider Update calls (Process) based on interfaces instead of reflection,
 	/// needs explicit adding and removing of entries
 	/// </summary>
+	[AddComponentMenu(Toolbox.Paths.Misc + "Behaviour Update Manager")]
 	public class BehaviourUpdateManager : MonoBehaviour
 	{
 		public static BehaviourUpdateManager Component { get; }
@@ -49,6 +50,8 @@ namespace MB
 
 		static BehaviourUpdateManager()
 		{
+			if (Application.isPlaying == false) return;
+
 			var gameObject = new GameObject("Behaviour Update Manager");
 			DontDestroyOnLoad(gameObject);
 			

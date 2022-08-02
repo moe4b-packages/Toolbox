@@ -52,7 +52,6 @@ namespace MB
         //Static
         #region
         public const string ID = "Auto Preferences";
-        public const string Path = Toolbox.Paths.Box + ID + "/";
 
         public static SerializedType[] Converters => Instance.converters;
         static JsonConverter[] CreateConverters()

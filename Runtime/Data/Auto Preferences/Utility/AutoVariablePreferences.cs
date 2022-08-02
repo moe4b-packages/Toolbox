@@ -10,7 +10,7 @@ namespace MB
     /// Component that allows saving any variable to Auto Prefs
     /// </summary>
     [SerializedVariable.Ignore]
-    [AddComponentMenu(AutoPreferences.Path + "Auto Variable Preferences")]
+    [AddComponentMenu(Toolbox.Paths.Misc + "Auto Variable Preferences")]
     public class AutoVariablePreferences : MonoBehaviour
     {
         [SerializeField]

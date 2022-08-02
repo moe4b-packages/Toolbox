@@ -19,9 +19,12 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-    [AddComponentMenu(Initializer.Path + "Auto Initializer")]
-	public class AutoInitializer : MonoBehaviour, PreAwake.IInterface
-	{
+    /// <summary>
+    /// Component that allows Auto Initializing a GameObject, To be Placed on Prefabs
+    /// </summary>
+    [AddComponentMenu(Initializer.Path + "Auto Initialize GameObject")]
+    public class AutoInitializeGameObject : MonoBehaviour, PreAwake.IInterface
+    {
         [ReadOnly]
         [SerializeField]
         Component[] collection;

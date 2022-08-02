@@ -45,7 +45,7 @@ namespace MB
         public virtual void Configure() { }
         public virtual void Initialize() { }
 
-        public virtual Coroutine Invoke() => operation.Execute();
+        public virtual MRoutine.Handle Invoke() => operation.Execute();
     }
 
 	public abstract class ExecutionRelay<TContext> : ExecutionRelay
