@@ -39,32 +39,78 @@ namespace MB
             internal readonly IEnumerator numerator;
             internal readonly ulong ID;
 
-            public bool IsAssigned => processor != null;
-
             /// <summary>
-            /// Returns true as long as the routine that this handle was retrieved for is still running
+            /// Flag used to indiciate if this handle is valid, handles are invalid once their routines finish
             /// </summary>
             public bool IsValid
             {
                 get
                 {
-                    if (IsAssigned == false)
+                    if (processor == null)
                         return false;
 
                     return processor.ID == ID;
                 }
             }
 
-            public event Action OnFinish
+            /// <summary>
+            /// Current state of this handle and the routine it's referencing
+            /// </summary>
+            public RuntimeState State
             {
-                add => processor.OnFinish += value;
-                remove => processor.OnFinish -= value;
+                get
+                {
+                    if (processor == null)
+                        return RuntimeState.Unassigned;
+
+                    if (processor.ID == ID)
+                    {
+                        switch (processor.State)
+                        {
+                            case Processor.RuntimeState.Idle:
+                                return RuntimeState.Idle;
+
+                            case Processor.RuntimeState.Running:
+                                return RuntimeState.Running;
+
+                            case Processor.RuntimeState.Stopping:
+                                return RuntimeState.Stopping;
+
+                            default:
+                                throw new NotImplementedException();
+                        }
+                    }
+                    else
+                    {
+                        return RuntimeState.Complete;
+                    }
+                }
+            }
+            public enum RuntimeState
+            {
+                Unassigned, Idle, Running, Stopping, Complete
             }
 
-            void Validate()
+            public event Action OnFinish
+            {
+                add
+                {
+                    Validate("OnFinish Subscribe");
+
+                    processor.OnFinish += value;
+                }
+                remove
+                {
+                    Validate("OnFinish Unsubscribe");
+
+                    processor.OnFinish -= value;
+                }
+            }
+
+            void Validate(string name)
             {
                 if (IsValid == false)
-                    throw new InvalidOperationException("Trying to Perform Operation on Invalid Routine Handle");
+                    throw new InvalidOperationException($"Cannot Perform '{name}' Operation on Invalid Routine Handle");
             }
 
             #region Controls
@@ -79,7 +125,7 @@ namespace MB
                 if (gameObject == null)
                     throw new ArgumentNullException(nameof(gameObject));
 
-                Validate();
+                Validate(nameof(Attach));
 
                 processor.Attach(gameObject);
 
@@ -93,7 +139,7 @@ namespace MB
             /// <returns></returns>
             public Handle Check(CheckDelegate method)
             {
-                Validate();
+                Validate(nameof(Check));
 
                 processor.Check(method);
 
@@ -107,7 +153,7 @@ namespace MB
             /// <returns></returns>
             public Handle Callback(Action method)
             {
-                Validate();
+                Validate(nameof(Callback));
 
                 OnFinish += method;
                 return this;
@@ -118,7 +164,7 @@ namespace MB
             /// </summary>
             public Handle Start()
             {
-                Validate();
+                Validate(nameof(Start));
 
                 processor.Start(numerator);
                 return this;
@@ -142,7 +188,7 @@ namespace MB
                 return Procedure(this).GetAwaiter();
                 async Task Procedure(Handle handle)
                 {
-                    while (handle.IsValid)
+                    while (handle.State != RuntimeState.Complete)
                         await Task.Delay(10);
                 }
             }
@@ -179,16 +225,20 @@ namespace MB
             Stack<IEnumerator> Numerators;
             IAwaitable Awaitable;
 
-            internal State State { get; private set; }
+            internal RuntimeState State { get; private set; }
+            internal enum RuntimeState
+            {
+                Idle, Running, Stopping
+            }
 
             public event Action OnFinish;
 
             internal void Start(IEnumerator numerator)
             {
-                if (State != State.Idle)
+                if (State != RuntimeState.Idle)
                     throw new InvalidOperationException("Routine Already Started");
 
-                State = State.Active;
+                State = RuntimeState.Running;
 
                 Numerators.Push(numerator);
 
@@ -200,10 +250,10 @@ namespace MB
             internal void Stop() => TryStop();
             internal bool TryStop()
             {
-                if (State != State.Active)
+                if (State != RuntimeState.Running)
                     return false;
 
-                State = State.Stopping;
+                State = RuntimeState.Stopping;
                 return true;
             }
 
@@ -214,7 +264,7 @@ namespace MB
             }
             bool Evaluate()
             {
-                if (State == State.Stopping)
+                if (State == RuntimeState.Stopping)
                     return true;
 
                 if (Checker != null && Checker() == false)
@@ -243,7 +293,7 @@ namespace MB
                     }
                     else
                     {
-                        if (State == State.Stopping)
+                        if (State == RuntimeState.Stopping)
                             return true;
 
                         Numerators.Pop();
@@ -278,7 +328,7 @@ namespace MB
                     Awaitable = null;
                 }
 
-                State = State.Idle;
+                State = RuntimeState.Idle;
 
                 Pool<Processor>.Return(this);
             }
@@ -287,13 +337,8 @@ namespace MB
             {
                 ID = 0;
                 Numerators = new Stack<IEnumerator>();
-                State = State.Idle;
+                State = RuntimeState.Idle;
             }
-        }
-
-        internal enum State
-        {
-            Idle, Active, Stopping
         }
 
         public delegate bool CheckDelegate();
@@ -565,7 +610,7 @@ namespace MB
             {
                 public Handle handle;
 
-                public override bool Evaluate() => handle.IsValid == false;
+                public override bool Evaluate() => handle.State == Handle.RuntimeState.Complete;
             }
             public class WaitForAsyncOperation : Command<WaitForAsyncOperation>
             {
