@@ -22,7 +22,7 @@ using UnityEngine.Events;
 namespace MB
 {
     [AddComponentMenu(Toolbox.Paths.Rewind + "Animation Trigger Rewind")]
-    public class AnimationTriggerRewind : MonoBehaviour
+    public class AnimationTriggerRewind : MonobehaviourCallback.Processor<AnimationTriggerRewind>
     {
         public Dictionary<string, HashSet<Action>> Dictionary { get; private set; }
 
@@ -35,12 +35,12 @@ namespace MB
             if (Dictionary.TryGetValue(id, out var set))
             {
                 foreach (var callback in set)
-                    CallbackPool.Add(callback);
+                    CallbackCache.Add(callback);
 
-                for (int i = 0; i < CallbackPool.Count; i++)
-                    CallbackPool[i].Invoke();
+                for (int i = 0; i < CallbackCache.Count; i++)
+                    CallbackCache[i].Invoke();
 
-                CallbackPool.Clear();
+                CallbackCache.Clear();
             }
         }
 
@@ -68,13 +68,6 @@ namespace MB
         }
 
         //Static Utility
-        static List<Action> CallbackPool;
-
-        static AnimationTriggerRewind()
-        {
-            CallbackPool = new List<Action>();
-        }
-
-        public static AnimationTriggerRewind Retrieve(UObjectSurrogate target) => MonobehaviourCallback.Retrieve<AnimationTriggerRewind>(target);
+        static List<Action> CallbackCache = new List<Action>();
     }
 }

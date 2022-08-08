@@ -115,7 +115,8 @@ namespace MB
 
             #region Controls
             /// <summary>
-            /// Attach this routine to a GameObject so it can be stopped when said GameObject is disabled/destroyed
+            /// Attach this routine to a GameObject so it can be stopped when said GameObject is disabled/destroyed,
+            /// can only be called once
             /// </summary>
             /// <param name="behaviour"></param>
             /// <returns></returns>
@@ -133,7 +134,8 @@ namespace MB
             }
 
             /// <summary>
-            /// Add a constant running checking method, this method will cause the routine to stop if it returns false
+            /// Add a constant running checking method, this method will cause the routine to stop if it returns false,
+            /// can only be called once
             /// </summary>
             /// <param name="method"></param>
             /// <returns></returns>
@@ -147,7 +149,8 @@ namespace MB
             }
 
             /// <summary>
-            /// Register a callback for when this routine finishes executing
+            /// Register a callback for when this routine finishes executing,
+            /// can be called multiple times
             /// </summary>
             /// <param name="method"></param>
             /// <returns></returns>
@@ -160,7 +163,8 @@ namespace MB
             }
 
             /// <summary>
-            /// Starts the current routine, must be called explicitly when creating routines
+            /// Starts the current routine, must be called explicitly when creating routines,
+            /// must be called at least once
             /// </summary>
             public Handle Start()
             {
@@ -206,13 +210,13 @@ namespace MB
         {
             public ulong ID { get; private set; }
 
-            OnDisableCallback Callback;
+            MonobehaviourCallback.GameObject.Disable Callback;
             internal void Attach(GameObject gameObject)
             {
                 if (Callback != null)
                     throw new InvalidOperationException($"Routine Already has been Attached");
 
-                Callback = OnDisableCallback.Retrieve(gameObject);
+                Callback = MonobehaviourCallback.GameObject.Disable.Retrieve(gameObject);
                 Callback.Event += Stop;
             }
 
@@ -329,6 +333,8 @@ namespace MB
                 }
 
                 State = RuntimeState.Idle;
+
+                Runtime.OnProcess -= Process;
 
                 Pool<Processor>.Return(this);
             }

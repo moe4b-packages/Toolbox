@@ -66,14 +66,7 @@ namespace MB
         }
 #endif
 
-        public override string ToString()
-        {
-#if UNITY_EDITOR
-            return asset == null ? "null" : asset.name;
-#else
-            return registered ? id : "null";
-#endif
-        }
+        public override string ToString() => name;
 
 #if UNITY_EDITOR
         public MSceneAsset(Object asset)
