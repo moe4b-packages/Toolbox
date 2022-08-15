@@ -54,6 +54,16 @@ namespace MB
             }
 
             /// <summary>
+            /// Is this routine not finished?
+            /// </summary>
+            public bool IsProcessing => IsValid;
+
+            /// <summary>
+            /// Has this routine finished?
+            /// </summary>
+            public bool IsFinished => IsValid == false;
+
+            /// <summary>
             /// Current state of this handle and the routine it's referencing
             /// </summary>
             public RuntimeState State
@@ -192,7 +202,7 @@ namespace MB
                 return Procedure(this).GetAwaiter();
                 async Task Procedure(Handle handle)
                 {
-                    while (handle.State != RuntimeState.Complete)
+                    while (handle.IsProcessing)
                         await Task.Delay(10);
                 }
             }
@@ -616,7 +626,7 @@ namespace MB
             {
                 public Handle handle;
 
-                public override bool Evaluate() => handle.State == Handle.RuntimeState.Complete;
+                public override bool Evaluate() => handle.IsFinished;
             }
             public class WaitForAsyncOperation : Command<WaitForAsyncOperation>
             {
