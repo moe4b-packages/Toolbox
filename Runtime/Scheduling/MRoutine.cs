@@ -214,6 +214,11 @@ namespace MB
 
                 ID = processor.ID;
             }
+
+            /// <summary>
+            /// Returns a complete handle
+            /// </summary>
+            public static Handle Complete => new Handle();
         }
 
         internal class Processor
