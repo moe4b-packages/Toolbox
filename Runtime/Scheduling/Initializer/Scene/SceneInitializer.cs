@@ -74,9 +74,13 @@ namespace MB
         {
             public override void OnInspectorGUI()
             {
+                GUI.enabled = false;
+
                 EditorGUILayout.HelpBox("This component is auto created at scene build-time, please don't add by hand", MessageType.Warning);
 
                 base.OnInspectorGUI();
+
+                GUI.enabled = true;
             }
         }
 #endif
