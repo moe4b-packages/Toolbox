@@ -20,6 +20,11 @@ namespace MB
 		public abstract void Prewarm(int count);
 
 		/// <summary>
+		/// Destroy All Pooled Objects
+		/// </summary>
+		public abstract void Clear();
+
+		/// <summary>
 		/// Implement on Pool Object to Receive Lease & Return Callbacks
 		/// </summary>
 		public interface ICallback
@@ -45,6 +50,8 @@ namespace MB
 	{
 		public Stack<T> Stack { get; }
 
+		public List<T> All { get; }
+
 		public T Lease()
 		{
 			T instance;
@@ -59,14 +66,9 @@ namespace MB
 				instance = Spawn();
 			}
 
-			if (instance is ICallback pool) pool.OnLease();
+			if (instance is ICallback callback) callback.OnLease();
 	        
 			return instance;
-		}
-
-		void Enable(T instance)
-        {
-			instance.gameObject.SetActive(true);
 		}
 
 		int iterations;
@@ -79,13 +81,26 @@ namespace MB
 
 			var instance = gameObject.GetComponent<T>();
 
+			All.Add(instance);
+
 			if (instance is IInitialize<T> target) target.Initialize(this);
 
 			return instance;
 		}
 
+		public void Return(T instance)
+		{
+			if(instance is ICallback calback) calback.OnReturn();
+
+			Disable(instance);
+
+			Stack.Push(instance);
+		}
+
 		public override void Prewarm(int count)
 		{
+			All.EnsureExtraCapacity(count);
+
 			for (int i = 0; i < count; i++)
 			{
 				var item = Spawn();
@@ -94,23 +109,37 @@ namespace MB
 			}
 		}
 
-		public void Return(T instance)
+		void Enable(T instance)
 		{
-			if(instance is ICallback pool) pool.OnReturn();
-
-			Disable(instance);
-
-			Stack.Push(instance);
+			instance.gameObject.SetActive(true);
 		}
-
 		void Disable(T instance)
 		{
 			instance.gameObject.SetActive(false);
 		}
 
+		public override void Clear()
+		{
+            for (int i = 0; i < All.Count; i++)
+				Object.Destroy(All[i].gameObject);
+
+			All.Clear();
+			Stack.Clear();
+		}
+
 		public GameObjectPool()
 		{
 			Stack = new Stack<T>();
+			All = new List<T>();
+		}
+		public GameObjectPool(GameObject prefab, int count)
+        {
+			this.prefab = prefab;
+
+			Stack = new Stack<T>(count);
+			All = new List<T>(count);
+
+			Prewarm(count);
 		}
 	}
 }
