@@ -636,12 +636,7 @@ namespace MB
             if (list.Capacity < capacity)
                 list.Capacity = capacity;
         }
-
-        public static void EnsureExtraCapacity<T>(this List<T> list, int extra)
-        {
-            if (list.Capacity < list.Count + extra)
-                list.Capacity = list.Count + extra;
-        }
+        public static void EnsureExtraCapacity<T>(this List<T> list, int extra) => EnsureCapacity(list, list.Count + extra);
 
         public static IEnumerable<(T item, int index)> IterateWithIndex<T>(this IEnumerable<T> source)
         {
