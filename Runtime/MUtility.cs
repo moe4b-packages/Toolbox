@@ -298,26 +298,25 @@ namespace MB
         {
             var text = value.ToString();
 
-            var capacity = text.Length + CalculateExtraCapacity(text);
+            var capacity = CalculatePrettifyCapacity(text);
             var builder = new StringBuilder(capacity);
 
-            static int CalculateExtraCapacity(string text)
-            {
-                var value = 0;
-
-                for (int i = 0; i < text.Length; i++)
-                    if (char.IsUpper(text[i]) || char.IsDigit(text[i]))
-                        value += 1;
-
-                return value;
-            }
-
-            Prettify(text, builder);
+            PrettifyInternal(text, builder);
 
             return builder.ToString();
         }
+        public static void Prettify<T>(T value, StringBuilder builder)
+        {
+            var text = value.ToString();
 
-        public static void Prettify(string text, StringBuilder builder)
+            var capacity = CalculatePrettifyCapacity(text);
+
+            builder.EnsureExtraCapacity(capacity);
+
+            PrettifyInternal(text, builder);
+        }
+
+        static void PrettifyInternal(string text, StringBuilder builder)
         {
             builder.Append(text[0]);
 
@@ -352,6 +351,17 @@ namespace MB
             }
 
             builder.Append(text[^1]);
+        }
+
+        static int CalculatePrettifyCapacity(string text)
+        {
+            var value = text.Length;
+
+            for (int i = 0; i < text.Length; i++)
+                if (char.IsUpper(text[i]) || char.IsDigit(text[i]))
+                    value += 1;
+
+            return value;
         }
     }
     public static class TextExtensions
@@ -432,6 +442,8 @@ namespace MB
 
             return true;
         }
+
+        public static void EnsureExtraCapacity(this StringBuilder builder, int capacity) => builder.EnsureCapacity(builder.Length + capacity);
     }
 
     public abstract class PlatformUtility
@@ -654,12 +666,13 @@ namespace MB
             }
         }
 
-        public static void EnsureCapacity<T>(this List<T> list, int capacity)
+        public static void EnsureExtraCapacity<T>(this List<T> list, int capacity)
         {
+            capacity += list.Count;
+
             if (list.Capacity < capacity)
                 list.Capacity = capacity;
         }
-        public static void EnsureExtraCapacity<T>(this List<T> list, int extra) => EnsureCapacity(list, list.Count + extra);
 
         public static IEnumerable<(T item, int index)> IterateWithIndex<T>(this IEnumerable<T> source)
         {

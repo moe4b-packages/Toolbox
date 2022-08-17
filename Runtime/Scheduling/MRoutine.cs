@@ -444,7 +444,7 @@ namespace MB
                 var instance = Command.WaitForAllOperation.Lease();
 
                 var list = instance.list;
-                list.EnsureCapacity(2);
+                list.EnsureExtraCapacity(2);
 
                 TryAddAll(ref list, target1);
                 TryAddAll(ref list, target2);
@@ -456,7 +456,7 @@ namespace MB
                 var instance = Command.WaitForAllOperation.Lease();
 
                 var list = instance.list;
-                list.EnsureCapacity(3);
+                list.EnsureExtraCapacity(3);
 
                 TryAddAll(ref list, target1);
                 TryAddAll(ref list, target2);
@@ -469,7 +469,7 @@ namespace MB
                 var instance = Command.WaitForAllOperation.Lease();
 
                 var list = instance.list;
-                list.EnsureCapacity(4);
+                list.EnsureExtraCapacity(4);
 
                 TryAddAll(ref list, target1);
                 TryAddAll(ref list, target2);
@@ -484,7 +484,7 @@ namespace MB
                 var instance = Command.WaitForAllOperation.Lease();
 
                 var list = instance.list;
-                list.EnsureCapacity(targets.Length);
+                list.EnsureExtraCapacity(targets.Length);
 
                 for (int i = 0; i < targets.Length; i++)
                 {
