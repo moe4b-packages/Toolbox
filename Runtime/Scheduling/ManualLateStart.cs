@@ -41,7 +41,7 @@ namespace MB
         {
             Queue = new Queue<Action>();
 
-            MUtility.RegisterPlayerLoop<PreLateUpdate>(PreLateUpdate);
+            MUtility.PlayerLoop.Register<PreLateUpdate>(PreLateUpdate);
         }
     }
 }

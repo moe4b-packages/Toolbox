@@ -37,7 +37,7 @@ namespace MB
 
 		public static void Initialize()
 		{
-			MUtility.RegisterPlayerLoop<Update>(Update);
+			MUtility.PlayerLoop.Register<Update>(Update);
 		}
 
 		static void Update()

@@ -25,77 +25,109 @@ namespace MB
     /// </summary>
     public static partial class MUtility
     {
-        public static class GUICoordinates
+        public abstract class GUI : GUIUtility { }
+
+        [MenuItem("GameObject/Mark All Dirty")]
+        public static void MarkAllDirty()
         {
-            public static Rect[] SplitHorizontally(Rect rect, float padding, int segments)
+            foreach (var gameObject in Selection.gameObjects)
             {
-                var percentages = new float[segments];
+                MUtility.Unity.SetDirty(gameObject);
 
-                for (int i = 0; i < percentages.Length; i++)
-                    percentages[i] = 100 / segments;
-
-                return SplitHorizontally(rect, padding, percentages);
-            }
-            public static Rect[] SplitHorizontally(Rect rect, float padding, params float[] cuts)
-            {
-                padding /= 2f;
-
-                var areas = new Rect[cuts.Length];
-
-                var width = rect.width;
-                var x = rect.x;
-
-                for (int i = 0; i < areas.Length; i++)
+                foreach (var behaviour in gameObject.GetComponentsInChildren<Component>(true))
                 {
-                    var span = (width * cuts[i] / 100f);
-
-                    areas[i] = new Rect(x + padding, rect.y, span - padding, rect.height);
-
-                    x += span;
+                    MUtility.Unity.SetDirty(behaviour);
                 }
-
-                return areas;
-            }
-
-            public static Rect SliceLine(ref Rect rect) => SliceLine(ref rect, EditorGUIUtility.singleLineHeight);
-            public static Rect SliceLine(ref Rect rect, float height)
-            {
-                var area = new Rect(rect.x, rect.y, rect.width, height);
-
-                rect.yMin += height;
-
-                return area;
-            }
-
-            public static Rect SliceHorizontal(ref Rect rect, float width)
-            {
-                var area = new Rect(rect.x, rect.y, width, rect.height);
-
-                rect.xMin += width;
-
-                return area;
-            }
-            public static Rect SliceHorizontalPercentage(ref Rect rect, float percentage)
-            {
-                var width = rect.width * (percentage / 100);
-
-                return SliceHorizontal(ref rect, width);
             }
         }
     }
 
-    public static partial class MUtilityExtensions
+    #region Sub-Classes
+    public abstract class GUIUtility
     {
-        #region IO
+        public static Rect[] SplitHorizontally(Rect rect, float padding, int segments)
+        {
+            var percentages = new float[segments];
+
+            for (int i = 0; i < percentages.Length; i++)
+                percentages[i] = 100 / segments;
+
+            return SplitHorizontally(rect, padding, percentages);
+        }
+        public static Rect[] SplitHorizontally(Rect rect, float padding, params float[] cuts)
+        {
+            padding /= 2f;
+
+            var areas = new Rect[cuts.Length];
+
+            var width = rect.width;
+            var x = rect.x;
+
+            for (int i = 0; i < areas.Length; i++)
+            {
+                var span = (width * cuts[i] / 100f);
+
+                areas[i] = new Rect(x + padding, rect.y, span - padding, rect.height);
+
+                x += span;
+            }
+
+            return areas;
+        }
+
+        public static Rect SliceLine(ref Rect rect) => SliceLine(ref rect, EditorGUIUtility.singleLineHeight);
+        public static Rect SliceLine(ref Rect rect, float height)
+        {
+            var area = new Rect(rect.x, rect.y, rect.width, height);
+
+            rect.yMin += height;
+
+            return area;
+        }
+
+        public static Rect SliceHorizontal(ref Rect rect, float width)
+        {
+            var area = new Rect(rect.x, rect.y, width, rect.height);
+
+            rect.xMin += width;
+
+            return area;
+        }
+        public static Rect SliceHorizontalPercentage(ref Rect rect, float percentage)
+        {
+            var width = rect.width * (percentage / 100);
+
+            return SliceHorizontal(ref rect, width);
+        }
+    }
+    public static class GUIExtensions
+    {
+        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction function)
+        {
+            var content = new GUIContent(text);
+
+            menu.AddItem(content, on, function);
+        }
+        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction2 function, object data)
+        {
+            var content = new GUIContent(text);
+
+            menu.AddItem(content, on, function, data);
+        }
+    }
+
+    public static class IOExtensions
+    {
         public static void WriteText(this TextAsset asset, string contents)
         {
             var path = AssetDatabase.GetAssetPath(asset);
 
             File.WriteAllText(path, contents);
         }
-        #endregion
+    }
 
-        #region Serialization
+    public static class SerializationExtensions
+    {
         public static IEnumerable<SerializedProperty> IterateChildren(this SerializedObject target)
         {
             var iterator = target.GetIterator();
@@ -112,7 +144,7 @@ namespace MB
 
         public static string GetEnumValueName(this SerializedProperty property)
         {
-            if (property.enumDisplayNames.ValidateCollectionBounds(property.enumValueIndex))
+            if (property.enumDisplayNames.ValidateBounds(property.enumValueIndex))
                 return property.enumDisplayNames[property.enumValueIndex];
 
             return $"Undefined: {property.intValue}";
@@ -134,36 +166,7 @@ namespace MB
         {
             return property.serializedObject.targetObjects.Length > 1;
         }
-        #endregion
-
-        #region Generic Menu
-        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction function)
-        {
-            var content = new GUIContent(text);
-
-            menu.AddItem(content, on, function);
-        }
-        public static void AddItem(this GenericMenu menu, string text, bool on, GenericMenu.MenuFunction2 function, object data)
-        {
-            var content = new GUIContent(text);
-
-            menu.AddItem(content, on, function, data);
-        }
-        #endregion
-
-        [MenuItem("GameObject/Mark All Dirty")]
-        public static void MarkAllDirty()
-        {
-            foreach (var gameObject in Selection.gameObjects)
-            {
-                MUtility.SetDirty(gameObject);
-
-                foreach (var behaviour in gameObject.GetComponentsInChildren<Component>(true))
-                {
-                    MUtility.SetDirty(behaviour);
-                }
-            }
-        }
     }
+    #endregion
 }
 #endif

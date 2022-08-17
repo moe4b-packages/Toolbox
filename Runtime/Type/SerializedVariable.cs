@@ -124,7 +124,7 @@ namespace MB
                     }
                     else
                     {
-                        var area = MUtility.GUICoordinates.SliceLine(ref rect);
+                        var area = MUtility.GUI.SliceLine(ref rect);
 
                         EditorGUI.BeginChangeCheck();
                         EditorGUI.PropertyField(area, context, label);
@@ -140,7 +140,7 @@ namespace MB
                 //Dropdown
                 if (context.objectReferenceValue != null)
                 {
-                    var area = MUtility.GUICoordinates.SliceLine(ref rect);
+                    var area = MUtility.GUI.SliceLine(ref rect);
 
                     if (local)
                         area = EditorGUI.PrefixLabel(area, label);

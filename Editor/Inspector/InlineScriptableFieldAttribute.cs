@@ -40,7 +40,7 @@ namespace MB
 
 			public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
 			{
-				var line = MUtility.GUICoordinates.SliceLine(ref rect);
+				var line = MUtility.GUI.SliceLine(ref rect);
 				
 				if (property.objectReferenceValue is ScriptableObject asset)
 				{
@@ -49,7 +49,7 @@ namespace MB
 					
 					if (property.isExpanded)
 					{
-						MUtility.GUICoordinates.SliceLine(ref rect, TopOffset);
+						MUtility.GUI.SliceLine(ref rect, TopOffset);
 					
 						EditorGUI.indentLevel++;
 						rect = EditorGUI.IndentedRect(rect);
@@ -87,7 +87,7 @@ namespace MB
 				foreach (var child in SerializedObject.IterateChildren())
 				{
 					var height = EditorGUI.GetPropertyHeight(child, true);
-					var area = MUtility.GUICoordinates.SliceLine(ref rect, height);
+					var area = MUtility.GUI.SliceLine(ref rect, height);
 
 					EditorGUI.PropertyField(area, child, true);
 				}

@@ -35,13 +35,290 @@ namespace MB
     /// </summary>
     public static partial class MUtility
     {
-        public static string PrettifyName<T>(T value)
+        public abstract class Bounds : BoundsUtility { }
+        public abstract class Layer : LayerUtility { }
+        public abstract class PlayerLoop : PlayerLoopUtility { }
+        public abstract class Audio : AudioUtility { }
+        public abstract class Process : ProcessUtility { }
+        public abstract class Type : TypeUtility { }
+        public abstract class Text : TextUtility { }
+        public abstract class Platform : PlatformUtility { }
+        public abstract class Collections : CollectionsUtility { }
+        public abstract class Thread : ThreadUtility { }
+        public abstract class Exception : ExceptionUtility { }
+        public abstract class Unity : UnityUtility { }
+    }
+
+    #region Sub-Classes
+    public abstract class BoundsUtility
+    {
+        public static Bounds CalculateRenderer(UObjectSurrogate surrogate) => CalculateRenderer(surrogate, true);
+        public static Bounds CalculateRenderer(UObjectSurrogate surrogate, bool includeInactive)
+        {
+            var targets = surrogate.GameObject.GetComponentsInChildren<Renderer>(includeInactive);
+
+            Bounds Extract(Renderer renderer) => renderer.bounds;
+
+            return Calculate(surrogate, targets, Extract);
+        }
+
+        public static Bounds CalculateCollider(UObjectSurrogate surrogate) => CalculateCollider(surrogate, true);
+        public static Bounds CalculateCollider(UObjectSurrogate surrogate, bool includeInactive)
+        {
+            var targets = surrogate.GameObject.GetComponentsInChildren<Collider>(includeInactive);
+
+            Bounds Extract(Collider renderer) => renderer.bounds;
+
+            return Calculate(surrogate, targets, Extract);
+        }
+
+        public static Bounds CalculateCollider2D(UObjectSurrogate surrogate) => CalculateCollider(surrogate, true);
+        public static Bounds CalculateCollider2D(UObjectSurrogate surrogate, bool includeInactive)
+        {
+            var targets = surrogate.GameObject.GetComponentsInChildren<Collider2D>(includeInactive);
+
+            Bounds Extract(Collider2D renderer) => renderer.bounds;
+
+            return Calculate(surrogate, targets, Extract);
+        }
+
+        public static Bounds Calculate<T>(Transform transform, IList<T> list, Func<T, Bounds> extract)
+        {
+            if (list.Count == 0)
+                return new Bounds(transform.position, Vector3.zero);
+
+            var bound = extract(list[0]);
+
+            for (int i = 1; i < list.Count; i++)
+            {
+                var context = extract(list[i]);
+
+                bound.Encapsulate(context);
+            }
+
+            return bound;
+        }
+    }
+
+    public abstract class LayerUtility
+    {
+        public static void Set(UObjectSurrogate surrogate, string name)
+        {
+            var index = LayerMask.NameToLayer(name);
+
+            Set(surrogate, index);
+        }
+
+        public static void Set(UObjectSurrogate surrogate, int index)
+        {
+            surrogate.GameObject.layer = index;
+
+            for (int i = 0; i < surrogate.Transform.childCount; i++)
+                Set(surrogate.Transform.GetChild(i), index);
+        }
+    }
+
+    public abstract class PlayerLoopUtility
+    {
+        public static void Register<TType>(PlayerLoopSystem.UpdateFunction callback)
+        {
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+
+            var index = Locate<TType>(ref loop);
+
+            if (index == -1)
+                throw new Exception($"No PlayerLoop Entry Found for {typeof(TType)}");
+
+            loop.subSystemList[index].updateDelegate += callback;
+
+            PlayerLoop.SetPlayerLoop(loop);
+
+            Application.quitting += () => Unregister<TType>(callback);
+        }
+
+        public static int Locate<TType>(ref PlayerLoopSystem loop)
+        {
+            for (int i = 0; i < loop.subSystemList.Length; ++i)
+                if (loop.subSystemList[i].type == typeof(TType))
+                    return i;
+
+            return -1;
+        }
+
+        public static bool Unregister<TType>(PlayerLoopSystem.UpdateFunction callback)
+        {
+            var loop = PlayerLoop.GetCurrentPlayerLoop();
+
+            var index = Locate<TType>(ref loop);
+
+            if (index == -1) return false;
+
+            loop.subSystemList[index].updateDelegate -= callback;
+
+            PlayerLoop.SetPlayerLoop(loop);
+            return true;
+        }
+    }
+
+    public abstract class AudioUtility
+    {
+        public static float LinearToDecibel(float linear)
+        {
+            if (linear == 0)
+                return -144.0f;
+            else
+                return Mathf.Log10(linear) * 20.0f;
+        }
+
+        public static float DecibelToLinear(float dB)
+        {
+            return Mathf.Pow(10.0f, dB / 20.0f);
+        }
+    }
+
+    public abstract class ProcessUtility
+    {
+        public static string FormatArguments(params string[] arguments)
+        {
+            const char Marker = '"';
+
+            if (arguments.Length == 0) return "";
+
+            using (DisposablePool.StringBuilder.Lease(out var builder))
+            {
+                for (int i = 0; i < arguments.Length; i++)
+                {
+                    var argument = $"{Marker}{arguments[i]}{Marker}";
+                    builder.Append(argument);
+
+                    if (i < arguments.Length - 1) builder.Append(' ');
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        public static ProcessStartInfo FormatSystemCommand(string command)
+        {
+            var info = new ProcessStartInfo();
+
+            switch (Application.platform)
+            {
+                //Windows
+                case RuntimePlatform.WindowsEditor:
+                case RuntimePlatform.WindowsPlayer:
+                case RuntimePlatform.WindowsServer:
+                {
+                    info.FileName = "cmd.exe";
+
+                    command = FormatArguments(command);
+                    info.Arguments = $"/C {command}";
+
+                    return info;
+                }
+
+                //Linux
+                case RuntimePlatform.LinuxEditor:
+                case RuntimePlatform.LinuxPlayer:
+                case RuntimePlatform.LinuxServer:
+                {
+                    info.FileName = "/bin/bash";
+
+                    command = command.Replace(@"\", @"/");
+                    command = FormatArguments(command);
+                    info.Arguments = $"-c {command}";
+
+                    return info;
+                }
+
+                //OSX
+                case RuntimePlatform.OSXEditor:
+                case RuntimePlatform.OSXPlayer:
+                case RuntimePlatform.OSXServer:
+                {
+                    break;
+                }
+            }
+
+            throw new Exception($"Unsupported Platform: {Application.platform}");
+        }
+    }
+
+    public abstract class TypeUtility
+    {
+        public static IEnumerable<Type> IterateHierarchy(Type type)
+        {
+            while (true)
+            {
+                yield return type;
+
+                type = type.BaseType;
+
+                if (type == null) break;
+            }
+        }
+
+        public static IEnumerable<Type> IterateNesting(Type type)
+        {
+            while (true)
+            {
+                yield return type;
+
+                type = type.DeclaringType;
+
+                if (type == null) break;
+            }
+        }
+
+        public static Type GetCollectionArgument(Type type)
+        {
+            if (type.IsArray)
+                return type.GetElementType();
+
+            if (type.IsGenericType)
+                return type.GetGenericArguments()[0];
+
+            throw new ArgumentException();
+        }
+    }
+    public static class TypeExtensions
+    {
+        public static bool IsAssignableFrom(this Type type, object target)
+        {
+            if (target == null) return false;
+
+            return type.IsAssignableFrom(target.GetType());
+        }
+        public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
+    }
+
+    public abstract class TextUtility
+    {
+        public static string Prettify<T>(T value)
         {
             var text = value.ToString();
 
             var capacity = text.Length + CalculateExtraCapacity(text);
             var builder = new StringBuilder(capacity);
 
+            static int CalculateExtraCapacity(string text)
+            {
+                var value = 0;
+
+                for (int i = 0; i < text.Length; i++)
+                    if (char.IsUpper(text[i]) || char.IsDigit(text[i]))
+                        value += 1;
+
+                return value;
+            }
+
+            Prettify(text, builder);
+
+            return builder.ToString();
+        }
+
+        public static void Prettify(string text, StringBuilder builder)
+        {
             builder.Append(text[0]);
 
             for (int i = 1; i < text.Length - 1; i++)
@@ -75,22 +352,91 @@ namespace MB
             }
 
             builder.Append(text[^1]);
+        }
+    }
+    public static class TextExtensions
+    {
+        public static string ToPrettyString<T>(this T value) => MUtility.Text.Prettify(value);
+
+        public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
+        public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
+        public static string Join(this IEnumerable<string> collection) => Join(collection, "");
+
+        public static string Remove(this string text, params string[] phrases)
+        {
+            var builder = new StringBuilder(text);
+
+            for (int i = 0; i < phrases.Length; i++)
+                builder.Replace(phrases[i], string.Empty);
 
             return builder.ToString();
+        }
+        public static string Remove(this string text, params char[] characters)
+        {
+            var set = new HashSet<char>(characters);
 
-            static int CalculateExtraCapacity(string text)
+            var builder = new StringBuilder(text.Length);
+
+            for (int i = 0; i < text.Length; i++)
             {
-                var value = 0;
+                if (set.Contains(text[i]))
+                    continue;
 
-                for (int i = 0; i < text.Length; i++)
-                    if (char.IsUpper(text[i]) || char.IsDigit(text[i]))
-                        value += 1;
-
-                return value;
+                builder.Append(text[i]);
             }
+
+            return builder.ToString();
         }
 
-        public static RuntimePlatform CheckPlatform()
+        public static string Between(this string text, int start, int end) => text.Substring(start, end - start);
+
+        public static string RemovePrefix(this string text, string prefix)
+        {
+            if (text.StartsWith(prefix))
+            {
+                return text.Substring(prefix.Length, text.Length - prefix.Length);
+            }
+
+            return text;
+        }
+        public static string RemoveSuffix(this string text, string suffix)
+        {
+            if (text.EndsWith(suffix))
+                return text.Substring(0, text.Length - suffix.Length);
+
+            return text;
+        }
+
+        public static bool BeginsWith(this string text, char character) => text[0] == character;
+        public static bool BeginsWith(this string text, string target)
+        {
+            if (target.Length > text.Length) return false;
+
+            for (int i = 0; i < target.Length; i++)
+                if (text[i] != target[i])
+                    return false;
+
+            return true;
+        }
+
+        public static bool EndsWith(this string text, char character) => text[text.Length - 1] == character;
+        public static bool EndsWith(this string text, string target)
+        {
+            if (target.Length > text.Length) return false;
+
+            var offset = text.Length - target.Length;
+
+            for (int i = 0; i < target.Length; i++)
+                if (text[i + offset] != target[i])
+                    return false;
+
+            return true;
+        }
+    }
+
+    public abstract class PlatformUtility
+    {
+        public static RuntimePlatform Check()
         {
 #if UNITY_EDITOR
             switch (EditorUserBuildSettings.activeBuildTarget)
@@ -141,116 +487,11 @@ namespace MB
 
             return Application.platform;
         }
+    }
 
-        #region Player Loop
-        public static void RegisterPlayerLoop<TType>(PlayerLoopSystem.UpdateFunction callback)
-        {
-            var loop = PlayerLoop.GetCurrentPlayerLoop();
-
-            var index = LocatePlayerLoop<TType>(ref loop);
-
-            if (index == -1)
-                throw new Exception($"No PlayerLoop Entry Found for {typeof(TType)}");
-
-            loop.subSystemList[index].updateDelegate += callback;
-
-            PlayerLoop.SetPlayerLoop(loop);
-
-            Application.quitting += () => UnregisterPlayerLoop<TType>(callback);
-        }
-
-        public static int LocatePlayerLoop<TType>(ref PlayerLoopSystem loop)
-        {
-            for (int i = 0; i < loop.subSystemList.Length; ++i)
-                if (loop.subSystemList[i].type == typeof(TType))
-                    return i;
-
-            return -1;
-        }
-
-        public static bool UnregisterPlayerLoop<TType>(PlayerLoopSystem.UpdateFunction callback)
-        {
-            var loop = PlayerLoop.GetCurrentPlayerLoop();
-
-            var index = LocatePlayerLoop<TType>(ref loop);
-
-            if (index == -1) return false;
-
-            loop.subSystemList[index].updateDelegate -= callback;
-
-            PlayerLoop.SetPlayerLoop(loop);
-            return true;
-        }
-        #endregion
-
-        #region Calculate Bounds
-        public static Bounds CalculateRendererBounds(UObjectSurrogate surrogate) => CalculateRendererBounds(surrogate, true);
-        public static Bounds CalculateRendererBounds(UObjectSurrogate surrogate, bool includeInactive)
-        {
-            var targets = surrogate.GameObject.GetComponentsInChildren<Renderer>(includeInactive);
-
-            Bounds Extract(Renderer renderer) => renderer.bounds;
-
-            return CalculateBounds(surrogate, targets, Extract);
-        }
-
-        public static Bounds CalculateColliderBounds(UObjectSurrogate surrogate) => CalculateColliderBounds(surrogate, true);
-        public static Bounds CalculateColliderBounds(UObjectSurrogate surrogate, bool includeInactive)
-        {
-            var targets = surrogate.GameObject.GetComponentsInChildren<Collider>(includeInactive);
-
-            Bounds Extract(Collider renderer) => renderer.bounds;
-
-            return CalculateBounds(surrogate, targets, Extract);
-        }
-
-        public static Bounds CalculateCollider2DBounds(UObjectSurrogate surrogate) => CalculateColliderBounds(surrogate, true);
-        public static Bounds CalculateCollider2DBounds(UObjectSurrogate surrogate, bool includeInactive)
-        {
-            var targets = surrogate.GameObject.GetComponentsInChildren<Collider2D>(includeInactive);
-
-            Bounds Extract(Collider2D renderer) => renderer.bounds;
-
-            return CalculateBounds(surrogate, targets, Extract);
-        }
-
-        public static Bounds CalculateBounds<T>(Transform transform, IList<T> list, Func<T, Bounds> extract)
-        {
-            if (list.Count == 0)
-                return new Bounds(transform.position, Vector3.zero);
-
-            var bound = extract(list[0]);
-
-            for (int i = 1; i < list.Count; i++)
-            {
-                var context = extract(list[i]);
-
-                bound.Encapsulate(context);
-            }
-
-            return bound;
-        }
-        #endregion
-
-        #region Layer
-        public static void SetLayer(UObjectSurrogate surrogate, string name)
-        {
-            var index = LayerMask.NameToLayer(name);
-
-            SetLayer(surrogate, index);
-        }
-
-        public static void SetLayer(UObjectSurrogate surrogate, int index)
-        {
-            surrogate.GameObject.layer = index;
-
-            for (int i = 0; i < surrogate.Transform.childCount; i++)
-                SetLayer(surrogate.Transform.GetChild(i), index);
-        }
-        #endregion
-
-        #region Collections
-        public static bool ValidateIndexBounds(int length, int index)
+    public abstract class CollectionsUtility
+    {
+        public static bool ValidateBounds(int length, int index)
         {
             if (index < 0 || index + 1 > length) return false;
 
@@ -283,227 +524,9 @@ namespace MB
 
             return true;
         }
-        #endregion
-
-        #region Audio
-        public static float LinearToDecibel(float linear)
-        {
-            if (linear == 0)
-                return -144.0f;
-            else
-                return Mathf.Log10(linear) * 20.0f;
-        }
-
-        public static float DecibelToLinear(float dB)
-        {
-            return Mathf.Pow(10.0f, dB / 20.0f);
-        }
-        #endregion
-
-        #region Unity Object
-        public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
-        {
-            var transform = surrogate.Transform;
-
-            var builder = new StringBuilder();
-
-            builder.Append(transform.name);
-
-            transform = transform.parent;
-
-            while (transform != null)
-            {
-                builder.Insert(0, seperator);
-                builder.Insert(0, transform.name);
-
-                transform = transform.parent;
-            }
-
-            return builder.ToString();
-        }
-
-        public static IEnumerable<Transform> IterateTransformHierarchy(UObjectSurrogate surrogate)
-        {
-            var transform = surrogate.Transform;
-
-            for (int i = 0; i < transform.childCount; i++)
-            {
-                var context = transform.GetChild(i);
-
-                yield return context;
-
-                if (context.childCount > 0)
-                {
-                    foreach (var child in IterateTransformHierarchy(context))
-                    {
-                        yield return child;
-                    }
-                }
-            }
-        }
-        #endregion
-
-        #region Types
-        public static IEnumerable<Type> IterateTypeHierarchy(Type type)
-        {
-            while (true)
-            {
-                yield return type;
-
-                type = type.BaseType;
-
-                if (type == null) break;
-            }
-        }
-
-        public static IEnumerable<Type> IterateTypeNesting(Type type)
-        {
-            while (true)
-            {
-                yield return type;
-
-                type = type.DeclaringType;
-
-                if (type == null) break;
-            }
-        }
-
-        public static Type GetCollectionArgument(Type type)
-        {
-            if (type.IsArray)
-                return type.GetElementType();
-
-            if (type.IsGenericType)
-                return type.GetGenericArguments()[0];
-
-            throw new ArgumentException();
-        }
-        #endregion
-
-        #region Threading
-        public static Thread ASyncThread(Func<Task> function)
-        {
-            void Run() => function().Wait();
-
-            return new Thread(Run);
-        }
-        #endregion
-
-        #region Exception
-        public static Exception FormatDependencyException<TDependency>(object dependent)
-        {
-            var text = $"Invalid Dependency of {typeof(TDependency)} by {dependent}";
-
-            return new Exception(text);
-        }
-        #endregion
-
-        #region Process
-        public static string FormatProcessArguments(params string[] arguments)
-        {
-            const char Marker = '"';
-
-            if (arguments.Length == 0) return "";
-
-            using (DisposablePool.StringBuilder.Lease(out var builder))
-            {
-                for (int i = 0; i < arguments.Length; i++)
-                {
-                    var argument = $"{Marker}{arguments[i]}{Marker}";
-                    builder.Append(argument);
-
-                    if (i < arguments.Length - 1) builder.Append(' ');
-                }
-
-                return builder.ToString();
-            }
-        }
-
-        public static ProcessStartInfo FormatSystemCommand(string command)
-        {
-            var info = new ProcessStartInfo();
-
-            switch (Application.platform)
-            {
-                //Windows
-                case RuntimePlatform.WindowsEditor:
-                case RuntimePlatform.WindowsPlayer:
-                case RuntimePlatform.WindowsServer:
-                    {
-                        info.FileName = "cmd.exe";
-
-                        command = FormatProcessArguments(command);
-                        info.Arguments = $"/C {command}";
-
-                        return info;
-                    }
-
-                //Linux
-                case RuntimePlatform.LinuxEditor:
-                case RuntimePlatform.LinuxPlayer:
-                case RuntimePlatform.LinuxServer:
-                    {
-                        info.FileName = "/bin/bash";
-
-                        command = command.Replace(@"\", @"/");
-                        command = FormatProcessArguments(command);
-                        info.Arguments = $"-c {command}";
-
-                        return info;
-                    }
-
-                //OSX
-                case RuntimePlatform.OSXEditor:
-                case RuntimePlatform.OSXPlayer:
-                case RuntimePlatform.OSXServer:
-                    {
-                        break;
-                    }
-            }
-
-            throw new Exception($"Unsupported Platform: {Application.platform}");
-        }
-        #endregion
-
-        public static void SetDirty(Object target)
-        {
-#if UNITY_EDITOR
-            EditorUtility.SetDirty(target);
-#endif
-        }
     }
-
-    public static partial class MUtilityExtensions
+    public static class CollectionsExtensions
     {
-        public static string ToPrettyString<T>(this T value) => MUtility.PrettifyName(value);
-
-        #region Color
-        public static Color SetAlpha(this Color color, float value)
-        {
-            color.a = value;
-
-            return color;
-        }
-        #endregion
-
-        #region Transform
-        public static string GetHierarchyPath(this Transform transform) => MUtility.GetHierarchyPath(transform);
-        #endregion
-
-        #region Delegate
-        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method)
-            where TDelegate : Delegate
-        {
-            return method.CreateDelegate(typeof(TDelegate)) as TDelegate;
-        }
-        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method, object target)
-            where TDelegate : Delegate
-        {
-            return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
-        }
-        #endregion
-
-        #region Collections
         /// <summary>
         /// Returns element at index, or returns default if index out of bounds
         /// </summary>
@@ -511,9 +534,9 @@ namespace MB
         /// <param name="collection"></param>
         /// <param name="index"></param>
         /// <returns></returns>
-        public static T SafeIndexer<T>(this IList<T> collection, int index)
+        public static T SafeIndex<T>(this IList<T> collection, int index)
         {
-            return SafeIndexer(collection, index, default);
+            return SafeIndex(collection, index, default);
         }
         /// <summary>
         /// Returns element at index, or returns fallback if index out of bounds
@@ -523,16 +546,16 @@ namespace MB
         /// <param name="index"></param>
         /// <param name="fallback"></param>
         /// <returns></returns>
-        public static T SafeIndexer<T>(this IList<T> collection, int index, T fallback)
+        public static T SafeIndex<T>(this IList<T> collection, int index, T fallback)
         {
-            if (ValidateCollectionBounds(collection, index) == false) return fallback;
+            if (ValidateBounds(collection, index) == false) return fallback;
 
             return collection[index];
         }
 
         public static bool TryGet<T>(this IList<T> collection, int index, out T value)
         {
-            if (collection.ValidateCollectionBounds(index) == false)
+            if (collection.ValidateBounds(index) == false)
             {
                 value = default;
                 return false;
@@ -542,12 +565,12 @@ namespace MB
             return true;
         }
 
-        public static bool ValidateCollectionBounds<T>(this ICollection<T> collection, int index)
+        public static bool ValidateBounds<T>(this ICollection<T> collection, int index)
         {
-            return MUtility.ValidateIndexBounds(collection.Count, index);
+            return MUtility.Collections.ValidateBounds(collection.Count, index);
         }
 
-        public static T GetRandomElement<T>(this IList<T> list)
+        public static T GetRandom<T>(this IList<T> list)
         {
             var index = Random.Range(0, list.Count);
 
@@ -556,7 +579,7 @@ namespace MB
 
         public static void SetOrAdd<T>(this List<T> list, int index, T item)
         {
-            while (list.ValidateCollectionBounds(index) == false)
+            while (list.ValidateBounds(index) == false)
                 list.Add(default);
 
             list[index] = item;
@@ -669,102 +692,82 @@ namespace MB
                 }
             }
         }
-        #endregion
+    }
 
-        #region String
-        public static string Join(this IEnumerable<string> collection, string seperator) => string.Join(seperator, collection);
-        public static string Join(this IEnumerable<string> collection, char seperator) => Join(collection, seperator.ToString());
-        public static string Join(this IEnumerable<string> collection) => Join(collection, "");
-
-        public static string Remove(this string text, params string[] phrases)
+    public abstract class ThreadUtility
+    {
+        public static Thread ASyncThread(Func<Task> function)
         {
-            var builder = new StringBuilder(text);
+            void Run() => function().Wait();
 
-            for (int i = 0; i < phrases.Length; i++)
-                builder.Replace(phrases[i], string.Empty);
+            return new Thread(Run);
+        }
+    }
 
+    public abstract class ExceptionUtility
+    {
+        public static Exception FormatDependencyException<TDependency>(object dependent)
+        {
+            var text = $"Invalid Dependency of {typeof(TDependency)} by {dependent}";
+
+            return new Exception(text);
+        }
+    }
+
+    public abstract class UnityUtility
+    {
+        public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
+        {
+            var builder = new StringBuilder();
+            GetHierarchyPath(surrogate, builder, seperator);
             return builder.ToString();
         }
-        public static string Remove(this string text, params char[] characters)
+        public static void GetHierarchyPath(UObjectSurrogate surrogate, StringBuilder builder, string seperator = "/")
         {
-            var set = new HashSet<char>(characters);
+            var transform = surrogate.Transform;
 
-            var builder = new StringBuilder(text.Length);
+            builder.Append(transform.name);
 
-            for (int i = 0; i < text.Length; i++)
+            transform = transform.parent;
+
+            while (transform != null)
             {
-                if (set.Contains(text[i]))
-                    continue;
+                builder.Insert(0, seperator);
+                builder.Insert(0, transform.name);
 
-                builder.Append(text[i]);
+                transform = transform.parent;
             }
-
-            return builder.ToString();
         }
 
-        public static string Between(this string text, int start, int end) => text.Substring(start, end - start);
-
-        public static string RemovePrefix(this string text, string prefix)
+        public static IEnumerable<Transform> IterateHierarchy(UObjectSurrogate surrogate)
         {
-            if(text.StartsWith(prefix))
+            var transform = surrogate.Transform;
+
+            for (int i = 0; i < transform.childCount; i++)
             {
-                return text.Substring(prefix.Length, text.Length - prefix.Length);
+                var context = transform.GetChild(i);
+
+                yield return context;
+
+                if (context.childCount > 0)
+                {
+                    foreach (var child in IterateHierarchy(context))
+                    {
+                        yield return child;
+                    }
+                }
             }
-
-            return text;
         }
-        public static string RemoveSuffix(this string text, string suffix)
+
+        public static void SetDirty(Object target)
         {
-            if (text.EndsWith(suffix))
-                return text.Substring(0, text.Length - suffix.Length);
-
-            return text;
+#if UNITY_EDITOR
+            EditorUtility.SetDirty(target);
+#endif
         }
-
-        public static bool BeginsWith(this string text, char character) => text[0] == character;
-        public static bool BeginsWith(this string text, string target)
-        {
-            if (target.Length > text.Length) return false;
-
-            for (int i = 0; i < target.Length; i++)
-                if (text[i] != target[i])
-                    return false;
-
-            return true;
-        }
-
-        public static bool EndsWith(this string text, char character) => text[text.Length - 1] == character;
-        public static bool EndsWith(this string text, string target)
-        {
-            if (target.Length > text.Length) return false;
-
-            var offset = text.Length - target.Length;
-
-            for (int i = 0; i < target.Length; i++)
-                if (text[i + offset] != target[i])
-                    return false;
-
-            return true;
-        }
-        #endregion
-
-        #region Type
-        public static bool IsAssignableFrom(this Type type, object target)
-        {
-            if (target == null) return false;
-
-            return type.IsAssignableFrom(target.GetType());
-        }
-        public static bool IsAssignableFrom<T>(this Type type) => type.IsAssignableFrom(typeof(T));
-        #endregion
-
-        #region Aync Tasks
-        public static async void Forget(this Task task)
-        {
-            await task;
-        }
-        #endregion
-
+    }
+    public static class UnityExtensions
+    {
         /// <summary>
         /// Retrieves the GameObject of the Rigidbody attached to this Collider,
         /// or the GameObject attached to the collider if no Rigidbody is attached to Collider
@@ -856,4 +859,41 @@ namespace MB
         }
         #endregion
     }
+
+    public static class ColorExtensions
+    {
+        public static Color SetAlpha(this Color color, float value)
+        {
+            color.a = value;
+
+            return color;
+        }
+    }
+
+    public static class DelegateExtensions
+    {
+        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method)
+            where TDelegate : Delegate
+        {
+            return method.CreateDelegate(typeof(TDelegate)) as TDelegate;
+        }
+        public static TDelegate CreateDelegate<TDelegate>(this MethodInfo method, object target)
+            where TDelegate : Delegate
+        {
+            return method.CreateDelegate(typeof(TDelegate), target) as TDelegate;
+        }
+    }
+
+    public static class TaskExtensions
+    {
+        public static async void Forget(this Task task)
+        {
+            await task;
+        }
+        public static async void Forget<T>(this Task<T> task)
+        {
+            await task;
+        }
+    }
+    #endregion
 }

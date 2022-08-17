@@ -80,7 +80,7 @@ namespace MB
 					if (GUILayout.Button("Create"))
 					{
 						var asset = ScriptableObject.CreateInstance(Type);
-						var name = MUtility.PrettifyName(Type.Name);
+						var name = MUtility.Text.Prettify(Type.Name);
 						ProjectWindowUtil.CreateAsset(asset, $"Assets/{name}.asset");
 					}
 				}

@@ -74,19 +74,19 @@ namespace MB
                     return;
 
                 //Spacing
-                MUtility.GUICoordinates.SliceLine(ref rect, FieldsSpacing);
+                MUtility.GUI.SliceLine(ref rect, FieldsSpacing);
 
                 DrawPreview(ref rect, property, texture, attribute.Scale);
             }
             void DrawField(ref Rect rect, SerializedProperty property, GUIContent label)
             {
-                var area = MUtility.GUICoordinates.SliceLine(ref rect);
+                var area = MUtility.GUI.SliceLine(ref rect);
 
                 EditorGUI.BeginProperty(area, label, property);
 
                 //Foldout
                 {
-                    var space = MUtility.GUICoordinates.SliceHorizontal(ref area, EditorGUIUtility.labelWidth);
+                    var space = MUtility.GUI.SliceHorizontal(ref area, EditorGUIUtility.labelWidth);
 
                     property.isExpanded = EditorGUI.Foldout(space, property.isExpanded, label, true);
                 }

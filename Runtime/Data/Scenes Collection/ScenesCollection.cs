@@ -46,7 +46,7 @@ namespace MB
 #if UNITY_EDITOR
             var targets = Extract();
 
-            if (MUtility.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
+            if (MUtility.Collections.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
             {
                 list = targets;
                 Runtime.Save(this);

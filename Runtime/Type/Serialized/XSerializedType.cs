@@ -153,7 +153,7 @@ namespace MB
                 }
                 else
                 {
-                    var area = MUtility.GUICoordinates.SliceHorizontalPercentage(ref rect, 80f);
+                    var area = MUtility.GUI.SliceHorizontalPercentage(ref rect, 80f);
                     EditorGUI.HelpBox(area, $" Invalid Selection of {selection.Name}", MessageType.Error);
 
                     rect.xMin += 2;

@@ -337,7 +337,7 @@ namespace MB
 
 		void HeaderGUI(ref Rect rect)
 		{
-			var area = MUtility.GUICoordinates.SliceLine(ref rect, HeaderHeight);
+			var area = MUtility.GUI.SliceLine(ref rect, HeaderHeight);
 
 			ProcessItemsDrop(area);
 
@@ -506,7 +506,7 @@ namespace MB
 
 		void BodyGUI(ref Rect rect)
 		{
-			var area = MUtility.GUICoordinates.SliceLine(ref rect, BodyHeight);
+			var area = MUtility.GUI.SliceLine(ref rect, BodyHeight);
 
 			EditorGUI.DrawRect(area, PrimaryColor);
 
@@ -517,7 +517,7 @@ namespace MB
 			var color = new Color32(64, 65, 65, 255);
 			EditorGUI.DrawRect(area, color);
 
-			MUtility.GUICoordinates.SliceLine(ref area, BodyVerticalPadding);
+			MUtility.GUI.SliceLine(ref area, BodyVerticalPadding);
 
 			if (Count == 0)
 				DrawEmptyIndicator(area);
@@ -550,7 +550,7 @@ namespace MB
 		{
 			for (int i = 0; i < ElementsHeights.Count; i++)
 			{
-				var area = MUtility.GUICoordinates.SliceLine(ref rect, ElementsHeights[i]);
+				var area = MUtility.GUI.SliceLine(ref rect, ElementsHeights[i]);
 
 				ElementGUI(area, i);
 			}
@@ -767,7 +767,7 @@ namespace MB
 
 		void ToolbarGUI(ref Rect rect)
 		{
-			var area = MUtility.GUICoordinates.SliceLine(ref rect, ToolbarHeight);
+			var area = MUtility.GUI.SliceLine(ref rect, ToolbarHeight);
 
 			area.x = area.width - ToolbarWidth;
 			area.width = ToolbarWidth;
@@ -776,7 +776,7 @@ namespace MB
 
 			area.yMin += OutlinePadding;
 
-			var areas = MUtility.GUICoordinates.SplitHorizontally(area, 5, 2);
+			var areas = MUtility.GUI.SplitHorizontally(area, 5, 2);
 			DrawToolbarAdd(areas[0]);
 			DrawToolbarRemove(areas[1]);
 		}
@@ -901,7 +901,7 @@ namespace MB
 			this.Property = property;
 
 			ElementType = new SmartSerializedProperty<IList>(Property).ManagedType;
-			ElementType = MUtility.GetCollectionArgument(ElementType);
+			ElementType = MUtility.Type.GetCollectionArgument(ElementType);
 
 			TitleContent = new GUIContent(property.displayName, property.tooltip);
 		}

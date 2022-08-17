@@ -194,14 +194,14 @@ namespace MB
 
             void DrawField(ref Rect rect, GUIContent label, SerializedProperty asset)
             {
-                var area = MUtility.GUICoordinates.SliceLine(ref rect);
+                var area = MUtility.GUI.SliceLine(ref rect);
 
                 asset.objectReferenceValue = EditorGUI.ObjectField(area, label, asset.objectReferenceValue, typeof(SceneAsset), false);
             }
 
             void DrawInstruction(ref Rect rect, string text, MessageType type, string instructions, Action callback)
             {
-                var area = MUtility.GUICoordinates.SliceLine(ref rect);
+                var area = MUtility.GUI.SliceLine(ref rect);
 
                 area.width -= 90;
 

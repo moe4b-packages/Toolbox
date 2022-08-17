@@ -74,7 +74,7 @@ namespace MB
                 return true;
             }
 
-            if (MUtility.CheckElementsInclusion(list, targets) == false)
+            if (MUtility.Collections.CheckElementsInclusion(list, targets) == false)
             {
                 list = targets;
                 Runtime.Save(this);

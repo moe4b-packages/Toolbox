@@ -165,14 +165,14 @@ namespace MB
 					var directory = new DirectoryInfo(DirectoryRelativePath);
 					if (directory.Exists == false) directory.Create();
 
-					var name = MUtility.PrettifyName(type.Name);
+					var name = MUtility.Text.Prettify(type.Name);
 					var path = Path.Combine(DirectoryRelativePath, $"{name}.asset");
 
 					return Create(type, path);
 				}
 				internal static ScriptableManager Create(Type type, string path)
 				{
-					Debug.LogWarning($"Creating {MUtility.PrettifyName(type.Name)} Manager");
+					Debug.LogWarning($"Creating {MUtility.Text.Prettify(type.Name)} Manager");
 
 					var asset = CreateInstance(type) as ScriptableManager;
 					AssetDatabase.CreateAsset(asset, path);

@@ -51,7 +51,7 @@ namespace MB
 				var context = FindContextProperty(property);
 				var target = FindTargetProperty(property);
 
-				var areas = MUtility.GUICoordinates.SplitHorizontally(rect, 5, 70f, 30f);
+				var areas = MUtility.GUI.SplitHorizontally(rect, 5, 70f, 30f);
 
 				EditorGUI.BeginChangeCheck();
 				{
@@ -143,7 +143,7 @@ namespace MB
         {
 			if (target == null) return "None";
 
-			return MUtility.PrettifyName(target.GetType().Name);
+			return MUtility.Text.Prettify(target.GetType().Name);
 		}
 #endif
 	}

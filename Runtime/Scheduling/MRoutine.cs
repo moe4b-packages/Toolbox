@@ -374,7 +374,7 @@ namespace MB
 
             static Runtime()
             {
-                MUtility.RegisterPlayerLoop<Update>(Process);
+                MUtility.PlayerLoop.Register<Update>(Process);
             }
         }
 

@@ -35,7 +35,7 @@ namespace MB
                 {
                     var target = property.objectReferenceValue;
                     
-                    var area = MUtility.GUICoordinates.SplitHorizontally(rect, 0, 80f, 20f);
+                    var area = MUtility.GUI.SplitHorizontally(rect, 0, 80f, 20f);
                     
                     EditorGUI.PropertyField(area[0], property, label);
                     
