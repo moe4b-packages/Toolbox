@@ -32,11 +32,11 @@ namespace MB
         {
             foreach (var gameObject in Selection.gameObjects)
             {
-                MUtility.Unity.SetDirty(gameObject);
+                MUtility.UObject.SetDirty(gameObject);
 
                 foreach (var behaviour in gameObject.GetComponentsInChildren<Component>(true))
                 {
-                    MUtility.Unity.SetDirty(behaviour);
+                    MUtility.UObject.SetDirty(behaviour);
                 }
             }
         }

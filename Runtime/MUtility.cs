@@ -46,7 +46,7 @@ namespace MB
         public abstract class Collections : CollectionsUtility { }
         public abstract class Thread : ThreadUtility { }
         public abstract class Exception : ExceptionUtility { }
-        public abstract class Unity : UnityUtility { }
+        public abstract class UObject : UObjectUtility { }
     }
 
     #region Sub-Classes
@@ -727,7 +727,7 @@ namespace MB
         }
     }
 
-    public abstract class UnityUtility
+    public abstract class UObjectUtility
     {
         public static string GetHierarchyPath(UObjectSurrogate surrogate, string seperator = "/")
         {
@@ -779,7 +779,7 @@ namespace MB
 #endif
         }
     }
-    public static class UnityExtensions
+    public static class UObjectExtensions
     {
         /// <summary>
         /// Retrieves the GameObject of the Rigidbody attached to this Collider,

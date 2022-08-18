@@ -92,7 +92,7 @@ namespace MB
             {
                 if (Enabled == false) return;
 
-                foreach (var child in MUtility.Unity.IterateHierarchy(gameObject))
+                foreach (var child in MUtility.UObject.IterateHierarchy(gameObject))
                 {
                     if (CheckCollider(child, out var type) == false) continue;
 

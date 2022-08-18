@@ -85,7 +85,7 @@ namespace MB
         internal static void Invoke(IInterface context)
         {
             context.PreAwake();
-            MUtility.Unity.SetDirty(context as Object);
+            MUtility.UObject.SetDirty(context as Object);
         }
         #endregion
 #endif
