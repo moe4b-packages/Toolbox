@@ -42,8 +42,6 @@ namespace MB
 
 	public interface IScriptableObjectBuildPreProcess
 	{
-#if UNITY_EDITOR
 		void PreProcessBuild();
-#endif
 	}
 }

@@ -57,12 +57,12 @@ namespace MB
             Dictionary.AddAll(List, x => x.Name);
         }
 
-#if UNITY_EDITOR
         public void PreProcessBuild()
         {
+#if UNITY_EDITOR
             Refresh();
-        }
 #endif
+        }
         #endregion
 
         //Static

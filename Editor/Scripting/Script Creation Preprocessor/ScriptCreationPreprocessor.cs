@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+using System;
 using System.IO;
 using System.Linq;
 using System.Collections;
@@ -23,7 +24,6 @@ using Newtonsoft.Json.Linq;
 
 namespace MB
 {
-#if UNITY_EDITOR
     /// <summary>
     /// A PreProcessor for scripts, used for replacing #VARIABLES like #NAMESPACE
     /// </summary>
@@ -192,5 +192,5 @@ namespace MB
 
         public static string UnifyPathSeperator(string path) => path.Replace('\\', '/');
     }
-#endif
 }
+#endif

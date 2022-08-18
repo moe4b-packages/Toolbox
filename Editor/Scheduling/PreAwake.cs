@@ -92,9 +92,7 @@ namespace MB
 
         public interface IInterface
         {
-#if UNITY_EDITOR
             void PreAwake();
-#endif
         }
     }
 }
