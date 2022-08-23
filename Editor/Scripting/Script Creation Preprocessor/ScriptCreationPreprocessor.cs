@@ -33,10 +33,10 @@ namespace MB
         {
             public static bool Query(string file, out AssemblyDefinitionAsset asset)
             {
-                if (QueryAssets(file, out asset))
+                if (QueryReferences(file, out asset))
                     return true;
 
-                if (QueryReferences(file, out asset))
+                if (QueryAssets(file, out asset))
                     return true;
 
                 return false;

@@ -123,6 +123,8 @@ namespace MB
             var path = AssetDatabase.GetAssetPath(asset);
 
             File.WriteAllText(path, contents);
+
+            AssetDatabase.ImportAsset(path);
         }
     }
 
