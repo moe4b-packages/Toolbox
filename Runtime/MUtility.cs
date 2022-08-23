@@ -35,6 +35,7 @@ namespace MB
     /// </summary>
     public static partial class MUtility
     {
+        public abstract class IO : IOUtility { }
         public abstract class Bounds : BoundsUtility { }
         public abstract class Layer : LayerUtility { }
         public abstract class PlayerLoop : PlayerLoopUtility { }
@@ -50,6 +51,17 @@ namespace MB
     }
 
     #region Sub-Classes
+    public abstract class IOUtility
+    {
+        public static void EnsureFileDirectory(string path)
+        {
+            var file = new FileInfo(path);
+            var directory = file.Directory;
+
+            if (directory.Exists == false) directory.Create();
+        }
+    }
+
     public abstract class BoundsUtility
     {
         public static Bounds CalculateRenderer(UObjectSurrogate surrogate) => CalculateRenderer(surrogate, true);

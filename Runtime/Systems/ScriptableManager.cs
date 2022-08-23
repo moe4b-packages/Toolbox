@@ -160,7 +160,7 @@ namespace MB
 
 				internal static ScriptableManager Create(Type type)
 				{
-					const string DirectoryRelativePath = "Assets/Moe Baker/Scriptable Managers/";
+					var DirectoryRelativePath = Toolbox.IO.GenerateRuntimePath("Scriptable Managers/");
 
 					var directory = new DirectoryInfo(DirectoryRelativePath);
 					if (directory.Exists == false) directory.Create();

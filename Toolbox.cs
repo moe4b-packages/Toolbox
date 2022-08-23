@@ -41,6 +41,13 @@ namespace MB
             public const string Example = Misc + "Example/";
         }
 
+        public static class IO
+        {
+            const string RuntimeDirectory = "Assets/Moe Baker/";
+
+            public static string GenerateRuntimePath(string segment) => Path.Combine(RuntimeDirectory, segment);
+        }
+
         [RuntimeInitializeOnLoadMethod]
         static void OnLoad()
         {
