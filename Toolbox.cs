@@ -20,7 +20,7 @@ using Random = UnityEngine.Random;
 using System.Reflection;
 using Newtonsoft.Json.Utilities;
 
-[assembly: AssemblySymbolDefine("MOE_TOOLBOX")]
+[assembly: AssemblySymbolDefine("MB_TOOLBOX")]
 
 namespace MB
 {
