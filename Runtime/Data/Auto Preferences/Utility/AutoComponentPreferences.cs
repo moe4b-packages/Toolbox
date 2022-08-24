@@ -7,11 +7,11 @@ using UnityEngine.UIElements;
 namespace MB
 {
     /// <summary>
-    /// Component that allows saving any variable to Auto Preferences
+    /// Component that allows saving any variable of a component to Auto Preferences
     /// </summary>
     [SerializedVariable.Ignore]
-    [AddComponentMenu(Toolbox.Paths.Misc + "Auto Variable Preferences")]
-    public class AutoVariablePreferences : MonoBehaviour
+    [AddComponentMenu(Toolbox.Paths.Misc + "Auto Component Preferences")]
+    public class AutoComponentPreferences : MonoBehaviour
     {
         static AutoPreferences AutoPreferences => AutoPreferences.Instance;
 
