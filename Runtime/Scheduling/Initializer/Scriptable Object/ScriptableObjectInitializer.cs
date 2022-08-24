@@ -47,7 +47,7 @@ namespace MB
             Perform();
         }
 
-        private void Perform()
+        void Perform()
         {
             var interfaces = new IInitialize[list.Count];
 

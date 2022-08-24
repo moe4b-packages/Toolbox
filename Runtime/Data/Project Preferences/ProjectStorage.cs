@@ -23,40 +23,33 @@ using Newtonsoft.Json.Linq;
 namespace MB
 {
     /// <summary>
-    /// Persistent data storage class that can be accessed from both editor and player
+    /// Persistent data storage class that will persist from editor to build
     /// </summary>
     [Manager]
     [SettingsMenu(Toolbox.Paths.Root + "Project Storage")]
     [LoadOrder(Runtime.Defaults.LoadOrder.ProjectStorage)]
     public class ProjectStorage : ScriptableManager<ProjectStorage>
     {
-        //Instance
-        #region
         [SerializeField]
         [TextArea(55, 400)]
         string json = default;
+        public string Json => json;
+
+        public JObjectComposer Composer { get; private set; }
 
         protected override void OnLoad()
         {
             base.OnLoad();
 
+            Composer = JObjectComposer.Create<ProjectStorage>();
             var settings = new JsonSerializerSettings()
             {
                 Formatting = Formatting.Indented,
             };
             Composer.Configure(settings);
-
             Composer.Load(json);
 
             Composer.OnChange += ComposerChangeCallback;
-        }
-        void ComposerChangeCallback()
-        {
-            json = Composer.Context.ToString();
-
-#if UNITY_EDITOR
-            Runtime.Save(this);
-#endif
         }
 
         void OnValidate()
@@ -77,23 +70,19 @@ namespace MB
 
             Composer.Load(json);
         }
-        #endregion
 
-        //Static
-        #region
-        public static string Json => Instance.json;
+        public void Set(string key, object value) => Composer.Set(key, value);
+        public T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
+        public bool Contains(string key) => Composer.Contains(key);
+        public bool Remove(string key) => Composer.Remove(key);
 
-        public static JObjectComposer Composer { get; private set; }
-
-        public static void Set(string key, object value) => Composer.Set(key, value);
-        public static T Read<T>(string key, T fallback = default) => Composer.Read(key, fallback: fallback);
-        public static bool Contains(string key) => Composer.Contains(key);
-        public static bool Remove(string key) => Composer.Remove(key);
-
-        static ProjectStorage()
+        void ComposerChangeCallback()
         {
-            Composer = JObjectComposer.Create<ProjectStorage>();
+            json = Composer.Context.ToString();
+
+#if UNITY_EDITOR
+            Runtime.Save(this);
+#endif
         }
-        #endregion
     }
 }

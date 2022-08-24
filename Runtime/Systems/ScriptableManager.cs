@@ -26,7 +26,8 @@ namespace MB
 	public abstract class ScriptableManager : ScriptableObject
 	{
 		/// <summary>
-		/// Determines whether this Scriptable Manager is included in build, override to change
+		/// Determines whether this Scriptable Manager is included in build,
+		/// defaults to true, override to change
 		/// </summary>
 		protected virtual bool IncludeInBuild => true;
 

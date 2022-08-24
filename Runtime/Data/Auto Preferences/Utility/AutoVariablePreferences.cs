@@ -13,6 +13,8 @@ namespace MB
     [AddComponentMenu(Toolbox.Paths.Misc + "Auto Variable Preferences")]
     public class AutoVariablePreferences : MonoBehaviour
     {
+        static AutoPreferences AutoPreferences => AutoPreferences.Instance;
+
         [SerializeField]
         [ReadOnly(ReadOnlyPlayMode.PlayMode)]
         Entry[] entries;

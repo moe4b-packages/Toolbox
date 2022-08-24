@@ -25,10 +25,12 @@ namespace MB
     [LoadOrder(Runtime.Defaults.LoadOrder.ScenesCollection)]
     public class ScenesCollection : ScriptableManager<ScenesCollection>, IScriptableObjectBuildPreProcess
     {
-        //Instance
-        #region
         [SerializeField]
         List<MSceneAsset> list = new List<MSceneAsset>();
+        public List<MSceneAsset> List => Instance.list;
+
+        public Dictionary<string, MSceneAsset> Dictionary { get; } = new Dictionary<string, MSceneAsset>();
+        public bool TryFind(string name, out MSceneAsset asset) => Dictionary.TryGetValue(name, out asset);
 
         protected override void OnLoad()
         {
@@ -46,7 +48,7 @@ namespace MB
 #if UNITY_EDITOR
             var targets = Extract();
 
-            if (MUtility.Collections.CheckElementsInclusion(list, targets, comparer: MSceneAsset.AssetComparer.Instance) == false)
+            if (list.SequenceEqual(targets, MSceneAsset.AssetComparer.Instance) == false)
             {
                 list = targets;
                 Runtime.Save(this);
@@ -57,23 +59,12 @@ namespace MB
             Dictionary.AddAll(List, x => x.Name);
         }
 
+#if UNITY_EDITOR
         public void PreProcessBuild()
         {
-#if UNITY_EDITOR
             Refresh();
-#endif
         }
-        #endregion
 
-        //Static
-        #region
-        public static List<MSceneAsset> List => Instance.list;
-
-        public static Dictionary<string, MSceneAsset> Dictionary { get; } = new Dictionary<string, MSceneAsset>();
-
-        public static bool TryFind(string id, out MSceneAsset asset) => Dictionary.TryGetValue(id, out asset);
-
-#if UNITY_EDITOR
         static List<MSceneAsset> Extract()
         {
             var targets = new List<MSceneAsset>();
@@ -92,6 +83,5 @@ namespace MB
             return targets;
         }
 #endif
-        #endregion
     }
 }
