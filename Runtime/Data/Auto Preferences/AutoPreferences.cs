@@ -187,45 +187,4 @@ namespace MB
         }
         #endregion
     }
-
-    public class AutoPreferenceVariable<T>
-    {
-        AutoPreferences AutoPreferences => AutoPreferences.Instance;
-
-        public string ID { get; }
-
-        T backing;
-        public T Value
-        {
-            get => backing;
-            set
-            {
-                backing = value;
-
-                Save();
-            }
-        }
-
-        public void Load()
-        {
-            backing = AutoPreferences.Read(ID, backing);
-        }
-        public void Save()
-        {
-            AutoPreferences.Set(ID, backing);
-        }
-
-        public override string ToString() => backing.ToString();
-
-        public AutoPreferenceVariable(string ID) : this(ID, default) { }
-        public AutoPreferenceVariable(string ID, T initial)
-        {
-            this.ID = ID;
-            this.backing = initial;
-
-            Load();
-        }
-
-        public static implicit operator T(AutoPreferenceVariable<T> variable) => variable.Value;
-    }
 }

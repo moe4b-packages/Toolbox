@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 namespace MB
 {
     /// <summary>
-    /// Component that allows saving any variable to Auto Prefs
+    /// Component that allows saving any variable to Auto Preferences
     /// </summary>
     [SerializedVariable.Ignore]
     [AddComponentMenu(Toolbox.Paths.Misc + "Auto Variable Preferences")]
