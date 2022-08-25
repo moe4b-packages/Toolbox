@@ -27,6 +27,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace MB
 {
@@ -35,6 +36,7 @@ namespace MB
     /// </summary>
     public static partial class MUtility
     {
+        public abstract class UI : UIUtility { }
         public abstract class IO : IOUtility { }
         public abstract class Bounds : BoundsUtility { }
         public abstract class Layer : LayerUtility { }
@@ -51,6 +53,85 @@ namespace MB
     }
 
     #region Sub-Classes
+    public abstract class UIUtility
+    {
+        public static class LocalPointerEventData
+        {
+            static EventSystem System;
+
+            static PointerEventData cache;
+
+            public static PointerEventData Retrieve()
+            {
+                if (System != EventSystem.current)
+                {
+                    System = EventSystem.current;
+                    cache = new PointerEventData(EventSystem.current);
+                }
+
+                Clear(cache);
+
+                return cache;
+            }
+
+            static void Clear(PointerEventData data)
+            {
+                data.eligibleForClick = false;
+
+                data.pointerId = -1;
+                data.position = Vector2.zero; // Current position of the mouse or touch event
+                data.delta = Vector2.zero; // Delta since last update
+                data.pressPosition = Vector2.zero; // Delta since the event started being tracked
+                data.clickTime = 0.0f; // The last time a click event was sent out (used for double-clicks)
+                data.clickCount = 0; // Number of clicks in a row. 2 for a double-click for example.
+
+                data.scrollDelta = Vector2.zero;
+                data.useDragThreshold = true;
+                data.dragging = false;
+                data.button = PointerEventData.InputButton.Left;
+
+                data.pressure = 0f;
+                data.tangentialPressure = 0f;
+                data.altitudeAngle = 0f;
+                data.azimuthAngle = 0f;
+                data.twist = 0f;
+                data.radius = Vector2.zero;
+                data.radiusVariance = Vector2.zero;
+            }
+        }
+
+        public static class PointerOverlap
+        {
+            static List<RaycastResult> Results = new List<RaycastResult>(10);
+
+            public static bool Check() => Check(Input.mousePosition);
+            public static bool Check(Vector3 position)
+            {
+                Results.Clear();
+
+                var eventData = LocalPointerEventData.Retrieve();
+                eventData.position = position;
+
+                EventSystem.current.RaycastAll(eventData, Results);
+
+                for (int i = 0; i < Results.Count; i++)
+                {
+                    if (Results[i].module.TryGetComponent<Canvas>(out var canvas) == false)
+                        continue;
+
+                    if (canvas.renderMode == RenderMode.ScreenSpaceCamera || canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+                        return true;
+                }
+
+                return false;
+            }
+        }
+    }
+    public static class UIExtensions
+    {
+        
+    }
+
     public abstract class IOUtility
     {
         public static void EnsureFileDirectory(string path)
