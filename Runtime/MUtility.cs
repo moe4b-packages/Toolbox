@@ -134,10 +134,11 @@ namespace MB
 
     public abstract class IOUtility
     {
-        public static void EnsureFileDirectory(string path)
+        public static void EnsureDirectory(string path)
         {
-            var file = new FileInfo(path);
-            var directory = file.Directory;
+            var extension = Path.GetExtension(path.AsSpan());
+
+            var directory = extension == "" ? new DirectoryInfo(path) : new FileInfo(path).Directory;
 
             if (directory.Exists == false) directory.Create();
         }
