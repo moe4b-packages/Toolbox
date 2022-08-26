@@ -53,5 +53,22 @@ namespace MB
         {
             AotHelper.EnsureList<KeyValuePair<string, string>>();
         }
+
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+        static void EnsureJsonProjectInclusion()
+        {
+            var flags = BindingFlags.Static | BindingFlags.NonPublic;
+            var property = typeof(EditorSettings).GetProperty("Internal_ProjectGenerationUserExtensions", flags);
+
+            var text = property.GetValue(default) as string;
+
+            if (text.ToLower().Contains("json") == false)
+            {
+                text += ";json";
+                property.SetValue(default, text);
+            }
+        }
+#endif
     }
 }
