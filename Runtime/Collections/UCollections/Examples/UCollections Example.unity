@@ -212,6 +212,7 @@ Transform:
   m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
   m_LocalPosition: {x: 0, y: 3, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 1
@@ -227,7 +228,6 @@ GameObject:
   - component: {fileID: 733603728}
   - component: {fileID: 733603726}
   - component: {fileID: 733603725}
-  - component: {fileID: 733603727}
   m_Layer: 0
   m_Name: Example
   m_TagString: Untagged
@@ -249,25 +249,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   hash1:
     list:
-    - Hello World
+    - <Value>k__BackingField: Hello World
+      <IsValid>k__BackingField: 1
   hash2:
     list:
-    - firstName: Max
-      lastName: Payne
+    - <Value>k__BackingField:
+        first: Max
+        last: Payne
+      <IsValid>k__BackingField: 1
+    - <Value>k__BackingField:
+        first: Mark
+        last: Ruffalo
+      <IsValid>k__BackingField: 1
   hash3:
     list:
-    - {fileID: 200134301}
-  nested:
-    hash1:
-      list:
-      - Hello World
-    hash2:
-      list:
-      - firstName: Max
-        lastName: Payne
-    hash3:
-      list:
-      - {fileID: 200134301}
+    - <Value>k__BackingField: {fileID: 200134301}
+      <IsValid>k__BackingField: 1
+    - <Value>k__BackingField: {fileID: 1494258756}
+      <IsValid>k__BackingField: 1
 --- !u!114 &733603726
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -282,78 +281,39 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dictionary1:
     list:
-    - key: Hello
-      value: World
-    - key: Rustle
-      value: Mania
-    - key: Mark
-      value: Hamill
+    - <Key>k__BackingField: Hello
+      <Value>k__BackingField: World
+      <IsValid>k__BackingField: 1
+    - <Key>k__BackingField: Rustle
+      <Value>k__BackingField: Mania
+      <IsValid>k__BackingField: 1
+    - <Key>k__BackingField: Mark
+      <Value>k__BackingField: Hamill
+      <IsValid>k__BackingField: 1
   dictionary2:
     list:
-    - key:
+    - <Key>k__BackingField:
         ID: 007
         file: Mi6
-      value:
-        firstName: James
-        lastName: Bond
-    - key:
+      <Value>k__BackingField:
+        first: James
+        last: Bond
+      <IsValid>k__BackingField: 1
+    - <Key>k__BackingField:
         ID: 47
         file: ICA
-      value:
-        firstName: David
-        lastName: Bateson
+      <Value>k__BackingField:
+        first: David
+        last: Hayter
+      <IsValid>k__BackingField: 1
   dictionary3:
     list:
-    - key: {fileID: 200134301}
-      value: {x: 1, y: 1, z: 1}
-    - key: {fileID: 1494258756}
-      value: {x: 2, y: 2, z: 2}
-  nested:
-    dictionary1:
-      list:
-      - key: Hello
-        value: World
-      - key: Rustle
-        value: Mania
-      - key: Mark
-        value: Hamill
-    dictionary2:
-      list:
-      - key:
-          ID: 007
-          file: Mi6
-        value:
-          firstName: James
-          lastName: Bond
-      - key:
-          ID: 47
-          file: ICA
-        value:
-          firstName: David
-          lastName: Bateson
-    dictionary3:
-      list:
-      - key: {fileID: 200134301}
-        value: {x: 1, y: 1, z: 1}
-      - key: {fileID: 1494258756}
-        value: {x: 2, y: 2, z: 2}
---- !u!114 &733603727
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 733603724}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25fa589770b2ca64fa54d5addf7cefe4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  list1:
-    collection:
-    - Hello World
-    - How are you doing?
-    - Goodbye World
+    - <Key>k__BackingField: {fileID: 1494258756}
+      <Value>k__BackingField: {x: 2, y: 2, z: 2}
+      <IsValid>k__BackingField: 1
+    - <Key>k__BackingField: {fileID: 200134301}
+      <Value>k__BackingField: {x: 1, y: 1, z: 1}
+      <IsValid>k__BackingField: 1
 --- !u!4 &733603728
 Transform:
   m_ObjectHideFlags: 0
@@ -364,6 +324,7 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
@@ -447,57 +408,8 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1740016187
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1740016188}
-  - component: {fileID: 1740016189}
-  m_Layer: 0
-  m_Name: Sandbox
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1740016188
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1740016187}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1740016189
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1740016187}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a2d47d89e8b1f2048979d7dab86ee27c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  color: {r: 0, g: 0, b: 0, a: 0}
-  example:
-    data: []
-  field:
-    list: []
-  colors:
-    list: []

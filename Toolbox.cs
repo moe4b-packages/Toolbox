@@ -56,17 +56,11 @@ namespace MB
 
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
-        static void EnsureJsonProjectInclusion()
+        static void EnsureExtraProjectExtensionsInclusion()
         {
-            var flags = BindingFlags.Static | BindingFlags.NonPublic;
-            var property = typeof(EditorSettings).GetProperty("Internal_ProjectGenerationUserExtensions", flags);
-
-            var text = property.GetValue(default) as string;
-
-            if (text.ToLower().Contains("json") == false)
+            using (MUtility.Editor.ProjectIncludeExtensions.Modify(out var set))
             {
-                text += ";json";
-                property.SetValue(default, text);
+                set.Add("json");
             }
         }
 #endif

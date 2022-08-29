@@ -19,205 +19,105 @@ using Random = UnityEngine.Random;
 
 namespace MB
 {
-    /// <summary>
-    /// A Collection of serializable collections
-    /// </summary>
-    public abstract class UCollection : IUCollection
-    {
-        public abstract int Count { get; }
-
-        /// <summary>
-        /// Method that invalidates the internal cache of some of the collections (dictionary & hashset),
-        /// mostly invoked from editor UI when it changes
-        /// </summary>
-        public abstract void InvalidateCache();
-
 #if UNITY_EDITOR
-        public abstract class BaseDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(UDictionary<,>), true)]
+    [CustomPropertyDrawer(typeof(UHashSet<>), true)]
+    public class UCollectionDrawer : PropertyDrawer
+    {
+        public static void Initiate(SerializedProperty property, out SerializedProperty list)
         {
-            protected abstract SerializedProperty FindListProperty(SerializedProperty property);
+            list = property.FindPropertyRelative("list");
+        }
 
-            public float ListPadding = 5f;
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            Initiate(property, out var list);
 
-            public static float SingleLineHeight => EditorGUIUtility.singleLineHeight;
+            return EditorGUI.GetPropertyHeight(list, true);
+        }
 
-            public const float ElementHeightPadding = 2f;
-            public const float ElementFoldoutPadding = 15f;
+        public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+        {
+            Initiate(property, out var list);
 
-            #region Height
-            public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+            EditorGUI.PropertyField(rect, list, label, true);
+        }
+    }
+
+    public abstract class UCollectionEntryDrawer : PropertyDrawer
+    {
+        public const float Padding = 3f;
+
+        static GUIContent ErrorContent = MUtility.GUI.IconContent("console.erroricon.sml", "Invalid Element");
+
+        public static void RetrieveIsValid(SerializedProperty property, out SerializedProperty isValid)
+        {
+            isValid = property.FindPropertyRelative(MUtility.Type.FormatPropertyBackingFieldName("IsValid"));
+        }
+
+        public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
+        {
+            RetrieveIsValid(property, out var isValid);
+
+            rect.y += Padding / 2f;
+            rect.height -= Padding;
+
+            //Draw Error
             {
-                if (property.IsEditingMultipleObjects())
-                    return EditorGUIUtility.singleLineHeight;
+                var area = new Rect();
 
-                var height = ListPadding * 2;
-
-                var list = FindListProperty(property);
-
-                var UI = ImprovedReorderableList.Collection.Retrieve(list);
-                UI.GetElementHeight = GetElementHeight;
-
-                height += UI.CalculateHeight();
-
-                return height;
-            }
-
-            protected virtual float GetElementHeight(ImprovedReorderableList list, int index)
-            {
-                var element = list.Property.GetArrayElementAtIndex(index);
-
-                var height = EditorGUI.GetPropertyHeight(element);
-
-                var max = Math.Max(height, SingleLineHeight);
-
-                return max + ElementHeightPadding;
-            }
-            #endregion
-
-            #region Draw
-            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-            {
-                if (property.IsEditingMultipleObjects())
+                if (isValid.boolValue == false)
                 {
-                    EditorGUI.HelpBox(rect, "Cannot Multi-Edit UCollections", MessageType.Warning);
-                    return;
+                    var height = Math.Min(EditorGUIUtility.singleLineHeight, rect.height);
+
+                    area = MUtility.GUI.SliceHorizontal(ref rect, height);
+                    area.height = height;
+
+                    area.x -= 5f;
                 }
 
-                var list = FindListProperty(property);
-
-                var UI = ImprovedReorderableList.Collection.Retrieve(list);
-                UI.TitleText = property.displayName;
-                UI.GetElementHeight = GetElementHeight;
-                UI.DrawElement = DrawElement;
-
-                rect = EditorGUI.IndentedRect(rect);
-                EditorGUI.indentLevel = 0;
-
-                rect.y += ListPadding;
-                rect.height -= ListPadding + ListPadding;
-
-                EditorGUI.BeginChangeCheck();
-                UI.Draw(rect);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    var collection = property.MakeSmart<UCollection>().ManagedObject;
-                    collection.InvalidateCache();
-                }
+                DrawError(area);
             }
 
-            protected virtual void DrawElement(ImprovedReorderableList list, Rect rect, int index)
+            DrawContent(rect, property, label, isValid.boolValue);
+        }
+
+        public virtual void DrawError(Rect rect)
+        {
+            EditorGUI.LabelField(rect, ErrorContent);
+        }
+
+        protected abstract void DrawContent(Rect rect, SerializedProperty property, GUIContent label, bool isValid);
+
+        public static void DrawShortField(Rect rect, SerializedProperty property)
+        {
+            EditorGUIUtility.labelWidth /= 1.5f;
+
+            if (IsNestedProperty(property))
             {
-                rect.height -= ElementHeightPadding;
-                rect.y += ElementHeightPadding / 2;
-
-                var element = list.Property.GetArrayElementAtIndex(index);
-
-                DrawField(rect, element);
-            }
-
-            protected virtual void DrawField(Rect rect, SerializedProperty property)
-            {
-                if (IsInline(property) == false)
-                {
-                    rect.x += ElementFoldoutPadding;
-                    rect.width -= ElementFoldoutPadding;
-                }
+                rect.xMin += 10f;
 
                 EditorGUI.PropertyField(rect, property, true);
             }
-            #endregion
-
-            #region Static Utility
-            public static bool IsInline(SerializedProperty property)
+            else
             {
-                switch (property.propertyType)
-                {
-                    case SerializedPropertyType.Generic:
-                        return property.hasVisibleChildren == false;
-                }
-
-                return true;
+                EditorGUI.PropertyField(rect, property, GUIContent.none, true);
             }
-
-            public static Rect[] Split(Rect source, params float[] cuts)
-            {
-                var rects = new Rect[cuts.Length];
-
-                var x = 0f;
-
-                for (int i = 0; i < cuts.Length; i++)
-                {
-                    rects[i] = new Rect(source);
-
-                    rects[i].x += x;
-                    rects[i].width *= cuts[i] / 100;
-
-                    x += rects[i].width;
-                }
-
-                return rects;
-            }
-
-            public static IEnumerable<SerializedProperty> IterateChildren(SerializedProperty property)
-            {
-                var path = property.propertyPath;
-
-                property.Next(true);
-
-                while (true)
-                {
-                    yield return property;
-
-                    if (property.NextVisible(false) == false) break;
-                    if (property.propertyPath.StartsWith(path) == false) break;
-                }
-            }
-
-            public static float GetChildrenSingleHeight(SerializedProperty property, float spacing)
-            {
-                if (IsInline(property)) return SingleLineHeight;
-
-                var height = 0f;
-
-                foreach (var child in IterateChildren(property))
-                    height += SingleLineHeight + spacing;
-
-                return height;
-            }
-
-            public static void DeleteArrayRange(SerializedProperty array, int difference)
-            {
-                for (int i = 0; i < difference; i++)
-                {
-                    var index = array.arraySize - 1;
-
-                    ForceDeleteArrayElement(array, index);
-                }
-            }
-
-            public static void ForceDeleteArrayElement(SerializedProperty array, int index)
-            {
-                var property = array.GetArrayElementAtIndex(index);
-
-                if (property.propertyType == SerializedPropertyType.ObjectReference)
-                    property.objectReferenceValue = null;
-
-                array.DeleteArrayElementAtIndex(index);
-            }
-
-            public static GUIContent GetIconContent(string id, string tooltip)
-            {
-                var icon = EditorGUIUtility.IconContent(id);
-
-                return new GUIContent(icon.image, tooltip);
-            }
-            #endregion
         }
-#endif
-    }
 
-    public interface IUCollection
-    {
-        int Count { get; }
+        public static bool IsNestedProperty(SerializedProperty property)
+        {
+            if (property.propertyType != SerializedPropertyType.Generic)
+                return false;
+
+            if (property.hasVisibleChildren == false)
+                return false;
+
+            if (property.type == "UnityEvent")
+                return false;
+
+            return true;
+        }
     }
+#endif
 }

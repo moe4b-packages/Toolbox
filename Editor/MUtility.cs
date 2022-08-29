@@ -26,6 +26,7 @@ namespace MB
     public static partial class MUtility
     {
         public abstract class GUI : GUIUtility { }
+        public abstract class Editor : MEditorUtility { }
 
         [MenuItem("GameObject/Mark All Dirty")]
         public static void MarkAllDirty()
@@ -99,6 +100,12 @@ namespace MB
 
             return SliceHorizontal(ref rect, width);
         }
+
+        public static GUIContent IconContent(string name, string tooltip)
+        {
+            var icon = EditorGUIUtility.IconContent(name);
+            return new GUIContent(icon.image, tooltip);
+        }
     }
     public static class GUIExtensions
     {
@@ -167,6 +174,54 @@ namespace MB
         public static bool IsEditingMultipleObjects(this SerializedProperty property)
         {
             return property.serializedObject.targetObjects.Length > 1;
+        }
+    }
+
+    public abstract class MEditorUtility
+    {
+        public static class ProjectIncludeExtensions
+        {
+            static PropertyInfo PropertyInfo { get; }
+
+            public static HashSet<string> Retrieve()
+            {
+                var text = (PropertyInfo.GetValue(default) as string).ToLower();
+                var set = text.Split(';', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+                return set;
+            }
+            public static void Set(HashSet<string> collection)
+            {
+                var text = string.Join(';', collection).ToLower();
+
+                PropertyInfo.SetValue(default, text);
+            }
+
+            public static Handle Modify(out HashSet<string> collection)
+            {
+                collection = Retrieve();
+                return new Handle(collection);
+            }
+
+            public struct Handle : IDisposable
+            {
+                public HashSet<string> Collection { get; }
+
+                public void Dispose()
+                {
+                    Set(Collection);
+                }
+
+                public Handle(HashSet<string> collection)
+                {
+                    this.Collection = collection;
+                }
+            }
+
+            static ProjectIncludeExtensions()
+            {
+                var flags = BindingFlags.Static | BindingFlags.NonPublic;
+                PropertyInfo = typeof(EditorSettings).GetProperty("Internal_ProjectGenerationUserExtensions", flags);
+            }
         }
     }
     #endregion

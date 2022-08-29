@@ -340,6 +340,8 @@ namespace MB
 
     public abstract class TypeUtility
     {
+        public static string FormatPropertyBackingFieldName(string name) => $"<{name}>k__BackingField";
+
         public static IEnumerable<Type> IterateHierarchy(Type type)
         {
             while (true)

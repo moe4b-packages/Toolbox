@@ -25,15 +25,6 @@ namespace MB
         public UDictionary<Key, Value> dictionary2;
         public UDictionary<Component, Vector3> dictionary3;
 
-        public Nested nested;
-        [Serializable]
-        public class Nested
-        {
-            public UDictionary<string, string> dictionary1;
-            public UDictionary<Key, Value> dictionary2;
-            public UDictionary<Component, Vector3> dictionary3;
-        }
-
         [Serializable]
         public struct Key
         {
@@ -45,14 +36,14 @@ namespace MB
         [Serializable]
         public struct Value
         {
-            public string firstName;
+            public string first;
 
-            public string lastName;
+            public string last;
         }
 
         void Start()
         {
-            dictionary1["See Ya Later"] = "Space Cowboy";
+            dictionary1.Backing["See Ya Later"] = "Space Cowboy";
         }
     }
 }

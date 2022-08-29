@@ -16,188 +16,254 @@ using UnityEditorInternal;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
+using System.Reflection;
+
 namespace MB
 {
     [Serializable]
-    public abstract class UHashSet : UCollection
+    public class UHashSet<T> : ISet<T>, IReadOnlyCollection<T>, ISerializationCallbackReceiver
     {
-#if UNITY_EDITOR
-        [CustomPropertyDrawer(typeof(UHashSet), true)]
-        public class Drawer : BaseDrawer
-        {
-            public const float KeyInfoContextWidth = 20f;
+        public const int MiniumumCapacity = 1;
 
-            protected override SerializedProperty FindListProperty(SerializedProperty property)
-            {
-                return property.FindPropertyRelative("list");
-            }
-
-            public override void OnGUI(Rect rect, SerializedProperty property, GUIContent label)
-            {
-                EditorGUIUtility.labelWidth = 120f;
-
-                base.OnGUI(rect, property, label);
-            }
-        }
-#endif
-    }
-
-    [Serializable]
-    public class UHashSet<T> : UHashSet, ISet<T>
-    {
         [SerializeField]
-        List<T> list;
-        public List<T> List => list;
-
-        public override int Count => list.Count;
-
-        public bool IsReadOnly => false;
-
-        HashSet<T> cache;
-        public bool Cached => cache != null;
-        public HashSet<T> HashSet
+        List<Entry> list;
+        [Serializable]
+        public struct Entry : IEquatable<Entry>
         {
-            get
+            [field: SerializeField]
+            public T Value { get; private set; }
+
+            [field: SerializeField]
+            public bool IsValid { get; private set; }
+
+            public Entry SetValid(bool value)
             {
-                if (cache == null)
-                {
-                    cache = new HashSet<T>();
-
-                    for (int i = 0; i < list.Count; i++)
-                    {
-                        if (list[i] == null) continue;
-
-                        cache.Add(list[i]);
-                    }
-                }
-
-                return cache;
+                IsValid = value;
+                return this;
             }
-        }
 
-        public override void InvalidateCache()
-        {
-            cache = null;
-        }
-
-        public bool Contains(T item) => HashSet.Contains(item);
-
-        public bool Add(T item)
-        {
-            if (HashSet.Add(item))
+            public void Deconstruct(out T value)
             {
-                list.Add(item);
+                value = this.Value;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is Entry entry)
+                    return Equals(entry);
+
+                return false;
+            }
+            public bool Equals(Entry entry)
+            {
+                if (EqualityComparer<T>.Default.Equals(Value, entry.Value) == false)
+                    return false;
+
                 return true;
             }
 
-            return false;
-        }
-        void ICollection<T>.Add(T item) => Add(item);
+            public override int GetHashCode() => (Value?.GetHashCode()).GetValueOrDefault(0);
 
-        public bool Remove(T key)
-        {
-            var index = list.IndexOf(key);
-
-            if (index < 0) return false;
-
-            list.RemoveAt(index);
-
-            if (Cached) HashSet.Remove(key);
-
-            return true;
+            public Entry(T value)
+            {
+                this.Value = value;
+                IsValid = true;
+            }
         }
 
-        public void Clear()
+        [field: NonSerialized]
+        public HashSet<T> Backing { get; }
+
+        #region Interface Implementation
+        public int Count => ((ICollection<T>)Backing).Count;
+
+        public bool IsReadOnly => ((ICollection<T>)Backing).IsReadOnly;
+
+        public bool Add(T item)
         {
-            list.Clear();
-
-            if (Cached) HashSet.Clear();
-        }
-
-        public void CopyTo(T[] array, int arrayIndex) => (HashSet as ISet<T>).CopyTo(array, arrayIndex);
-
-        public IEnumerator<T> GetEnumerator() => HashSet.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => HashSet.GetEnumerator();
-
-        public UHashSet()
-        {
-            list = new List<T>();
+            return ((ISet<T>)Backing).Add(item);
         }
 
         public void ExceptWith(IEnumerable<T> other)
         {
-            var removals = new HashSet<T>(other);
-
-            list.RemoveAll(removals.Contains);
-
-            if (Cached) HashSet.ExceptWith(other);
+            ((ISet<T>)Backing).ExceptWith(other);
         }
 
         public void IntersectWith(IEnumerable<T> other)
         {
-            var collection = new HashSet<T>(other);
-
-            var removals = new HashSet<T>();
-
-            for (int i = 0; i < list.Count; i++)
-            {
-                if (collection.Contains(list[i]) == false)
-                    removals.Add(list[i]);
-            }
-
-            list.RemoveAll(removals.Contains);
-
-            if (Cached) HashSet.RemoveWhere(removals.Contains);
+            ((ISet<T>)Backing).IntersectWith(other);
         }
 
-        public bool IsProperSubsetOf(IEnumerable<T> other) => HashSet.IsProperSubsetOf(other);
-        public bool IsProperSupersetOf(IEnumerable<T> other) => HashSet.IsProperSupersetOf(other);
+        public bool IsProperSubsetOf(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).IsProperSubsetOf(other);
+        }
 
-        public bool IsSubsetOf(IEnumerable<T> other) => HashSet.IsSubsetOf(other);
-        public bool IsSupersetOf(IEnumerable<T> other) => HashSet.IsSupersetOf(other);
+        public bool IsProperSupersetOf(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).IsProperSupersetOf(other);
+        }
 
-        public bool Overlaps(IEnumerable<T> other) => HashSet.Overlaps(other);
+        public bool IsSubsetOf(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).IsSubsetOf(other);
+        }
 
-        public bool SetEquals(IEnumerable<T> other) => HashSet.SetEquals(other);
+        public bool IsSupersetOf(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).IsSupersetOf(other);
+        }
+
+        public bool Overlaps(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).Overlaps(other);
+        }
+
+        public bool SetEquals(IEnumerable<T> other)
+        {
+            return ((ISet<T>)Backing).SetEquals(other);
+        }
 
         public void SymmetricExceptWith(IEnumerable<T> other)
         {
-            var collections = new HashSet<T>(other);
-
-            var additions = new HashSet<T>();
-            var removals = new HashSet<T>();
-
-            for (int i = list.Count - 1; i >= 0; i--)
-            {
-                if (collections.Contains(list[i]))
-                    removals.Add(list[i]);
-                else
-                    additions.Add(list[i]);
-            }
-
-            list.RemoveAll(removals.Contains);
-            list.AddRange(additions);
-
-            if (Cached)
-            {
-                HashSet.RemoveWhere(removals.Contains);
-                HashSet.UnionWith(additions);
-            }
+            ((ISet<T>)Backing).SymmetricExceptWith(other);
         }
 
         public void UnionWith(IEnumerable<T> other)
         {
-            var additions = new HashSet<T>();
+            ((ISet<T>)Backing).UnionWith(other);
+        }
 
-            foreach (var element in other)
+        void ICollection<T>.Add(T item)
+        {
+            ((ICollection<T>)Backing).Add(item);
+        }
+
+        public void Clear()
+        {
+            ((ICollection<T>)Backing).Clear();
+        }
+
+        public bool Contains(T item)
+        {
+            return ((ICollection<T>)Backing).Contains(item);
+        }
+
+        public void CopyTo(T[] array, int arrayIndex)
+        {
+            ((ICollection<T>)Backing).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(T item)
+        {
+            return ((ICollection<T>)Backing).Remove(item);
+        }
+
+        public IEnumerator<T> GetEnumerator()
+        {
+            return ((IEnumerable<T>)Backing).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)Backing).GetEnumerator();
+        }
+        #endregion
+
+        #region Serialization
+        object SerializationLock = new object();
+
+        public void OnBeforeSerialize()
+        {
+            lock (SerializationLock)
             {
-                if (HashSet.Contains(element)) continue;
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i] = list[i].SetValid(Pool.Values.Add(list[i].Value));
+                    Pool.Entries.Add(list[i]);
+                }
 
-                additions.Add(element);
+                foreach (var item in Backing)
+                {
+                    var entry = new Entry(item);
+
+                    if (Pool.Entries.Contains(entry))
+                        continue;
+
+                    list.Add(entry);
+                }
+
+                Pool.Clear();
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Backing.Clear();
+
+            foreach (var entry in list)
+            {
+                if (entry.Value == null)
+                    continue;
+
+                Backing.Add(entry.Value);
+            }
+        }
+        #endregion
+
+        public UHashSet()
+        {
+            list = new List<Entry>();
+            Backing = new HashSet<T>();
+        }
+        public UHashSet(int capacity)
+        {
+            list = new List<Entry>(capacity);
+            Backing = new HashSet<T>(capacity);
+        }
+
+        public static class Pool
+        {
+            public static HashSet<Entry> Entries;
+            public static HashSet<T> Values;
+
+            public static void Clear()
+            {
+                Entries.Clear();
+                Values.Clear();
             }
 
-            list.AddRange(additions);
-            HashSet.UnionWith(additions);
+            static Pool()
+            {
+                Entries = new();
+                Values = new();
+            }
         }
     }
+
+#if UNITY_EDITOR
+    [CustomPropertyDrawer(typeof(UHashSet<>.Entry), true)]
+    public class UHashSetEntryDrawer : UCollectionEntryDrawer
+    {
+        public static void Initiate(SerializedProperty property, out SerializedProperty value)
+        {
+            value = property.FindPropertyRelative(MUtility.Type.FormatPropertyBackingFieldName("Value"));
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            Initiate(property, out var value);
+
+            return EditorGUI.GetPropertyHeight(value, true) + Padding;
+        }
+
+        protected override void DrawContent(Rect rect, SerializedProperty property, GUIContent label, bool isValid)
+        {
+            Initiate(property, out var value);
+
+            //EditorGUI.PropertyField(rect, value, label, true);
+            DrawShortField(rect, value);
+        }
+    }
+#endif
 }

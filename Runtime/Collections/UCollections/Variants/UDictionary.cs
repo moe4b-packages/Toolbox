@@ -15,240 +15,291 @@ using UnityEditorInternal;
 
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using UnityEngine.Serialization;
 
 namespace MB
 {
     [Serializable]
-    public abstract class UDictionary : UCollection
-    {
-#if UNITY_EDITOR
-        [CustomPropertyDrawer(typeof(UDictionary), true)]
-        public class Drawer : BaseDrawer
-        {
-            protected override SerializedProperty FindListProperty(SerializedProperty property)
-            {
-                return property.FindPropertyRelative("list");
-            }
-
-            public SerializedProperty GetKey(SerializedProperty list, int index)
-            {
-                return list.GetArrayElementAtIndex(index).FindPropertyRelative("key");
-            }
-            public SerializedProperty GetValue(SerializedProperty list, int index)
-            {
-                return list.GetArrayElementAtIndex(index).FindPropertyRelative("value");
-            }
-
-            public const float NestedElementSpacing = 2f;
-
-            public const float KeyValuePadding = 10f;
-
-            #region Height
-            protected override float GetElementHeight(ImprovedReorderableList list, int index)
-            {
-                var key = GetKey(list.Property, index);
-                var value = GetValue(list.Property, index);
-
-                var kHeight = GetChildrenSingleHeight(key, NestedElementSpacing);
-                var vHeight = GetChildrenSingleHeight(value, NestedElementSpacing);
-
-                var max = Math.Max(kHeight, vHeight);
-                max = Math.Max(max, SingleLineHeight);
-
-                return max + ElementHeightPadding;
-            }
-            #endregion
-
-            #region Draw
-            protected override void DrawElement(ImprovedReorderableList list, Rect rect, int index)
-            {
-                rect.height -= ElementHeightPadding;
-                rect.y += ElementHeightPadding / 2;
-
-                var areas = Split(rect, 40, 60);
-
-                var key = GetKey(list.Property, index);
-                var value = GetValue(list.Property, index);
-
-                DrawKey(areas[0], key);
-                DrawValue(areas[1], value);
-            }
-
-            void DrawKey(Rect rect, SerializedProperty property)
-            {
-                EditorGUIUtility.labelWidth = 60;
-
-                rect.x += KeyValuePadding / 2f;
-                rect.width -= KeyValuePadding;
-
-                DrawField(rect, property);
-            }
-
-            void DrawValue(Rect rect, SerializedProperty property)
-            {
-                EditorGUIUtility.labelWidth = 80;
-
-                rect.x += KeyValuePadding / 2f;
-                rect.width -= KeyValuePadding;
-
-                DrawField(rect, property);
-            }
-
-            protected override void DrawField(Rect rect, SerializedProperty property)
-            {
-                rect.height = SingleLineHeight;
-
-                if (IsInline(property))
-                {
-                    EditorGUI.PropertyField(rect, property, GUIContent.none);
-                }
-                else
-                {
-                    foreach (var child in IterateChildren(property))
-                    {
-                        EditorGUI.PropertyField(rect, child, false);
-
-                        rect.y += SingleLineHeight + NestedElementSpacing;
-                    }
-                }
-            }
-            #endregion
-        }
-#endif
-    }
-
-    [Serializable]
-    public class UDictionary<TKey, TValue> : UDictionary, IDictionary<TKey, TValue>
+    public class UDictionary<TKey, TValue> : IDictionary<TKey, TValue>, IDictionary, IReadOnlyCollection<UDictionary<TKey, TValue>.Entry>, ISerializationCallbackReceiver
     {
         [SerializeField]
-        List<KeyValuePair> list = default;
-        public List<KeyValuePair> List => list;
-
+        List<Entry> list;
         [Serializable]
-        public struct KeyValuePair
+        public struct Entry : IEquatable<Entry>
         {
-            [SerializeField]
-            TKey key;
-            public TKey Key => key;
+            [field: SerializeField, FormerlySerializedAs("key")]
+            public TKey Key { get; private set; }
 
-            [SerializeField]
-            TValue value;
-            public TValue Value => value;
+            [field: SerializeField, FormerlySerializedAs("value")]
+            public TValue Value { get; private set; }
 
-            public KeyValuePair(TKey key, TValue value)
+            [field: SerializeField]
+            internal bool IsValid { get; private set; }
+
+            public Entry SetValid(bool value)
             {
-                this.key = key;
-                this.value = value;
+                IsValid = value;
+                return this;
+            }
+
+            public void Deconstruct(out TKey key, out TValue value)
+            {
+                key = this.Key;
+                value = this.Value;
+            }
+
+            public override bool Equals(object obj)
+            {
+                if (obj is Entry entry)
+                    return Equals(entry);
+
+                return false;
+            }
+            public bool Equals(Entry entry)
+            {
+                if (EqualityComparer<TKey>.Default.Equals(Key, entry.Key) == false)
+                    return false;
+
+                if (EqualityComparer<TValue>.Default.Equals(Value, entry.Value) == false)
+                    return false;
+
+                return true;
+            }
+
+            public override int GetHashCode() => HashCode.Combine(Key, Value);
+
+            public Entry(TKey key, TValue value)
+            {
+                this.Key = key;
+                this.Value = value;
+                IsValid = true;
             }
         }
 
-        public ICollection<TKey> Keys => Dictionary.Keys;
-        public ICollection<TValue> Values => Dictionary.Values;
+        [field: NonSerialized]
+        public Dictionary<TKey, TValue> Backing { get; }
 
-        public override int Count => list.Count;
+        #region Interface Implementation
+        public ICollection<TKey> Keys => ((IDictionary<TKey, TValue>)Backing).Keys;
 
-        public bool IsReadOnly => false;
+        public ICollection<TValue> Values => ((IDictionary<TKey, TValue>)Backing).Values;
 
-        public int IndexOf(TKey key)
-        {
-            return list.FindIndex(Predicate);
+        public int Count => ((ICollection<KeyValuePair<TKey, TValue>>)Backing).Count;
 
-            bool Predicate(KeyValuePair pair) => Equals(pair.Key, key);
-        }
+        public bool IsReadOnly => ((ICollection<KeyValuePair<TKey, TValue>>)Backing).IsReadOnly;
 
-        Dictionary<TKey, TValue> cache;
-        public bool Cached => cache != null;
-        public Dictionary<TKey, TValue> Dictionary
-        {
-            get
-            {
-                if (cache == null)
-                {
-                    cache = new Dictionary<TKey, TValue>();
+        public bool IsFixedSize => ((IDictionary)Backing).IsFixedSize;
 
-                    for (int i = 0; i < List.Count; i++)
-                        cache[list[i].Key] = list[i].Value;
-                }
+        ICollection IDictionary.Keys => ((IDictionary)Backing).Keys;
 
-                return cache;
-            }
-        }
+        ICollection IDictionary.Values => ((IDictionary)Backing).Values;
 
-        public TValue this[TKey key]
-        {
-            get => Dictionary[key];
-            set
-            {
-                var index = IndexOf(key);
+        public bool IsSynchronized => ((ICollection)Backing).IsSynchronized;
 
-                if (index < 0)
-                {
-                    Add(key, value);
-                }
-                else
-                {
-                    list[index] = new KeyValuePair(key, value);
-                    if (Cached) Dictionary[key] = value;
-                }
-            }
-        }
+        public object SyncRoot => ((ICollection)Backing).SyncRoot;
 
-        public override void InvalidateCache()
-        {
-            cache = null;
-        }
-
-        public bool TryGetValue(TKey key, out TValue value) => Dictionary.TryGetValue(key, out value);
-
-        public bool ContainsKey(TKey key) => Dictionary.ContainsKey(key);
-        public bool Contains(KeyValuePair<TKey, TValue> item) => ContainsKey(item.Key);
+        public object this[object key] { get => ((IDictionary)Backing)[key]; set => ((IDictionary)Backing)[key] = value; }
+        public TValue this[TKey key] { get => ((IDictionary<TKey, TValue>)Backing)[key]; set => ((IDictionary<TKey, TValue>)Backing)[key] = value; }
 
         public void Add(TKey key, TValue value)
         {
-            if (ContainsKey(key)) throw new ArgumentException($"Key {key} Already Added With Collection");
-
-            var pair = new KeyValuePair(key, value);
-            list.Add(pair);
-
-            if (Cached) Dictionary.Add(key, value);
+            ((IDictionary<TKey, TValue>)Backing).Add(key, value);
         }
-        public void Add(KeyValuePair<TKey, TValue> item) => Add(item.Key, item.Value);
 
-        public void UnionWith(IDictionary<TKey, TValue> collection)
+        public bool ContainsKey(TKey key)
         {
-            foreach (var pair in collection)
-                this[pair.Key] = pair.Value;
+            return ((IDictionary<TKey, TValue>)Backing).ContainsKey(key);
         }
 
         public bool Remove(TKey key)
         {
-            var index = IndexOf(key);
-
-            if (index < 0) return false;
-
-            list.RemoveAt(index);
-
-            if (Cached) Dictionary.Remove(key);
-
-            return true;
+            return ((IDictionary<TKey, TValue>)Backing).Remove(key);
         }
-        public bool Remove(KeyValuePair<TKey, TValue> item) => Remove(item.Key);
+
+        public bool TryGetValue(TKey key, out TValue value)
+        {
+            return ((IDictionary<TKey, TValue>)Backing).TryGetValue(key, out value);
+        }
+
+        public void Add(KeyValuePair<TKey, TValue> item)
+        {
+            ((ICollection<KeyValuePair<TKey, TValue>>)Backing).Add(item);
+        }
 
         public void Clear()
         {
-            list.Clear();
-
-            if (Cached) Dictionary.Clear();
+            ((ICollection<KeyValuePair<TKey, TValue>>)Backing).Clear();
         }
 
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) => (Dictionary as IDictionary).CopyTo(array, arrayIndex);
+        public bool Contains(KeyValuePair<TKey, TValue> item)
+        {
+            return ((ICollection<KeyValuePair<TKey, TValue>>)Backing).Contains(item);
+        }
 
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => Dictionary.GetEnumerator();
-        IEnumerator IEnumerable.GetEnumerator() => Dictionary.GetEnumerator();
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
+        {
+            ((ICollection<KeyValuePair<TKey, TValue>>)Backing).CopyTo(array, arrayIndex);
+        }
+
+        public bool Remove(KeyValuePair<TKey, TValue> item)
+        {
+            return ((ICollection<KeyValuePair<TKey, TValue>>)Backing).Remove(item);
+        }
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
+        {
+            return ((IEnumerable<KeyValuePair<TKey, TValue>>)Backing).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return ((IEnumerable)Backing).GetEnumerator();
+        }
+
+        public void Add(object key, object value)
+        {
+            ((IDictionary)Backing).Add(key, value);
+        }
+
+        public bool Contains(object key)
+        {
+            return ((IDictionary)Backing).Contains(key);
+        }
+
+        IDictionaryEnumerator IDictionary.GetEnumerator()
+        {
+            return ((IDictionary)Backing).GetEnumerator();
+        }
+
+        public void Remove(object key)
+        {
+            ((IDictionary)Backing).Remove(key);
+        }
+
+        public void CopyTo(Array array, int index)
+        {
+            ((ICollection)Backing).CopyTo(array, index);
+        }
+
+        IEnumerator<Entry> IEnumerable<Entry>.GetEnumerator()
+        {
+            return ((IEnumerable<Entry>)list).GetEnumerator();
+        }
+        #endregion
+
+        #region Serialization
+        object SerializationLock = new object();
+
+        public void OnBeforeSerialize()
+        {
+            lock (SerializationLock)
+            {
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i] = list[i].SetValid(Pool.Keys.Add(list[i].Key));
+                    Pool.Entries.Add(list[i]);
+                }
+
+                foreach (var (key, value) in Backing)
+                {
+                    var entry = new Entry(key, value);
+
+                    if (Pool.Entries.Contains(entry))
+                        continue;
+
+                    list.Add(entry);
+                }
+
+                Pool.Clear();
+            }
+        }
+
+        public void OnAfterDeserialize()
+        {
+            Backing.Clear();
+
+            foreach (var (key, value) in list)
+            {
+                if (key == null)
+                    continue;
+
+                Backing.TryAdd(key, value);
+            }
+        }
+        #endregion
 
         public UDictionary()
         {
-            list = new List<KeyValuePair>();
+            list = new List<Entry>();
+            Backing = new Dictionary<TKey, TValue>();
+        }
+        public UDictionary(int capacity)
+        {
+            list = new List<Entry>(capacity);
+            Backing = new Dictionary<TKey, TValue>(capacity);
+        }
+
+        public static class Pool
+        {
+            public static HashSet<Entry> Entries;
+            public static HashSet<TKey> Keys;
+
+            public static void Clear()
+            {
+                Entries.Clear();
+                Keys.Clear();
+            }
+
+            static Pool()
+            {
+                Entries = new();
+                Keys = new();
+            }
         }
     }
+
+#if UNITY_EDITOR
+    [CustomPropertyDrawer(typeof(UDictionary<,>.Entry), true)]
+    public class UDictionaryEntryDrawer : UCollectionEntryDrawer
+    {
+        public const float KeyValueSpacing = 5f;
+
+        public static void Initiate(SerializedProperty property, out SerializedProperty key, out SerializedProperty value)
+        {
+            key = property.FindPropertyRelative(MUtility.Type.FormatPropertyBackingFieldName("Key"));
+            value = property.FindPropertyRelative(MUtility.Type.FormatPropertyBackingFieldName("Value"));
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            Initiate(property, out var key, out var value);
+
+            var keyHeight = EditorGUI.GetPropertyHeight(key, true);
+            var valueHeight = EditorGUI.GetPropertyHeight(value, true);
+
+            return Math.Max(keyHeight, valueHeight) + Padding;
+        }
+
+        protected override void DrawContent(Rect rect, SerializedProperty property, GUIContent label, bool isValid)
+        {
+            Initiate(property, out var key, out var value);
+
+            var area = MUtility.GUI.SplitHorizontally(rect, 0, 35f, 65f);
+
+            DrawKey(area[0], key);
+            DrawValue(area[1], value);
+        }
+
+        public static void DrawKey(Rect rect, SerializedProperty property)
+        {
+            rect.xMax -= KeyValueSpacing;
+            DrawShortField(rect, property);
+        }
+        public static void DrawValue(Rect rect, SerializedProperty property)
+        {
+            rect.xMin += KeyValueSpacing;
+            DrawShortField(rect, property);
+        }
+    }
+#endif
 }

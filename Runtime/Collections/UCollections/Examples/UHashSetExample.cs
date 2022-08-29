@@ -25,21 +25,12 @@ namespace MB
         public UHashSet<Value> hash2;
         public UHashSet<Component> hash3;
         
-        public Nested nested;
-        [Serializable]
-        public class Nested
-        {
-            public UHashSet<string> hash1;
-            public UHashSet<Value> hash2;
-            public UHashSet<Component> hash3;
-        }
-
         [Serializable]
         public struct Value
         {
-            public string firstName;
+            public string first;
 
-            public string lastName;
+            public string last;
         }
 
         void Start()
